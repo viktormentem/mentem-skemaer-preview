@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Udfyld dine forberedelses-skemaer sikkert i din browser. Dine svar krypteres lokalt og deles kun med din psykolog.">
+<meta name="author" content="Viktor Nielsen, Mentem Psykologpraksis">
+<meta property="og:title" content="Mentem — Forberedelse til din samtale">
+<meta property="og:description" content="Udfyld dine forberedelses-skemaer sikkert i din browser.">
+<meta property="og:type" content="website">
+<title>Mentem — Forberedelse til din samtale</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --ink:#1a1a2e; --paper:#f8f6f1; --muted:#62626d; --accent:#2d6a4f;
+    --accent-light:#e8f5e1; --border:#e0ddd6; --card:#ffffff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; }
+
+  .header { background:var(--ink); color:white; padding:24px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .header-logo { font-family:'DM Serif Display',serif; font-size:24px; letter-spacing:-0.5px; }
+  .header-sub { font-size:13px; opacity:0.5; margin-top:2px; }
+  .header-secure { font-size:12px; opacity:0.6; }
+
+  .screen { display:none; }
+  .screen.active { display:block; animation:fadeIn 0.3s ease; }
+
+  .wrap { max-width:680px; margin:48px auto; padding:0 24px 80px; }
+  h1 { font-family:'DM Serif Display',serif; font-size:38px; line-height:1.1; margin-bottom:16px; }
+  h1 em { font-style:italic; color:var(--accent); }
+  .intro { font-size:17px; color:var(--muted); line-height:1.6; margin-bottom:36px; }
+
+  .schema-cards { display:grid; gap:12px; margin-bottom:36px; }
+  /* Kort = informativ liste (IKKE valgbar checklist — ingen flueben/valg-look) */
+  .schema-card { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:18px 22px; display:flex; align-items:center; gap:16px; }
+  .schema-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--accent-light); color:var(--accent); }
+  .schema-icon svg { width:22px; height:22px; display:block; }
+  .schema-info h3 { font-size:15px; font-weight:600; }
+  .schema-badge { margin-left:auto; margin-right:32px; font-size:11px; font-weight:500; padding:3px 8px; border-radius:20px; background:var(--border); color:var(--muted); white-space:nowrap; }
+
+  .btn-primary { background:var(--accent); color:white; border:none; padding:16px 32px; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.15s; width:100%; }
+  .btn-primary:hover { background:#1e4d38; }
+  .btn-primary:disabled { background:var(--muted); cursor:not-allowed; }
+
+  .form-progress { position:sticky; top:0; z-index:5; background:var(--paper); border-bottom:1px solid var(--border); padding:16px 0; margin-bottom:28px; display:flex; align-items:center; gap:16px; }
+  .progress-bar-track { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progress-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width 0.3s ease; width:0%; }
+  .progress-label { font-size:13px; color:var(--muted); white-space:nowrap; }
+
+  .patient-info { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:28px; }
+  .form-field label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em; }
+  .form-field input { width:100%; padding:12px 16px; border:1.5px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:16px; background:white; outline:none; }
+  .form-field input:focus { border-color:var(--accent); }
+
+  .schema-section { margin-bottom:40px; }
+  .schema-header { border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:18px; }
+  .schema-title { font-family:'DM Serif Display',serif; font-size:26px; margin-bottom:4px; }
+  .schema-instruction { background:var(--accent-light); border-left:3px solid var(--accent); padding:12px 16px; border-radius:0 8px 8px 0; font-size:14px; margin-bottom:20px; line-height:1.5; }
+  .schema-attribution { font-size:11px; color:var(--muted); margin-top:10px; font-style:italic; }
+
+  .question-block { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:12px; transition:border-color 0.15s; }
+  .question-block.answered { border-color:var(--accent); }
+  .question-text { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.4; }
+  .question-num { font-size:12px; color:var(--muted); font-weight:400; margin-right:8px; }
+  .radio-group { display:grid; gap:8px; }
+  .radio-option { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.12s; background:white; font-size:15px; }
+  .radio-option:hover { border-color:var(--accent); background:#f0faf5; }
+  .radio-option input[type=radio] { width:18px; height:18px; accent-color:var(--accent); flex-shrink:0; }
+  .radio-option.checked { border-color:var(--accent); background:var(--accent-light); font-weight:500; }
+
+  /* VAS — ingen tal-readout (proces-neutral, nul-score) */
+  .vas-row { margin-top:8px; }
+  .vas-slider { width:100%; -webkit-appearance:none; appearance:none; height:8px; border-radius:4px; background:linear-gradient(90deg,#e0ddd6,#2d6a4f); outline:none; cursor:pointer; }
+  .vas-slider::-webkit-slider-thumb { -webkit-appearance:none; width:26px; height:26px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 2px 8px rgba(45,106,79,0.35); border:3px solid white; }
+  .vas-slider::-moz-range-thumb { width:26px; height:26px; border-radius:50%; background:var(--accent); border:3px solid white; cursor:pointer; }
+  .vas-ends { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:8px; }
+
+  .done-wrap { max-width:560px; margin:80px auto; padding:0 24px; text-align:center; }
+  .done-mark { font-size:56px; margin-bottom:16px; }
+  .done-wrap h2 { font-family:'DM Serif Display',serif; font-size:32px; margin-bottom:12px; }
+  .done-wrap p { color:var(--muted); font-size:16px; line-height:1.6; margin-bottom:28px; }
+  .done-status { font-size:14px; color:var(--accent); margin-top:16px; min-height:20px; }
+  .disclaimer { background:var(--border); border-radius:8px; padding:12px 16px; font-size:12px; color:var(--muted); margin-top:24px; line-height:1.5; }
+  .start-note { text-align:center; font-size:14px; color:var(--muted); margin-top:14px; line-height:1.5; }
+  .footer-credit { font-size:11px; color:var(--muted); margin-top:20px; line-height:1.5; text-align:center; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+
+  /* ── Søvndagbog (diary) ───────────────────────────────────────────────── */
+  .btn-secondary { background:transparent; color:var(--accent); border:1.5px solid var(--accent); padding:14px 28px; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; width:100%; margin-top:10px; transition:all 0.15s; }
+  .btn-secondary:hover { background:var(--accent-light); }
+  .diary-progress { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 22px; margin-bottom:28px; }
+  .diary-progress-label { font-size:13px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+  .diary-progress-big { font-family:'DM Serif Display',serif; font-size:24px; margin-top:4px; }
+  .diary-dots { display:flex; gap:7px; flex-wrap:wrap; margin-top:14px; }
+  .diary-dot { width:14px; height:14px; border-radius:50%; background:var(--border); }
+  .diary-dot.done { background:var(--accent); }
+  .diary-dot.today { box-shadow:0 0 0 2px var(--accent); background:var(--accent-light); }
+  .diary-field { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:12px; transition:border-color 0.15s; }
+  .diary-field.answered { border-color:var(--accent); }
+  .diary-q { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.4; }
+  .diary-q .question-num { font-size:12px; color:var(--muted); font-weight:400; margin-right:8px; }
+  .diary-optional { font-size:12px; color:var(--muted); font-weight:400; font-style:italic; margin-left:6px; }
+  .diary-input-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .diary-field input[type=time], .diary-field input[type=number], .diary-field input[type=text] {
+    padding:12px 16px; border:1.5px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:16px; background:white; outline:none; }
+  .diary-field input[type=time], .diary-field input[type=number] { max-width:160px; }
+  .diary-field input[type=text] { width:100%; }
+  .diary-field input:focus { border-color:var(--accent); }
+  .diary-unit { font-size:14px; color:var(--muted); }
+
+  /* WCAG 2.1 AA: synligt tastatur-fokus (B7) + touch-mål ≥44px. */
+  :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .btn-primary, .btn-secondary, .radio-option, .diary-field input { min-height:44px; }
+  /* <label>/<fieldset>/<legend> for diary-felter (A11Y semantik). */
+  label.diary-q { display:block; }
+  fieldset.diary-field { min-width:0; }
+  legend.diary-q { padding:0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">Mentem</div>
+    <div class="header-sub">Forberedelse · Viktor Nielsen, autoriseret psykolog</div>
+  </div>
+  <div class="header-secure">🔒 Dine svar krypteres i din browser</div>
+</div>
+
+<!-- 1: VELKOMST -->
+<div id="screen-welcome" class="screen active">
+  <div class="wrap">
+    <h1>Klar til at <em>forberede</em><br>jeres samtale</h1>
+    <p class="intro" id="welcome-intro"></p>
+    <div class="schema-cards" id="schema-cards"></div>
+    <button class="btn-primary" id="start-btn" disabled>Start</button>
+    <p class="start-note">Til sidst får du én fil, som du nemt deler med din psykolog — vi viser dig hvordan.</p>
+    <div class="disclaimer">🔒 <strong>Privatliv:</strong> Du udfylder alt i din egen browser. Når du er færdig, samles svarene i én krypteret fil, som kun din psykolog kan åbne. Intet gemmes på en server, og du sender selv filen.</div>
+    <p class="footer-credit">Skemaerne bygger på anerkendte spørgeskemaer (GAD-7, PHQ-9, WHO-5, WSAS), som din psykolog bruger til at følge din udvikling.</p>
+    <p class="footer-credit" id="key-fp"></p>
+  </div>
+</div>
+
+<!-- 2: FORMULAR -->
+<div id="screen-form" class="screen">
+  <div class="wrap">
+    <div class="form-progress">
+      <span class="progress-label" id="progress-current">0%</span>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <span class="progress-label" id="progress-total">0 af 0</span>
+    </div>
+    <div class="patient-info">
+      <div class="form-field">
+        <label>Dit navn (valgfrit)</label>
+        <input type="text" id="patient-name" placeholder="Fx Anna Larsen" autocomplete="off">
+      </div>
+    </div>
+    <div id="form-sections"></div>
+    <button class="btn-primary" id="finish-btn" style="margin-top:8px">Færdig →</button>
+  </div>
+</div>
+
+<!-- 3: AFSLUTNING (nul-score) -->
+<div id="screen-done" class="screen">
+  <div class="done-wrap">
+    <div class="done-mark">✅</div>
+    <h2>Tak — du er færdig</h2>
+    <p>Dine svar er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.</p>
+    <button class="btn-primary" id="share-btn">Send filen til din psykolog</button>
+    <div class="done-status" id="done-status"></div>
+    <div class="disclaimer" style="text-align:left;margin-top:28px">Filen indeholder kun dine svar og er krypteret, så kun din psykolog kan læse den. Du får ikke en score eller en vurdering her — det gennemgår I sammen til samtalen.</div>
+  </div>
+</div>
+
+<!-- D1: SØVNDAGBOG — status/velkomst (akkumulerende) -->
+<div id="screen-diary-welcome" class="screen">
+  <div class="wrap">
+    <h1>Din <em>søvndagbog</em></h1>
+    <p class="intro" id="diary-intro"></p>
+    <div class="diary-progress">
+      <div class="diary-progress-label">Fremdrift</div>
+      <div class="diary-progress-big" id="diary-progress-text">Dag 1</div>
+      <div class="diary-dots" id="diary-dots"></div>
+    </div>
+    <button class="btn-primary" id="diary-start-btn">Udfyld for i nat</button>
+    <button class="btn-secondary" id="diary-backfill-btn" style="display:none">Udfyld for i går</button>
+    <button class="btn-secondary" id="diary-update-btn" style="display:none">Send opdatering til psykolog</button>
+    <button class="btn-secondary" id="diary-finish-now-btn" style="display:none">Afslut og send til psykolog</button>
+    <p class="start-note" id="diary-note"></p>
+    <div class="done-status" id="diary-update-status" style="min-height:0"></div>
+    <div class="disclaimer" id="diary-privacy"></div>
+    <p class="footer-credit" id="diary-attribution"></p>
+    <p class="footer-credit" id="diary-key-fp"></p>
+  </div>
+</div>
+
+<!-- D2: SØVNDAGBOG — dagens indtastning -->
+<div id="screen-diary-form" class="screen">
+  <div class="wrap">
+    <div class="form-progress">
+      <span class="progress-label" id="diary-form-day">Dag 1</span>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="diary-form-fill"></div></div>
+      <span class="progress-label" id="diary-form-count">0 af 0</span>
+    </div>
+    <div class="schema-instruction" id="diary-form-instruction" style="margin-bottom:24px"></div>
+    <button class="btn-secondary" id="diary-sameasyesterday-btn" style="display:none;margin-bottom:16px">Samme som i går (kan rettes)</button>
+    <div id="diary-fields"></div>
+    <button class="btn-primary" id="diary-save-btn" style="margin-top:8px">Gem</button>
+    <button class="btn-secondary" id="diary-cancel-btn">Tilbage</button>
+  </div>
+</div>
+
+<!-- B1: SØVN-BASELINE — velkomst (engangs) -->
+<div id="screen-baseline-welcome" class="screen">
+  <div class="wrap">
+    <h1>Kort om <em>din søvn</em></h1>
+    <p class="intro" id="baseline-intro"></p>
+    <button class="btn-primary" id="baseline-start-btn">Start</button>
+    <p class="start-note">Det tager et par minutter og udfyldes kun denne ene gang.</p>
+    <div class="disclaimer">🔒 <strong>Privatliv:</strong> Du udfylder alt i din egen browser. Til sidst samles svarene i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv. Intet gemmes på en server.</div>
+    <p class="footer-credit" id="baseline-key-fp"></p>
+  </div>
+</div>
+
+<!-- B2: SØVN-BASELINE — formular -->
+<div id="screen-baseline-form" class="screen">
+  <div class="wrap">
+    <div class="form-progress">
+      <span class="progress-label" id="baseline-progress-current">0%</span>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="baseline-progress-fill"></div></div>
+      <span class="progress-label" id="baseline-progress-total">0 af 0</span>
+    </div>
+    <div class="schema-instruction" id="baseline-instruction" style="margin-bottom:24px"></div>
+    <div id="baseline-fields"></div>
+    <button class="btn-primary" id="baseline-finish-btn" style="margin-top:8px">Færdig →</button>
+  </div>
+</div>
+
+<script type="module">
+import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
+         CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD,
+         PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
+
+// ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
+const params   = new URLSearchParams(location.search);
+const sParam   = params.get('s');
+const sessionN = params.get('n') ? parseInt(params.get('n'), 10) : null;
+const dParam   = params.get('d') ? parseInt(params.get('d'), 10) : null;   // dagbog-periode (dage)
+
+// ── Server draft-store (Mulighed A) ───────────────────────────────────────
+// token = forløbs-id (128-bit, fra Mentem). {BASE} er KONFIGURERBAR (ikke
+// hardcoded host) → swappable: tom DRAFT_API_BASE + intet ?api= → server-sync
+// FRA (ren localStorage, bagudkompatibel). ?api= overrider (preview/test).
+// {BASE} = TCC-lane draft-store (D1/WEUR + R2/eu). ⚠️ TEST-preview-endpoint —
+// KUN TEST-data. Prod go-live (reel klient-data) er GATET på G3-DPA + Viktor-GO;
+// denne branch er held (0-push prod). Route-kontrakt: /api/soevn-draft/{token}.
+// ?api= kan stadig override (lokal test). Tom base + intet ?api= → server-sync FRA.
+// LOCAL_ONLY: localStorage-only-variant (G3-fri rigtig-klient). Når true →
+// server-sync STRUKTURELT umulig (draftBase tom + ?api ignoreret) → klientens
+// data rammer ALDRIG nogen server, robust mod param-tab (flag bagt ind i den
+// distinkte lokal-deploy, ikke en URL-param). false = server-wiret preview.
+const LOCAL_ONLY = true;
+const DRAFT_API_BASE = '';   // localStorage-only: ingen server
+const draftToken = params.get('t');
+const apiOverride = params.get('api');
+function draftBase() { if (LOCAL_ONLY) return ''; return ((apiOverride || DRAFT_API_BASE || '').trim()).replace(/\/+$/, ''); }
+function draftEnabled() { return !!(draftToken && /^[0-9a-f]{32}$/.test(draftToken) && draftBase()); }
+function draftUrl() { return `${draftBase()}/api/soevn-draft/${draftToken}`; }
+
+// TEST-only dag-advance: ?testday=N rykker "i dag" N dage frem så dag 2 + slet-
+// flow kan device-testes uden at vente et døgn. GATET til preview/test-hosts →
+// ALDRIG aktiv i prod (viktormentem.github.io/mentem-skemaer).
+const TEST_HOST = /mentem-skemaer-preview|localhost|127\.0\.0\.1|\.loca\.lt|\.trycloudflare\.com/
+  .test(location.host + location.pathname);
+const testDayOffset = (TEST_HOST && params.get('testday')) ? (parseInt(params.get('testday'), 10) || 0) : 0;
+
+// SIKKERHED: krypteringsnøglen er PINNED i koden (ikke fra ?pk=). Et ?pk= i
+// URL'en bruges KUN som cross-check — afviger det fra pinned nøgle, nægter vi
+// at kryptere (ingen krypter-til-fremmed-nøgle via manipuleret link).
+const keyCheck = resolveRecipientKey(params.get('pk'));
+
+const rawSelected = (sParam ? sParam.split(',').map(x => x.trim().toLowerCase()) : [])
+  .filter(id => SKEMAER[id]);
+// Søvndagbog (kind:'diary') er en standalone akkumulerende dagbog — håndteres
+// af et separat flow (runDiary), IKKE spørgeskema-batteriet.
+const diaryId = rawSelected.find(id => SKEMAER[id].kind === 'diary') || null;
+// Søvn-baseline (kind:'baseline') = engangs intake-skema, eget flow (runBaseline).
+const baselineId = rawSelected.find(id => SKEMAER[id].kind === 'baseline') || null;
+let selected = SKEMA_ORDER.filter(id => rawSelected.includes(id));   // kanonisk rækkefølge (kun spørgeskemaer)
+const fixedFromLink = selected.length > 0;                    // ?s= → låst batteri
+
+const answers = {};
+
+// Neutrale line-ikoner (stroke = currentColor; pale-grøn cirkel via .schema-icon).
+const SVG = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+const ICONS = {
+  kompas:    SVG('<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 11 11 8.5 15.5 13 13"/>'),
+  tanker:    SVG('<path d="M7.5 14a4 4 0 1 1 1.4-7.6A4.5 4.5 0 0 1 17 8a3 3 0 0 1-.4 6H8"/><circle cx="6" cy="17.5" r="1"/><circle cx="3.5" cy="20" r="0.6"/>'),
+  sky:       SVG('<path d="M7.5 18a4 4 0 0 1 0-8 5 5 0 0 1 9.5-1.2A3.5 3.5 0 0 1 17 18z"/>'),
+  sol:       SVG('<line x1="3" y1="18" x2="21" y2="18"/><path d="M7 18a5 5 0 0 1 10 0"/><line x1="12" y1="4.5" x2="12" y2="7"/><line x1="5.5" y1="8.5" x2="7" y2="10"/><line x1="18.5" y1="8.5" x2="17" y2="10"/>'),
+  plante:    SVG('<path d="M12 20v-7"/><path d="M12 13c0-3 2.3-5 5-5 0 3-2.3 5-5 5z"/><path d="M12 15c0-2.4-1.9-4.2-4.3-4.2 0 2.4 1.9 4.2 4.3 4.2z"/>'),
+  puslespil: SVG('<path d="M5 9V6.5A1.5 1.5 0 0 1 6.5 5H9a2 2 0 1 1 4 0h2.5A1.5 1.5 0 0 1 17 6.5V9a2 2 0 1 1 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5H13a2 2 0 1 0-4 0H6.5A1.5 1.5 0 0 1 5 15.5V13a2 2 0 1 0 0-4z"/>'),
+  samarbejde:SVG('<circle cx="9.5" cy="12" r="4"/><circle cx="14.5" cy="12" r="4"/>'),
+};
+const iconSVG = (key) => ICONS[key] || SVG('<circle cx="12" cy="12" r="8"/>');
+
+// ── VELKOMST ─────────────────────────────────────────────────────────────
+// Kortene er en INFORMATIV liste over det batteri din psykolog har valgt —
+// ikke en valgbar checklist (ingen flueben/valg-affordance, R5/anti-priming).
+function renderWelcome() {
+  const intro = document.getElementById('welcome-intro');
+  const cardsEl = document.getElementById('schema-cards');
+  const startBtn = document.getElementById('start-btn');
+
+  // SIKKERHED: hvis linket peger på en ukendt nøgle, så advar straks og
+  // bloker — klienten skal ikke engang udfylde via et manipuleret link.
+  if (!keyCheck.ok) {
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    document.getElementById('schema-cards').innerHTML = '';
+    startBtn.disabled = true;
+    startBtn.textContent = 'Linket kan ikke bruges';
+    return;
+  }
+
+  const battery = fixedFromLink ? selected : SKEMA_ORDER;
+  selected = battery;   // hele batteriet udfyldes
+
+  intro.textContent = 'Din psykolog har sammensat nogle korte skemaer, der hjælper jer med at få mest ud af jeres samtale. Tag dem i dit eget tempo — det tager omkring 10 minutter, og der er ingen rigtige eller forkerte svar.';
+
+  cardsEl.innerHTML = '';
+  battery.forEach(id => {
+    const s = SKEMAER[id];
+    const card = document.createElement('div');
+    card.className = 'schema-card';
+    card.innerHTML = `
+      <div class="schema-icon">${iconSVG(s.icon)}</div>
+      <div class="schema-info"><h3>${s.short}</h3></div>
+      <span class="schema-badge">${s.badge}</span>`;
+    cardsEl.appendChild(card);
+  });
+
+  startBtn.disabled = battery.length === 0;
+  startBtn.textContent = 'Start';
+  startBtn.addEventListener('click', startForm);
+
+  const fp = document.getElementById('key-fp');
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+}
+
+// ── FORMULAR ───────────────────────────────────────────────────────────────
+function renderForm() {
+  const root = document.getElementById('form-sections');
+  root.innerHTML = '';
+  selected.forEach(id => {
+    const s = SKEMAER[id];
+    const sec = document.createElement('div');
+    sec.className = 'schema-section';
+    const attr = s.attribution ? `<div class="schema-attribution">${s.attribution}</div>` : '';
+    sec.innerHTML = `
+      <div class="schema-header"><div class="schema-title">${s.short}</div></div>
+      <div class="schema-instruction">${s.instruction}${attr}</div>
+      <div class="items" id="items-${id}"></div>`;
+    root.appendChild(sec);
+    const itemsEl = sec.querySelector('.items');
+    if (s.kind === 'radio') s.items.forEach((q, i) => itemsEl.appendChild(radioBlock(id, i, q, s.options)));
+    else s.items.forEach((it, i) => itemsEl.appendChild(vasBlock(id, i, it, s)));
+  });
+}
+
+function radioBlock(id, i, q, options) {
+  const block = document.createElement('div');
+  block.className = 'question-block';
+  block.innerHTML = `<div class="question-text"><span class="question-num">${i + 1}.</span>${q}</div>
+    <div class="radio-group"></div>`;
+  const group = block.querySelector('.radio-group');
+  options.forEach(opt => {
+    const lbl = document.createElement('label');
+    lbl.className = 'radio-option';
+    lbl.innerHTML = `<input type="radio" name="${id}_${i}" value="${opt.value}"><span>${opt.label}</span>`;
+    lbl.querySelector('input').addEventListener('change', () => {
+      if (!answers[id]) answers[id] = {};
+      answers[id][i] = opt.value;
+      group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('checked'));
+      lbl.classList.add('checked');
+      block.classList.add('answered');
+      updateProgress();
+    });
+    group.appendChild(lbl);
+  });
+  return block;
+}
+
+function vasBlock(id, i, item, s) {
+  if (!answers[id]) answers[id] = {};
+  if (answers[id][i] == null) answers[id][i] = 50;   // VAS starter på midten
+  const block = document.createElement('div');
+  block.className = 'question-block answered';
+  block.innerHTML = `<div class="question-text"><span class="question-num">${i + 1}.</span>${item.text}</div>
+    <div class="vas-row">
+      <input type="range" class="vas-slider" min="0" max="100" step="1" value="50" aria-label="${item.text}">
+      <div class="vas-ends"><span>${s.vasMin}</span><span>${s.vasMax}</span></div>
+    </div>`;
+  block.querySelector('input').addEventListener('input', e => {
+    answers[id][i] = parseInt(e.target.value, 10);
+  });
+  return block;
+}
+
+function updateProgress() {
+  let total = 0, answered = 0;
+  selected.forEach(id => {
+    const s = SKEMAER[id];
+    total += s.items.length;
+    if (s.kind === 'vas') answered += s.items.length;             // altid besvaret
+    else if (answers[id]) answered += Object.keys(answers[id]).length;
+  });
+  const pct = total ? Math.round(answered / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-current').textContent = pct + '%';
+  document.getElementById('progress-total').textContent = `${answered} af ${total}`;
+  const fb = document.getElementById('finish-btn');
+  fb.disabled = answered < total;
+  fb.textContent = answered < total ? `Mangler ${total - answered} svar` : 'Færdig →';
+}
+
+function startForm() {
+  renderForm();
+  showScreen('screen-form');
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+// ── AFSLUTNING + KRYPTERET DELING (nul-score) ───────────────────────────────
+function goDone() { showScreen('screen-done'); window.scrollTo(0, 0); }
+
+async function shareEncrypted() {
+  const status = document.getElementById('done-status');
+  const btn = document.getElementById('share-btn');
+  // SIKKERHED: nægt at kryptere hvis linket peger på en ukendt nøgle.
+  if (!keyCheck.ok) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    return;
+  }
+  btn.disabled = true;
+  status.style.color = 'var(--accent)';
+  status.textContent = 'Krypterer …';
+  try {
+    const name = (document.getElementById('patient-name').value || '').trim();
+    const payload = buildPayload(answers, { name, sessionNumber: sessionN });
+    // Krypter ALTID til den pinned nøgle (ikke ?pk=).
+    const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);
+    const blob = new Blob([JSON.stringify(container)], { type: 'application/json' });
+    const filename = `mentem-skema-${new Date().toISOString().slice(0, 10)}.json`;
+    const file = new File([blob], filename, { type: 'application/json' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Skema til min psykolog' });
+      status.textContent = 'Filen er klar til at sende. Tak!';
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      a.remove(); URL.revokeObjectURL(url);
+      status.innerHTML = 'Filen er hentet til din enhed. Vedhæft den nu i SMS-tråden til din psykolog.';
+    }
+  } catch (e) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
+    btn.disabled = false;
+  }
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  SØVNDAGBOG (CSD) — akkumulerende dagbog (localStorage → én opaque eksport)
+// ════════════════════════════════════════════════════════════════════════
+// Net-nyt fork: dagligt-akkumulerende dagbog gemt LOKALT (localStorage) → ved
+// periode-slut bygges ÉN opaque krypteret eksport (ikke daglige SMS'er).
+// localStorage er enheds-/browser-bundet — ryddet browser/skiftet enhed = tabte
+// dage (kommunikeret i klient-UI + databehandlings-noten). Nul-score bevaret:
+// siden viser ALDRIG TST/SE/scoring (Mentem-side beregner ved decrypt).
+const CSD_LS_KEY = 'mentem_csd_v1';
+const CSD_DEFAULT_DAYS = 14;
+
+function dateISO(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + testDayOffset + offsetDays);   // testDayOffset = 0 i prod
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function todayISO() { return dateISO(0); }
+function yesterdayISO() { return dateISO(-1); }
+function loadCSD() {
+  try { return JSON.parse(localStorage.getItem(CSD_LS_KEY)) || null; } catch { return null; }
+}
+function saveCSDState(state) {
+  try { localStorage.setItem(CSD_LS_KEY, JSON.stringify(state)); } catch (e) { /* private mode / quota */ }
+}
+function clearCSDState() {
+  try { localStorage.removeItem(CSD_LS_KEY); } catch (e) { /* ignore */ }
+}
+
+let diaryState = null;   // { startedAt, plannedDays, contentVersion, dirty, entries:[{date, …felter, savedAt}] }
+let diaryDraft = {};     // dagens igangværende svar
+let diarySkema = null;
+let recoveredBlob = null;   // opaque server-kladde efter ITP-wipe (kan IKKE dekrypteres klient-side)
+let diaryFillDate = null;   // hvilken kalenderdag formularen udfylder (i dag / i går-backfill)
+
+function diaryPlannedDays() {
+  if (dParam && dParam > 0 && dParam <= 60) return dParam;   // ?d= ved første åbning
+  return CSD_DEFAULT_DAYS;
+}
+function diaryHasToday() {
+  return !!(diaryState && diaryState.entries.find(e => e.date === todayISO()));
+}
+
+async function runDiary(id) {
+  diarySkema = SKEMAER[id];
+  // Eksisterende periode bevares; plannedDays + contentVersion låses ved første
+  // åbning (et senere ?d=/ny site-version ændrer ikke en igangværende periode, G2).
+  diaryState = loadCSD() || { startedAt: todayISO(), plannedDays: diaryPlannedDays(), contentVersion: CONTENT_VERSION, dirty: false, entries: [] };
+  if (!diaryState.plannedDays) diaryState.plannedDays = diaryPlannedDays();
+  if (diaryState.contentVersion == null) diaryState.contentVersion = CONTENT_VERSION;
+
+  document.getElementById('diary-start-btn').addEventListener('click', () => startDiaryEntry(todayISO()));
+  document.getElementById('diary-backfill-btn').addEventListener('click', () => startDiaryEntry(yesterdayISO()));
+  document.getElementById('diary-finish-now-btn').addEventListener('click', finishDiary);
+  document.getElementById('diary-update-btn').addEventListener('click', sendDiaryOpdatering);
+  document.getElementById('diary-save-btn').addEventListener('click', saveDiaryEntry);
+  document.getElementById('diary-cancel-btn').addEventListener('click', () => {
+    renderDiaryWelcome(); showScreen('screen-diary-welcome'); window.scrollTo(0, 0);
+  });
+  document.getElementById('share-btn').addEventListener('click', shareDiaryEncrypted);
+
+  showScreen('screen-diary-welcome');
+  renderDiaryWelcome();        // render straks (lokal)
+  await syncDraftOnLoad();     // server-sync (network-first m. lokal offline-buffer)
+  renderDiaryWelcome();        // re-render m. evt. recovery-tilstand
+}
+
+// Krypter HELE den akkumulerede dagbog → PUT. Offline → behold som localStorage-buffer.
+async function pushDraft() {
+  if (!draftEnabled() || !keyCheck.ok || diaryState.entries.length === 0) return;
+  try {
+    const payload = buildPayloadCSD(diaryState.entries, {
+      startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
+      forloebId: draftToken, contentVersion: diaryState.contentVersion });
+    const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);
+    const res = await fetch(draftUrl(), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(container) });
+    diaryState.dirty = !res.ok;
+  } catch (e) { diaryState.dirty = true; }   // offline → retry ved næste load
+  saveCSDState(diaryState);
+}
+
+async function syncDraftOnLoad() {
+  if (!draftEnabled()) return;
+  if (diaryState.entries.length && diaryState.dirty) await pushDraft();   // flush offline-buffer
+  try {
+    const res = await fetch(draftUrl(), { method: 'GET' });
+    if (res.ok && diaryState.entries.length === 0) {
+      // ITP-wipe / ny enhed: lokal kladde væk, serveren har den krypterede.
+      // Klienten kan IKKE dekryptere pinned-key-blobben → behold til forwarding
+      // ved afslut (blob-niveau recovery; entry-merge sker Mentem-side ved decrypt).
+      recoveredBlob = await res.text();
+    }
+  } catch (e) { /* offline → kør videre på lokal kladde */ }
+}
+
+async function deleteDraft() {
+  if (!draftEnabled()) return;
+  try { await fetch(draftUrl(), { method: 'DELETE' }); } catch (e) { /* best-effort */ }
+}
+
+function renderDiaryWelcome() {
+  const intro = document.getElementById('diary-intro');
+  const startBtn = document.getElementById('diary-start-btn');
+  const finishNow = document.getElementById('diary-finish-now-btn');
+  const note = document.getElementById('diary-note');
+
+  // SIKKERHED: samme key-pin-guard som spørgeskema-flowet.
+  if (!keyCheck.ok) {
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    startBtn.disabled = true; startBtn.textContent = 'Linket kan ikke bruges';
+    finishNow.style.display = 'none';
+    document.getElementById('diary-dots').innerHTML = '';
+    return;
+  }
+
+  const N = diaryState.plannedDays;
+  const done = diaryState.entries.length;
+  const filledToday = diaryHasToday();
+
+  intro.textContent = 'Udfyld dagbogen kort hver morgen for natten, der gik. Det tager et øjeblik, og der er ingen rigtige eller forkerte svar. Til sidst samler vi alle dagene i én fil, som du sender til din psykolog.';
+
+  // Privatlivstekst: v1 (localStorage-only) ELLER server-kladde-tekst.
+  const priv = document.getElementById('diary-privacy');
+  if (priv) priv.innerHTML = LOCAL_ONLY
+    ? '🔒 <strong>Privatliv:</strong> Dine svar gemmes kun i denne browser på din egen enhed. Når du er klar, samles de i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv. <strong>Bemærk:</strong> rydder du browseren eller skifter enhed, mistes de dage, du har gemt, og du må starte forfra.'
+    : '🔒 <strong>Privatliv:</strong> Dine svar krypteres på din egen enhed, før noget sendes. En krypteret kopi gemmes midlertidigt på en sikker server (i EU), så din dagbog ikke går tabt, hvis du rydder browseren eller skifter enhed. Kun din psykolog kan åbne den — serveren ser kun ulæselig, krypteret tekst. Kopien slettes automatisk, når perioden er slut (senest efter 45 dage).';
+
+  // Open-ended: vis reelt dag-tal; "af N" kun mens inden for målet, ellers "(fortsat)".
+  const dagNu = done + (filledToday ? 0 : 1);
+  document.getElementById('diary-progress-text').textContent =
+    dagNu <= N ? `Dag ${dagNu} af ${N}` : `Dag ${dagNu} (fortsat)`;
+
+  // Ugentlig ikke-terminal "Send opdatering"-knap (fortsætter forløbet).
+  const updateBtn = document.getElementById('diary-update-btn');
+  if (updateBtn) updateBtn.style.display = done >= 1 ? 'block' : 'none';
+
+  const dotsEl = document.getElementById('diary-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'diary-dot' + (i < done ? ' done' : (i === done && !filledToday ? ' today' : ''));
+    dotsEl.appendChild(dot);
+  }
+
+  if (filledToday) {
+    startBtn.textContent = 'Ret dagens svar';
+    note.textContent = 'Du har allerede udfyldt for i dag. Kom tilbage i morgen — eller ret dagens svar.';
+  } else {
+    startBtn.textContent = 'Udfyld for i nat';
+    note.textContent = `Gemt: ${done} ${done === 1 ? 'dag' : 'dage'}. Kom tilbage hver morgen.`;
+  }
+  startBtn.disabled = false;
+
+  finishNow.style.display = done >= 1 ? 'block' : 'none';
+  if (done >= N) {
+    finishNow.textContent = 'Perioden er fuldført — send til psykolog';
+    note.textContent = `Du har udfyldt alle ${N} dage. Tryk for at sende til din psykolog.`;
+  } else {
+    finishNow.textContent = 'Afslut og send til psykolog nu';
+  }
+
+  // 1-dags backfill-nåde: tillad "udfyld for i går" hvis misset (max 1 dag
+  // tilbage, og kun inden for perioden). INGEN straffende streak-mekanik.
+  const backfillBtn = document.getElementById('diary-backfill-btn');
+  if (backfillBtn) {
+    const y = yesterdayISO();
+    const yMissed = !diaryState.entries.find(e => e.date === y);
+    const yInPeriod = y >= diaryState.startedAt;
+    backfillBtn.style.display = (yMissed && yInPeriod) ? 'block' : 'none';
+  }
+
+  // Server-recovery (ITP-wipe): lokal kladde væk, men serveren havde en krypteret.
+  if (recoveredBlob && done === 0) {
+    note.textContent = 'Vi fandt en tidligere gemt dagbog (krypteret) hos din psykolog — den er sikker. Du kan udfylde flere dage, eller sende den nu.';
+    finishNow.style.display = 'block';
+    finishNow.textContent = 'Send gendannet dagbog til psykolog';
+    if (backfillBtn) backfillBtn.style.display = 'none';
+  }
+
+  document.getElementById('diary-attribution').textContent = diarySkema.attribution || '';
+  const fp = document.getElementById('diary-key-fp');
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+}
+
+function lastEntryBefore(dateStr) {
+  const before = diaryState.entries.filter(e => e.date < dateStr).sort((a, b) => a.date.localeCompare(b.date));
+  return before.length ? before[before.length - 1] : null;
+}
+
+function startDiaryEntry(forDate, prefillEntry) {
+  diaryFillDate = forDate || todayISO();
+  const existing = diaryState.entries.find(e => e.date === diaryFillDate);
+  // Forudfyld: eksisterende entry for datoen > "samme som i går"-kilde > tomt.
+  const src = existing || prefillEntry || null;
+  diaryDraft = src ? { ...src } : {};
+  delete diaryDraft.date; delete diaryDraft.savedAt;
+  // Valgfri felter får en blød default ("Nej"/"Intet") hvis intet er sat.
+  diarySkema.fields.forEach(f => {
+    if (f.optional && f.default != null && (diaryDraft[f.key] == null || diaryDraft[f.key] === '')) {
+      diaryDraft[f.key] = f.default;
+    }
+  });
+
+  // Dag-label: "I går" ved backfill, ellers "Dag k".
+  const priorCount = diaryState.entries.filter(e => e.date < diaryFillDate).length;
+  const dagNr = existing ? (diaryState.entries.findIndex(e => e.date === diaryFillDate) + 1) : (priorCount + 1);
+  document.getElementById('diary-form-day').textContent =
+    diaryFillDate === yesterdayISO() ? 'I går' : `Dag ${Math.min(dagNr, diaryState.plannedDays)}`;
+  document.getElementById('diary-form-instruction').textContent = diarySkema.instruction;
+
+  // "Samme som i går"-genvej: vis hvis der findes en tidligere dag og vi ikke
+  // allerede er ved at rette en eksisterende/forudfyldt entry.
+  const sameBtn = document.getElementById('diary-sameasyesterday-btn');
+  const prev = lastEntryBefore(diaryFillDate);
+  if (sameBtn) {
+    if (prev && !existing && !prefillEntry) {
+      sameBtn.style.display = 'block';
+      sameBtn.onclick = () => startDiaryEntry(diaryFillDate, prev);
+    } else {
+      sameBtn.style.display = 'none';
+    }
+  }
+
+  renderDiaryFields();
+  showScreen('screen-diary-form');
+  updateDiaryProgress();
+  window.scrollTo(0, 0);
+}
+
+function diaryFieldFilled(f) {
+  if (f.optional) return true;
+  const v = diaryDraft[f.key];
+  return v != null && v !== '';
+}
+function markDiaryField(block, f) {
+  if (!f.optional) block.classList.toggle('answered', diaryFieldFilled(f));
+}
+
+function renderDiaryFields() {
+  const root = document.getElementById('diary-fields');
+  root.innerHTML = '';
+  diarySkema.fields.forEach((f, i) => {
+    const inputId = `dfield-${f.key}`;
+    const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
+    const qHtml = `<span class="question-num">${i + 1}.</span>${f.text}${optTag}`;
+    const val = diaryDraft[f.key];
+
+    // Scale → <fieldset>/<legend> om radioknapperne (semantisk gruppe, A11Y).
+    if (f.kind === 'scale') {
+      const fs = document.createElement('fieldset');
+      fs.className = 'diary-field';
+      const legend = document.createElement('legend');
+      legend.className = 'diary-q'; legend.innerHTML = qHtml;
+      fs.appendChild(legend);
+      const group = document.createElement('div'); group.className = 'radio-group';
+      f.scale.forEach((label, idx) => {
+        const v = idx + 1;
+        const rid = `${inputId}-${v}`;
+        const opt = document.createElement('label');
+        opt.className = 'radio-option' + (val === v ? ' checked' : '');
+        opt.setAttribute('for', rid);
+        opt.innerHTML = `<input type="radio" id="${rid}" name="${f.key}" value="${v}" ${val === v ? 'checked' : ''}><span>${label}</span>`;
+        opt.querySelector('input').addEventListener('change', () => {
+          diaryDraft[f.key] = v;
+          group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('checked'));
+          opt.classList.add('checked'); markDiaryField(fs, f); updateDiaryProgress();
+        });
+        group.appendChild(opt);
+      });
+      fs.appendChild(group);
+      markDiaryField(fs, f);
+      root.appendChild(fs);
+      return;
+    }
+
+    // Øvrige → <label for> bundet til input'et (A11Y).
+    const block = document.createElement('div');
+    block.className = 'diary-field';
+    const label = document.createElement('label');
+    label.className = 'diary-q'; label.setAttribute('for', inputId); label.innerHTML = qHtml;
+    block.appendChild(label);
+
+    if (f.kind === 'time') {
+      const row = document.createElement('div'); row.className = 'diary-input-row';
+      const inp = document.createElement('input'); inp.type = 'time'; inp.id = inputId;
+      inp.setAttribute('placeholder', 'tt:mm');   // ingen "nu"-default
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => { diaryDraft[f.key] = e.target.value; markDiaryField(block, f); updateDiaryProgress(); });
+      row.appendChild(inp); block.appendChild(row);
+
+    } else if (f.kind === 'number') {
+      const row = document.createElement('div'); row.className = 'diary-input-row';
+      const inp = document.createElement('input'); inp.type = 'number'; inp.id = inputId; inp.inputMode = 'numeric';
+      if (f.min != null) inp.min = f.min;
+      if (f.max != null) inp.max = f.max;
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => {
+        const raw = e.target.value;
+        diaryDraft[f.key] = raw === '' ? undefined
+          : Math.max(f.min ?? 0, Math.min(f.max ?? 9999, parseInt(raw, 10) || 0));
+        markDiaryField(block, f); updateDiaryProgress();
+      });
+      row.appendChild(inp);
+      if (f.unit) { const u = document.createElement('span'); u.className = 'diary-unit'; u.textContent = f.unit; row.appendChild(u); }
+      block.appendChild(row);
+
+    } else { // text
+      const inp = document.createElement('input'); inp.type = 'text'; inp.id = inputId;
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => { diaryDraft[f.key] = e.target.value; markDiaryField(block, f); updateDiaryProgress(); });
+      block.appendChild(inp);
+    }
+
+    markDiaryField(block, f);
+    root.appendChild(block);
+  });
+}
+
+function updateDiaryProgress() {
+  const req = diarySkema.fields.filter(f => !f.optional);
+  const filled = req.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
+  const pct = req.length ? Math.round(filled / req.length * 100) : 100;
+  document.getElementById('diary-form-fill').style.width = pct + '%';
+  document.getElementById('diary-form-count').textContent = `${filled} af ${req.length}`;
+  const btn = document.getElementById('diary-save-btn');
+  btn.disabled = filled < req.length;
+  btn.textContent = filled < req.length ? `Mangler ${req.length - filled} svar` : 'Gem';
+}
+
+function saveDiaryEntry() {
+  const req = diarySkema.fields.filter(f => !f.optional);
+  if (req.some(f => { const v = diaryDraft[f.key]; return v == null || v === ''; })) return;
+
+  const date = diaryFillDate || todayISO();    // i dag ELLER i går-backfill
+  const entry = { date, savedAt: new Date().toISOString() };   // savedAt → newest-wins-merge
+  diarySkema.fields.forEach(f => { const v = diaryDraft[f.key]; if (v != null && v !== '') entry[f.key] = v; });
+
+  // Dag-dedup: én entry pr. kalenderdag (overskriv hvis samme dag gemmes igen).
+  const idx = diaryState.entries.findIndex(e => e.date === date);
+  if (idx >= 0) diaryState.entries[idx] = entry; else diaryState.entries.push(entry);
+  diaryState.entries.sort((a, b) => a.date.localeCompare(b.date));
+  recoveredBlob = null;     // brugeren udfylder aktivt → lokal kladde er nu autoritativ
+  saveCSDState(diaryState);
+
+  renderDiaryWelcome();
+  showScreen('screen-diary-welcome');
+  window.scrollTo(0, 0);
+  pushDraft();              // krypter HELE dagbogen → PUT (fire-and-forget; offline-buffer ved fejl)
+}
+
+function finishDiary() {
+  if (!diaryState || (diaryState.entries.length === 0 && !recoveredBlob)) return;
+  // Send-bekræft (irreversibelt): afslutning lukker perioden + sletter kladden.
+  const done = diaryState.entries.length;
+  const N = diaryState.plannedDays;
+  const ok = window.confirm(
+    `Du har udfyldt ${done} af ${N} dage.\n\nNår du sender, afsluttes perioden, og kladden lukkes. Er du sikker på, at du vil sende til din psykolog nu?`);
+  if (!ok) return;
+  const p = document.querySelector('#screen-done p');
+  if (p) p.textContent = 'Dine søvndage er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.';
+  showScreen('screen-done');
+  window.scrollTo(0, 0);
+}
+
+// Byg krypteret container-JSON for hele den akkumulerede dagbog. `afslut` sætter
+// endedAt (terminal). Server-recovery (lokal tom + recoveredBlob) → den blob.
+async function byggDiaryContainerJSON(afslut) {
+  if (diaryState.entries.length === 0 && recoveredBlob) return recoveredBlob;
+  const payload = buildPayloadCSD(diaryState.entries, {
+    startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
+    forloebId: draftToken || null, contentVersion: diaryState.contentVersion,
+    endedAt: afslut ? new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+  });
+  return JSON.stringify(await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId));   // ALTID pinned key
+}
+
+// Del filen via navigator.share → fallback download. Returnerer "delt"|"hentet".
+async function delDiaryFil(containerJSON, titel) {
+  const blob = new Blob([containerJSON], { type: 'application/json' });
+  const filename = `mentem-soevndagbog-${todayISO()}.json`;
+  const file = new File([blob], filename, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title: titel });
+    return 'delt';
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+  return 'hentet';
+}
+
+// TERMINAL: afslut + send. Rydder lokal kladde + sletter server-kladde.
+async function shareDiaryEncrypted() {
+  const status = document.getElementById('done-status');
+  const btn = document.getElementById('share-btn');
+  if (!keyCheck.ok) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    return;
+  }
+  if (diaryState.entries.length === 0 && !recoveredBlob) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Der er ingen dage at sende endnu. Udfyld mindst én nat først.';
+    return;
+  }
+  btn.disabled = true;
+  status.style.color = 'var(--accent)';
+  status.textContent = 'Krypterer …';
+  try {
+    const r = await delDiaryFil(await byggDiaryContainerJSON(true), 'Søvndagbog til min psykolog');
+    status.innerHTML = r === 'delt'
+      ? 'Filen er klar til at sende. Tak!'
+      : 'Filen er hentet til din enhed. Vedhæft den nu i SMS-tråden til din psykolog.';
+    await deleteDraft();   // ryd server-kladde efter delt (én eksport)
+    clearCSDState();       // + ryd lokal dagbog
+    recoveredBlob = null;
+  } catch (e) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
+    btn.disabled = false;
+  }
+}
+
+// IKKE-TERMINAL: ugentlig opdatering. Eksportér nuværende kladde → FORTSÆT
+// forløbet (ryd IKKE, slet IKKE). Til open-ended monitorering.
+async function sendDiaryOpdatering() {
+  const status = document.getElementById('diary-update-status');
+  const btn = document.getElementById('diary-update-btn');
+  if (!keyCheck.ok) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Sikkerhedstjek fejlede — kontakt din psykolog for et nyt link.';
+    return;
+  }
+  if (diaryState.entries.length === 0) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Udfyld mindst én nat, før du sender en opdatering.';
+    return;
+  }
+  btn.disabled = true;
+  status.style.color = 'var(--accent)';
+  status.textContent = 'Krypterer opdatering …';
+  try {
+    const r = await delDiaryFil(await byggDiaryContainerJSON(false), 'Søvndagbog-opdatering til min psykolog');
+    status.innerHTML = (r === 'delt'
+      ? 'Opdateringen er klar til at sende. Tak!'
+      : 'Opdateringen er hentet — vedhæft den i tråden til din psykolog.') + ' Du kan roligt fortsætte dagbogen.';
+  } catch (e) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Noget gik galt. Prøv igen, eller kontakt din psykolog.';
+  }
+  btn.disabled = false;   // ikke-terminal → knap forbliver brugbar (ugentligt)
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  SØVN-BASELINE (engangs intake) — ikke-akkumulerende, kun deskriptive felter
+// ════════════════════════════════════════════════════════════════════════
+// Adskilt fra den daglige CSD: udfyldes/deles ÉN gang. Genbruger nul-score +
+// pinned-key opaque-encrypt + navigator.share. D3-sikkerhedsscreen er IKKE her
+// (den hører i Viktors kliniske intake). WCAG 2.1 AA: semantisk HTML, <label>/
+// aria-labelledby, native input-typer, role=radiogroup, synligt fokus (B7).
+let baselineSkema = null;
+const baselineDraft = {};
+
+function runBaseline(id) {
+  baselineSkema = SKEMAER[id];
+  document.getElementById('baseline-start-btn').addEventListener('click', startBaseline);
+  document.getElementById('baseline-finish-btn').addEventListener('click', finishBaseline);
+  document.getElementById('share-btn').addEventListener('click', shareBaselineEncrypted);
+  renderBaselineWelcome();
+  showScreen('screen-baseline-welcome');
+}
+
+function renderBaselineWelcome() {
+  const intro = document.getElementById('baseline-intro');
+  const startBtn = document.getElementById('baseline-start-btn');
+  if (!keyCheck.ok) {
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    startBtn.disabled = true; startBtn.textContent = 'Linket kan ikke bruges';
+    return;
+  }
+  intro.textContent = baselineSkema.instruction;
+  startBtn.disabled = false;
+  const fp = document.getElementById('baseline-key-fp');
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+}
+
+function startBaseline() {
+  document.getElementById('baseline-instruction').textContent = baselineSkema.instruction;
+  renderBaselineFields();
+  showScreen('screen-baseline-form');
+  updateBaselineProgress();
+  window.scrollTo(0, 0);
+}
+
+function baselineFilled(f) {
+  if (f.optional) return true;
+  const v = baselineDraft[f.key];
+  return v != null && v !== '';
+}
+function markBaselineField(block, f) {
+  if (!f.optional) block.classList.toggle('answered', baselineFilled(f));
+}
+
+function renderBaselineFields() {
+  const root = document.getElementById('baseline-fields');
+  root.innerHTML = '';
+  baselineSkema.fields.forEach((f, i) => {
+    const block = document.createElement('div');
+    block.className = 'diary-field';
+    const qId = `bq-${f.key}`;
+    const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
+    block.innerHTML = `<div class="diary-q" id="${qId}"><span class="question-num">${i + 1}.</span>${f.text}${optTag}</div>`;
+    const val = baselineDraft[f.key];
+
+    if (f.kind === 'number') {
+      const row = document.createElement('div'); row.className = 'diary-input-row';
+      const inp = document.createElement('input'); inp.type = 'number'; inp.inputMode = 'numeric';
+      inp.setAttribute('aria-labelledby', qId);
+      if (f.min != null) inp.min = f.min;
+      if (f.max != null) inp.max = f.max;
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => {
+        const raw = e.target.value;
+        baselineDraft[f.key] = raw === '' ? undefined
+          : Math.max(f.min ?? 0, Math.min(f.max ?? 99999, parseInt(raw, 10) || 0));
+        markBaselineField(block, f); updateBaselineProgress();
+      });
+      row.appendChild(inp);
+      if (f.unit) { const u = document.createElement('span'); u.className = 'diary-unit'; u.textContent = f.unit; row.appendChild(u); }
+      block.appendChild(row);
+
+    } else if (f.kind === 'time') {
+      const row = document.createElement('div'); row.className = 'diary-input-row';
+      const inp = document.createElement('input'); inp.type = 'time'; inp.setAttribute('aria-labelledby', qId);
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => { baselineDraft[f.key] = e.target.value; markBaselineField(block, f); updateBaselineProgress(); });
+      row.appendChild(inp); block.appendChild(row);
+
+    } else if (f.kind === 'radio') {
+      const group = document.createElement('div'); group.className = 'radio-group';
+      group.setAttribute('role', 'radiogroup'); group.setAttribute('aria-labelledby', qId);
+      f.options.forEach(label => {
+        const lbl = document.createElement('label');
+        lbl.className = 'radio-option' + (val === label ? ' checked' : '');
+        lbl.innerHTML = `<input type="radio" name="${f.key}" value="${label}" ${val === label ? 'checked' : ''}><span>${label}</span>`;
+        lbl.querySelector('input').addEventListener('change', () => {
+          baselineDraft[f.key] = label;
+          group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('checked'));
+          lbl.classList.add('checked'); markBaselineField(block, f); updateBaselineProgress();
+        });
+        group.appendChild(lbl);
+      });
+      block.appendChild(group);
+
+    } else { // text
+      const inp = document.createElement('input'); inp.type = 'text'; inp.setAttribute('aria-labelledby', qId);
+      if (val != null) inp.value = val;
+      inp.addEventListener('input', e => { baselineDraft[f.key] = e.target.value; markBaselineField(block, f); updateBaselineProgress(); });
+      block.appendChild(inp);
+    }
+
+    markBaselineField(block, f);
+    root.appendChild(block);
+  });
+}
+
+function updateBaselineProgress() {
+  const req = baselineSkema.fields.filter(f => !f.optional);
+  const filled = req.filter(f => { const v = baselineDraft[f.key]; return v != null && v !== ''; }).length;
+  const pct = req.length ? Math.round(filled / req.length * 100) : 100;
+  document.getElementById('baseline-progress-fill').style.width = pct + '%';
+  document.getElementById('baseline-progress-current').textContent = pct + '%';
+  document.getElementById('baseline-progress-total').textContent = `${filled} af ${req.length}`;
+  const btn = document.getElementById('baseline-finish-btn');
+  btn.disabled = filled < req.length;
+  btn.textContent = filled < req.length ? `Mangler ${req.length - filled} svar` : 'Færdig →';
+}
+
+function finishBaseline() {
+  const req = baselineSkema.fields.filter(f => !f.optional);
+  if (req.some(f => { const v = baselineDraft[f.key]; return v == null || v === ''; })) return;
+  const p = document.querySelector('#screen-done p');
+  if (p) p.textContent = 'Dine svar er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.';
+  showScreen('screen-done');
+  window.scrollTo(0, 0);
+}
+
+async function shareBaselineEncrypted() {
+  const status = document.getElementById('done-status');
+  const btn = document.getElementById('share-btn');
+  if (!keyCheck.ok) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    return;
+  }
+  btn.disabled = true;
+  status.style.color = 'var(--accent)';
+  status.textContent = 'Krypterer …';
+  try {
+    const nameEl = document.getElementById('patient-name');
+    const name = ((nameEl && nameEl.value) || '').trim();
+    const payload = buildPayloadBaseline(baselineDraft, { name });
+    const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);   // ALTID pinned key
+    const blob = new Blob([JSON.stringify(container)], { type: 'application/json' });
+    const filename = `mentem-soevn-baseline-${new Date().toISOString().slice(0, 10)}.json`;
+    const file = new File([blob], filename, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Baseline til min psykolog' });
+      status.textContent = 'Filen er klar til at sende. Tak!';
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      a.remove(); URL.revokeObjectURL(url);
+      status.innerHTML = 'Filen er hentet til din enhed. Vedhæft den nu i SMS-tråden til din psykolog.';
+    }
+  } catch (e) {
+    status.style.color = '#c0392b';
+    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
+    btn.disabled = false;
+  }
+}
+
+// ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
+if (baselineId) {
+  runBaseline(baselineId);
+} else if (diaryId) {
+  runDiary(diaryId);
+} else {
+  document.getElementById('finish-btn').addEventListener('click', goDone);
+  document.getElementById('share-btn').addEventListener('click', shareEncrypted);
+  renderWelcome();
+}
+</script>
+</body>
+</html>
