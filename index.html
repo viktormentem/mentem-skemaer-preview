@@ -1029,6 +1029,11 @@ function renderBaselineFields() {
     const qId = `bq-${f.key}`;
     const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
     block.innerHTML = `<div class="diary-q" id="${qId}"><span class="question-num">${i + 1}.</span>${f.text}${optTag}</div>`;
+    if (f.hint) {
+      const hint = document.createElement('div');
+      hint.className = 'diary-hint'; hint.textContent = f.hint;
+      block.appendChild(hint);
+    }
     const val = baselineDraft[f.key];
 
     if (f.kind === 'number') {
@@ -1118,7 +1123,7 @@ async function shareBaselineEncrypted() {
   try {
     const nameEl = document.getElementById('patient-name');
     const name = ((nameEl && nameEl.value) || '').trim();
-    const payload = buildPayloadBaseline(baselineDraft, { name });
+    const payload = buildPayloadBaseline(baselineDraft, { name, token: draftToken });
     const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);   // ALTID pinned key
     const blob = new Blob([JSON.stringify(container)], { type: 'application/json' });
     const filename = `mentem-soevn-baseline-${new Date().toISOString().slice(0, 10)}.json`;

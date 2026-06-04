@@ -221,7 +221,11 @@ export const SOEVN_BASELINE = {
     { key: 'stimulanser',      kind: 'text',   text: 'Kaffe/te, alkohol og nikotin på en typisk dag? (valgfrit)', optional: true },
     { key: 'lure',             kind: 'radio',  text: 'Tager du dig lure i dagtimerne?',
       options: ['Nej', 'Ja, under 30 min', 'Ja, 30-60 min', 'Ja, over 60 min'] },
-    { key: 'vanligOpvaagning', kind: 'time',   text: 'Hvad tid står du normalt op om morgenen?' },
+    { key: 'vanligOpvaagning', kind: 'time',
+      text: 'Hvad tid står du normalt op om morgenen på hverdage? (det tidspunkt du står ud af sengen — ikke hvornår du vågner)',
+      hint: 'fx 06:30' },
+    { key: 'vanligOpvaagningWeekend', kind: 'time', optional: true,
+      text: 'Og i weekenden? (valgfrit)', hint: 'fx 08:00' },
   ],
 };
 SKEMAER['soevn-baseline'] = SOEVN_BASELINE;
@@ -407,7 +411,7 @@ export function buildPayloadBaseline(answers, meta = {}) {
     const v = answers[f.key];
     if (v != null && v !== '') baseline[f.key] = v;
   }
-  return {
+  const out = {
     version: 1,
     exportedAt: now,
     clientName: meta.name || '',
@@ -416,6 +420,11 @@ export function buildPayloadBaseline(answers, meta = {}) {
     baselineType: 'soevn-intake',
     baseline,
   };
+  // P1b: fold forløb-token (fra ?t=) ind i payloaden, så Mentem kan AUTO-matche en
+  // retur til det ventende klient-card. Kun rent 32-hex (samme regel som linket);
+  // ellers udeladt → bagudkompatibelt (ydre kuvert bærer fortsat intet token).
+  if (typeof meta.token === 'string' && /^[0-9a-f]{32}$/.test(meta.token)) out.token = meta.token;
+  return out;
 }
 
 // ════════════════════════════════════════════════════════════════════════
