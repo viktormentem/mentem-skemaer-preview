@@ -124,6 +124,17 @@
   .diary-field input[type=text] { width:100%; }
   .diary-field input:focus { border-color:var(--accent); }
   .diary-unit { font-size:14px; color:var(--muted); }
+  /* SM3 safety-felt ("Sikkerhed i dag") — prompt + altid-synlig mikro-tekst. */
+  .diary-prompt { font-size:15px; font-weight:400; line-height:1.45; margin:-4px 0 12px; }
+  .diary-microtext { font-size:13px; color:var(--muted); line-height:1.45; margin:12px 0 0; }
+  /* Tekst 4-reveal (SM3 AKTIV failsafe) — dæmpet/saglig amber, salience uden trussel. */
+  .safety-reveal { margin-top:16px; padding:16px 18px; border-radius:10px; background:#fbf6ec; border:1px solid #ecddc0; border-left:3px solid #c79a5b; }
+  .safety-reveal p { font-size:15px; color:var(--ink); line-height:1.55; margin:0 0 10px; }
+  .safety-reveal ul { margin:0 0 10px; padding-left:20px; }
+  .safety-reveal li { font-size:15px; color:var(--ink); line-height:1.5; margin:5px 0; }
+  .safety-reveal .icon-placeholder { font-size:12px; color:var(--muted); font-style:italic; }
+  .safety-sms-btn { display:inline-block; min-height:44px; line-height:1.2; box-sizing:border-box; padding:13px 24px; margin-top:4px; background:var(--accent); color:white; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; text-decoration:none; }
+  .safety-sms-btn:hover { filter:brightness(0.95); }
 
   /* WCAG 2.1 AA: synligt tastatur-fokus (B7) + touch-mål ≥44px. */
   :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
@@ -271,7 +282,7 @@
 
 <script type="module">
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
-         CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD,
+         CSD_SOEVNDAGBOG, SOEVN_BASELINE, SOEVN_SAFETY_TEKST4, CONTENT_VERSION, SITE_BUILD,
          PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
 
 // ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
@@ -749,14 +760,71 @@ function markDiaryField(block, f) {
   if (!f.optional) block.classList.toggle('answered', diaryFieldFilled(f));
 }
 
+// Conditional-reveal: et felt med `showIf:{field,equals}` vises kun når
+// betingelses-feltet har den givne værdi (ellers springes det helt over).
+function diaryShowIfMet(f) {
+  if (!f.showIf) return true;
+  return diaryDraft[f.showIf.field] === f.showIf.equals;
+}
+
 function renderDiaryFields() {
   const root = document.getElementById('diary-fields');
   root.innerHTML = '';
   diarySkema.fields.forEach((f, i) => {
+    if (!diaryShowIfMet(f)) return;   // conditional-reveal: skjul indtil betingelse mødt
     const inputId = `dfield-${f.key}`;
     const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
     const qHtml = `<span class="question-num">${i + 1}.</span>${f.text}${optTag}`;
     const val = diaryDraft[f.key];
+
+    // Radio-felt (fx SM3 safety-felt "Sikkerhed i dag"): titel + valgfri LÅST
+    // prompt + Nej/Ja + altid-synlig LÅST mikro-tekst. Ved "Ja" på et felt med
+    // safetyReveal → afslør den låste Tekst 4 + "Skriv til Viktor"-SMS-knap.
+    if (f.kind === 'radio') {
+      const fs = document.createElement('fieldset');
+      fs.className = 'diary-field';
+      const legend = document.createElement('legend');
+      legend.className = 'diary-q'; legend.innerHTML = qHtml;
+      fs.appendChild(legend);
+      if (f.prompt) {
+        const pr = document.createElement('div');
+        pr.className = 'diary-prompt'; pr.textContent = f.prompt;
+        fs.appendChild(pr);
+      }
+      const group = document.createElement('div'); group.className = 'radio-group';
+      group.setAttribute('role', 'radiogroup');
+      f.options.forEach(label => {
+        const lbl = document.createElement('label');
+        lbl.className = 'radio-option' + (val === label ? ' checked' : '');
+        lbl.innerHTML = `<input type="radio" name="${f.key}" value="${label}" ${val === label ? 'checked' : ''}><span>${label}</span>`;
+        lbl.querySelector('input').addEventListener('change', () => {
+          diaryDraft[f.key] = label;
+          // Ryd nu-skjulte showIf-felter (fx safetyNote ved skift Ja→Nej) så de
+          // ikke gemmes som stale data i entry'en.
+          diarySkema.fields.forEach(other => {
+            if (other.showIf && other.showIf.field === f.key && other.showIf.equals !== label) {
+              delete diaryDraft[other.key];
+            }
+          });
+          markDiaryField(fs, f); updateDiaryProgress();
+          renderDiaryFields();   // re-render → toggle showIf-felter + reveal
+        });
+        group.appendChild(lbl);
+      });
+      fs.appendChild(group);
+      if (f.microtext) {
+        const mt = document.createElement('div');
+        mt.className = 'diary-microtext'; mt.textContent = f.microtext;
+        fs.appendChild(mt);
+      }
+      // Tekst 4-reveal: kun for safety-feltet ved "Ja".
+      if (f.key === 'safetyFlag' && val === 'Ja') {
+        fs.appendChild(buildSafetyReveal());
+      }
+      markDiaryField(fs, f);
+      root.appendChild(fs);
+      return;
+    }
 
     // Scale → <fieldset>/<legend> om radioknapperne (semantisk gruppe, A11Y).
     if (f.kind === 'scale') {
@@ -824,6 +892,7 @@ function renderDiaryFields() {
 
     } else { // text
       const inp = document.createElement('input'); inp.type = 'text'; inp.id = inputId;
+      if (f.placeholder) inp.setAttribute('placeholder', f.placeholder);
       if (val != null) inp.value = val;
       inp.addEventListener('input', e => { diaryDraft[f.key] = e.target.value; markDiaryField(block, f); updateDiaryProgress(); });
       block.appendChild(inp);
@@ -832,6 +901,34 @@ function renderDiaryFields() {
     markDiaryField(block, f);
     root.appendChild(block);
   });
+}
+
+// SM3 AKTIV failsafe — bygger Tekst 4-reveal + "Skriv til Viktor"-SMS-knap.
+// Teksten er single-sourced i SOEVN_SAFETY_TEKST4 (LÅST verbatim); renderes her
+// uændret (erstatter — visuelt — det stramme søvnvindue-budskab). Ikon: skjold
+// (tegnes) → placeholder-note, ingen emoji/system-glyph (Viktor ikon-direktiv).
+function buildSafetyReveal() {
+  const box = document.createElement('div');
+  box.className = 'safety-reveal'; box.setAttribute('role', 'status');
+  const ico = document.createElement('div');
+  ico.className = 'icon-placeholder'; ico.textContent = 'ikon: skjold (tegnes)';
+  box.appendChild(ico);
+  let ul = null;
+  SOEVN_SAFETY_TEKST4.lines.forEach(ln => {
+    if (ln.bullet) {
+      if (!ul) { ul = document.createElement('ul'); box.appendChild(ul); }
+      const li = document.createElement('li'); li.textContent = ln.text; ul.appendChild(li);
+    } else {
+      ul = null;
+      const p = document.createElement('p'); p.textContent = ln.text; box.appendChild(p);
+    }
+  });
+  const btn = document.createElement('a');
+  btn.className = 'safety-sms-btn';
+  btn.setAttribute('href', `sms:${SOEVN_SAFETY_TEKST4.smsTo}`);
+  btn.textContent = 'Skriv til Viktor';
+  box.appendChild(btn);
+  return box;
 }
 
 function updateDiaryProgress() {

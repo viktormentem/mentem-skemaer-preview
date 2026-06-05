@@ -188,6 +188,32 @@ export const CSD_SOEVNDAGBOG = {
       scale: ['Meget dårlig', 'Dårlig', 'Nogenlunde', 'God', 'Meget god'] },
     { key: 'naps',            kind: 'text',   text: 'Tog du dig en lur eller blund i løbet af gårsdagen? (antal og samlet varighed, valgfrit)', optional: true, default: 'Nej' },
     { key: 'medication',      kind: 'text',   text: 'Tog du søvnmedicin, alkohol eller koffein i går? (hvad og hvornår, valgfrit)', optional: true, default: 'Intet' },
+    // SM3-safety-felt ("Sikkerhed i dag") — klient-rejst SM3-trigger i dagbogen.
+    // Tekster LÅST verbatim (srt-klient-tekst-laas-2026-06-02 §"Dagbogs-safety-felt").
+    // Ved "Ja" → render-motoren afslører fritekst (safetyNote) + den låste Tekst 4
+    // + "Skriv til Viktor"-SMS-knap (single-source SOEVN_SAFETY_TEKST4 nedenfor).
+    { key: 'safetyFlag',      kind: 'radio',  text: 'Sikkerhed i dag',
+      prompt: 'Var du i dag tæt på en ulykke på grund af træthed — eller faldt du i søvn et sted, hvor det kunne være farligt (fx bag rattet, ved en maskine)?',
+      microtext: 'Det her er ikke noget, du kan svare forkert på. Vælger du "Ja", hører jeg det med det samme, og vi finder ud af det sammen.',
+      options: ['Nej', 'Ja'] },
+    { key: 'safetyNote',      kind: 'text',   text: 'Vil du fortælle kort, hvad der skete? (valgfrit)',
+      placeholder: 'Du behøver ikke skrive noget — men hvis du vil, kan du fortælle kort, hvad der skete.',
+      optional: true, showIf: { field: 'safetyFlag', equals: 'Ja' } },
+  ],
+};
+
+// SM3 AKTIV failsafe — Tekst 4 (LÅST verbatim, Viktor 2026-06-02; single-source).
+// Vises i stedet for det stramme søvnvindue ved klient-rejst "Ja" på safetyFlag.
+// `lines` = afsnit/bullets i rækkefølge; `bullet:true` → punktopstilling.
+export const SOEVN_SAFETY_TEKST4 = {
+  smsTo: '+4553537585',
+  lines: [
+    { text: 'Tak fordi du fortæller mig det.' },
+    { text: 'Din krop er for søvnig lige nu til, at det er sikkert at fortsætte med det stramme søvnvindue. Det er ikke noget, du har gjort forkert — vi justerer.' },
+    { text: 'Gør det her nu:' },
+    { text: 'Sov efter dine vante tider i nat. Læg dig, når du plejer, og bliv i sengen, så længe du har brug for.', bullet: true },
+    { text: 'Lad være med at køre bil eller betjene maskiner, før du føler dig udhvilet.', bullet: true },
+    { text: 'Skriv til mig hurtigst muligt, så finder vi den rigtige justering sammen.', bullet: true },
   ],
 };
 
