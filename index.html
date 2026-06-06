@@ -1059,9 +1059,12 @@ async function ingestPost(afslut) {
     submissionUUID: diaryState[uuidKey],
     schemaType: 'soevndagbog', clientUA: 'web',
   });
+  // 12s-timeout: en hængende Worker må ikke æde brugerens gesture/tålmodighed —
+  // hellere hurtig fil-fallback end uendelig venten.
   const res = await fetch(ingestApiBase + '/submit', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(12000) : undefined,
   });
   const j = await res.json().catch(() => null);
   if (!res.ok || !j || j.ok !== true) throw new Error((j && j.err) || ('http_' + res.status));
@@ -1071,13 +1074,22 @@ async function ingestPost(afslut) {
 }
 
 // Del filen via navigator.share → fallback download. Returnerer "delt"|"hentet".
+// share-kaldet er try/catch'et: NotAllowedError (user-gesture opbrugt — fx
+// efter en await'et POST-fejl i ingest-fallbacken, E2E-fundet 6/6) → fald
+// igennem til download. AbortError (brugeren lukkede share-arket) → re-throw
+// (bevarer eksisterende annullerings-semantik).
 async function delDiaryFil(containerJSON, titel) {
   const blob = new Blob([containerJSON], { type: 'application/json' });
   const filename = `mentem-soevndagbog-${todayISO()}.json`;
   const file = new File([blob], filename, { type: 'application/json' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: titel });
-    return 'delt';
+    try {
+      await navigator.share({ files: [file], title: titel });
+      return 'delt';
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw e;   // brugeren annullerede
+      // NotAllowedError m.fl. → download-fallback nedenfor
+    }
   }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
