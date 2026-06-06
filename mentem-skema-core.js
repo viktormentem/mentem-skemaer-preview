@@ -546,3 +546,52 @@ export async function mentemEncrypt(recipientPubB64, payloadObj, keyId = PINNED_
     keyId,
   };
 }
+
+// ════════════════════════════════════════════════════════════════════════
+//  INGEST-POSTKASSE (F1-4) — konvolut (§5) + submit-envelope (§2.2)
+// ════════════════════════════════════════════════════════════════════════
+// Wire-kontrakt: noter/ingest-kontrakt-v1-2026-06-06.md (🔒 HÅRD FRYS).
+// Klient krypterer konvolutten til den SEPARATE ingest-public-key → POSTer
+// ciphertext+pseudonym-token til Worker'en. Worker ser ALDRIG klartekst.
+//
+// NØGLE-GUARD (kontrakt §4 pinning-note): ingest-nøglen er et SEPARAT X25519-
+// par — journal-nøglen (PINNED_PUBKEY/8aa536a1) MÅ ALDRIG bruges som ingest-
+// modtager. Håndhæves hårdt her (defense-in-depth mod fejl-konfiguration).
+export const INGEST_ENVELOPE_VERSION = 1;   // klartekst-envelope (§8.8)
+export const INGEST_SCHEMA_VERSION = 1;     // ciphertext-konvolut
+
+/// Byg ciphertext-konvolutten (kontrakt §5) omkring et payload-objekt.
+/// `clientUA` = "åbnet-i-kanal"-signal (§6, valgfrit; i ciphertext → nul-viden).
+export function byggIngestKonvolut(payloadObj, { schemaType = 'soevndagbog', respondentPseudonym = null, clientUA = 'web' } = {}) {
+  return {
+    schemaVersion: INGEST_SCHEMA_VERSION,
+    schemaType,
+    clientTimestamp: isoNoFrac(new Date()),
+    respondentPseudonym,
+    clientUA,
+    data: payloadObj,
+  };
+}
+
+/// Byg den fulde POST /submit-body (kontrakt §2.2): konvolut → mentemEncrypt
+/// til ingest-pubkey → container-JSON som `ciphertext`-streng.
+/// Kaster ved nøgle-guard-brud (ingest-nøgle mangler eller == journal-nøgle).
+export async function byggIngestSubmitBody({ token, payloadObj, ingestPubB64, ingestKeyId, submissionUUID, schemaType = 'soevndagbog', clientUA = 'web' }) {
+  if (!ingestPubB64 || !ingestKeyId) throw new Error('ingest_key_missing');
+  if (normKey(ingestPubB64) === normKey(PINNED_PUBKEY) || ingestKeyId === PINNED_KEY_ID) {
+    throw new Error('ingest_key_guard');   // journal-nøglen (T4) må ALDRIG være ingest-modtager
+  }
+  if (!token || !/^v1\./.test(token)) throw new Error('ingest_token_format');
+  if (!submissionUUID) throw new Error('ingest_uuid_missing');
+  const konvolut = byggIngestKonvolut(payloadObj, { schemaType, clientUA });
+  const container = await mentemEncrypt(ingestPubB64, konvolut, ingestKeyId);
+  const ciphertext = JSON.stringify(container);
+  return {
+    token,
+    envelopeVersion: INGEST_ENVELOPE_VERSION,
+    submissionUUID,
+    size: ciphertext.length,
+    schemaType,
+    ciphertext,
+  };
+}

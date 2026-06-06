@@ -10,7 +10,15 @@
 <meta property="og:type" content="website">
 <title>Mentem — Forberedelse til din samtale</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+  /* W1: self-hostede fonte (fontsource latin-subset, dækker æøå) — erstatter
+     render-blocking Google Fonts @import (ekstern afhængighed = batteri-dræn-
+     mistanke + blokeret automation-idle; nu 0 eksterne requests). */
+  @font-face { font-family:'DM Serif Display'; font-style:normal; font-weight:400; font-display:swap; src:url('./fonts/dm-serif-display-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family:'DM Serif Display'; font-style:italic; font-weight:400; font-display:swap; src:url('./fonts/dm-serif-display-latin-400-italic.woff2') format('woff2'); }
+  @font-face { font-family:'DM Sans'; font-style:normal; font-weight:300; font-display:swap; src:url('./fonts/dm-sans-latin-300-normal.woff2') format('woff2'); }
+  @font-face { font-family:'DM Sans'; font-style:normal; font-weight:400; font-display:swap; src:url('./fonts/dm-sans-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family:'DM Sans'; font-style:normal; font-weight:500; font-display:swap; src:url('./fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family:'DM Sans'; font-style:normal; font-weight:600; font-display:swap; src:url('./fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
   :root {
     --ink:#1a1a2e; --paper:#f8f6f1; --muted:#62626d; --accent:#2d6a4f;
     --accent-light:#e8f5e1; --border:#e0ddd6; --card:#ffffff;
@@ -283,7 +291,7 @@
 <script type="module">
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
          CSD_SOEVNDAGBOG, SOEVN_BASELINE, SOEVN_SAFETY_TEKST4, CONTENT_VERSION, SITE_BUILD,
-         PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
+         PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey, byggIngestSubmitBody } from './mentem-skema-core.js';
 
 // ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
 const params   = new URLSearchParams(location.search);
@@ -317,6 +325,26 @@ function draftUrl() { return `${draftBase()}/api/soevn-draft/${draftToken}`; }
 const TEST_HOST = /mentem-skemaer-preview|localhost|127\.0\.0\.1|\.loca\.lt|\.trycloudflare\.com/
   .test(location.host + location.pathname);
 const testDayOffset = (TEST_HOST && params.get('testday')) ? (parseInt(params.get('testday'), 10) || 0) : 0;
+
+// ── Ingest-postkasse (F1-4, wire-kontrakt v1 🔒) ──────────────────────────
+// Klient → POST /submit på Cloudflare-Worker (nul-viden postkasse) i stedet
+// for fil+SMS. AKTIVERES KUN når ALLE tre konfig-værdier er sat (blok B-deploy,
+// Viktor-GO) OG linkets ?t= bærer et v1-format-token. Legacy 32-hex-tokens
+// (alle nuværende links, inkl. igangværende baselines) → uændret fil-flow.
+// NØGLE-DISCIPLIN: ingest-pubkey er et SEPARAT X25519-par fra Mentems
+// IngestKeyStore — ALDRIG journal-nøglen (8aa536a1). Håndhæves dobbelt
+// (her + hård guard i byggIngestSubmitBody).
+const INGEST_API_BASE = '';   // Worker-URL — sættes ved blok B-deploy. Tom → ingest FRA.
+const INGEST_PUBKEY   = '';   // ingest-X25519-public-key (raw 32B base64url) fra ingestPublicKeyB64url()
+const INGEST_KEY_ID   = '';   // første 8 hex af SHA-256(ingest-pubkey) — SKAL ≠ 8aa536a1
+// TEST-overrides (?ingest= ?ipk= ?ikid=) KUN på preview/test-hosts — aldrig prod.
+const ingestApiBase = (((TEST_HOST && params.get('ingest')) || INGEST_API_BASE) + '').trim().replace(/\/+$/, '');
+const ingestPub     = (TEST_HOST && params.get('ipk'))  || INGEST_PUBKEY;
+const ingestKeyId   = (TEST_HOST && params.get('ikid')) || INGEST_KEY_ID;
+const ingestToken   = (draftToken && /^v1\./.test(draftToken)) ? draftToken : null;
+function ingestEnabled() {
+  return !!(ingestToken && ingestApiBase && ingestPub && ingestKeyId && ingestKeyId !== PINNED_KEY_ID);
+}
 
 // SIKKERHED: krypteringsnøglen er PINNED i koden (ikke fra ?pk=). Et ?pk= i
 // URL'en bruges KUN som cross-check — afviger det fra pinned nøgle, nægter vi
@@ -655,8 +683,13 @@ function renderDiaryWelcome() {
     dagNu <= N ? `Dag ${dagNu} af ${N}` : `Dag ${dagNu} (fortsat)`;
 
   // Ugentlig ikke-terminal "Send opdatering"-knap (fortsætter forløbet).
+  // W2: i ingest-mode (direkte POST) er det ÉT send-flow → kortere, direkte
+  // knaptekst + kvittering, ingen fil-dans.
   const updateBtn = document.getElementById('diary-update-btn');
-  if (updateBtn) updateBtn.style.display = done >= 1 ? 'block' : 'none';
+  if (updateBtn) {
+    updateBtn.style.display = done >= 1 ? 'block' : 'none';
+    updateBtn.textContent = ingestEnabled() ? 'Send til psykolog' : 'Send opdatering til psykolog';
+  }
 
   const dotsEl = document.getElementById('diary-dots');
   dotsEl.innerHTML = '';
@@ -770,11 +803,13 @@ function diaryShowIfMet(f) {
 function renderDiaryFields() {
   const root = document.getElementById('diary-fields');
   root.innerHTML = '';
+  let visNum = 0;   // W4: sekventiel nummerering over SYNLIGE felter (matcher tælleren)
   diarySkema.fields.forEach((f, i) => {
     if (!diaryShowIfMet(f)) return;   // conditional-reveal: skjul indtil betingelse mødt
+    visNum += 1;
     const inputId = `dfield-${f.key}`;
     const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
-    const qHtml = `<span class="question-num">${i + 1}.</span>${f.text}${optTag}`;
+    const qHtml = `<span class="question-num">${visNum}.</span>${f.text}${optTag}`;
     const val = diaryDraft[f.key];
 
     // Radio-felt (fx SM3 safety-felt "Sikkerhed i dag"): titel + valgfri LÅST
@@ -932,14 +967,19 @@ function buildSafetyReveal() {
 }
 
 function updateDiaryProgress() {
+  // W4: tælleren matcher de SYNLIGE spørgsmål (inkl. valgfri m. blød default) —
+  // samme univers som nummereringen, så "X af Y" og spørgsmålstal stemmer.
+  // Gem-knappen gates fortsat KUN på de obligatoriske felter.
+  const visible = diarySkema.fields.filter(f => diaryShowIfMet(f));
+  const filled = visible.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
   const req = diarySkema.fields.filter(f => !f.optional);
-  const filled = req.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
-  const pct = req.length ? Math.round(filled / req.length * 100) : 100;
+  const reqFilled = req.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
+  const pct = visible.length ? Math.round(filled / visible.length * 100) : 100;
   document.getElementById('diary-form-fill').style.width = pct + '%';
-  document.getElementById('diary-form-count').textContent = `${filled} af ${req.length}`;
+  document.getElementById('diary-form-count').textContent = `${filled} af ${visible.length}`;
   const btn = document.getElementById('diary-save-btn');
-  btn.disabled = filled < req.length;
-  btn.textContent = filled < req.length ? `Mangler ${req.length - filled} svar` : 'Gem';
+  btn.disabled = reqFilled < req.length;
+  btn.textContent = reqFilled < req.length ? `Mangler ${req.length - reqFilled} svar` : 'Gem';
 }
 
 function saveDiaryEntry() {
@@ -972,7 +1012,14 @@ function finishDiary() {
     `Du har udfyldt ${done} af ${N} dage.\n\nNår du sender, afsluttes perioden, og kladden lukkes. Er du sikker på, at du vil sende til din psykolog nu?`);
   if (!ok) return;
   const p = document.querySelector('#screen-done p');
-  if (p) p.textContent = 'Dine søvndage er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.';
+  const shareBtn = document.getElementById('share-btn');
+  if (ingestEnabled()) {
+    // W2: i POST-mode er "Send" ét direkte flow — ingen fil/SMS-dans.
+    if (p) p.textContent = 'Dine søvndage er klar. Tryk nedenfor, så sendes de krypteret og direkte til din psykolog.';
+    if (shareBtn) shareBtn.textContent = 'Send til din psykolog';
+  } else {
+    if (p) p.textContent = 'Dine søvndage er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.';
+  }
   showScreen('screen-done');
   window.scrollTo(0, 0);
 }
@@ -987,6 +1034,40 @@ async function byggDiaryContainerJSON(afslut) {
     endedAt: afslut ? new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
   });
   return JSON.stringify(await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId));   // ALTID pinned key
+}
+
+// ── F1-4: send dagbogen direkte til Worker-postkassen (POST /submit) ──────
+// Krypterer den AKKUMULEREDE dagbog ind i ingest-konvolutten (kontrakt §5) til
+// den SEPARATE ingest-nøgle og POSTer (kontrakt §2.2). Idempotent retry:
+// submissionUUID genereres én gang pr. uafsluttet forsendelse og genbruges ved
+// retry (kontrakt-invariant 4) — først ved succes ryddes den.
+// Kaster ved fejl → kalderen falder tilbage til fil+SMS-flowet (F1-4-gate).
+async function ingestPost(afslut) {
+  const uuidKey = afslut ? 'ingestUUIDFinal' : 'ingestUUIDUpdate';
+  if (!diaryState[uuidKey]) {
+    diaryState[uuidKey] = crypto.randomUUID();
+    saveCSDState(diaryState);
+  }
+  const payload = buildPayloadCSD(diaryState.entries, {
+    startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
+    forloebId: ingestToken, contentVersion: diaryState.contentVersion,
+    endedAt: afslut ? new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+  });
+  const body = await byggIngestSubmitBody({
+    token: ingestToken, payloadObj: payload,
+    ingestPubB64: ingestPub, ingestKeyId,
+    submissionUUID: diaryState[uuidKey],
+    schemaType: 'soevndagbog', clientUA: 'web',
+  });
+  const res = await fetch(ingestApiBase + '/submit', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || j.ok !== true) throw new Error((j && j.err) || ('http_' + res.status));
+  delete diaryState[uuidKey];   // succes (received ELLER duplicate) → ny UUID næste gang
+  saveCSDState(diaryState);
+  return j;
 }
 
 // Del filen via navigator.share → fallback download. Returnerer "delt"|"hentet".
@@ -1021,7 +1102,24 @@ async function shareDiaryEncrypted() {
   }
   btn.disabled = true;
   status.style.color = 'var(--accent)';
-  status.textContent = 'Krypterer …';
+  // F1-4: ingest-mode → direkte POST (terminal). recoveredBlob er en journal-
+  // nøgle-container (kan IKKE re-pakkes til ingest-konvolut) → fil-flow for den.
+  if (ingestEnabled() && diaryState.entries.length > 0) {
+    status.textContent = 'Krypterer og sender …';
+    try {
+      await ingestPost(true);
+      status.textContent = 'Sendt ✓ — din psykolog har modtaget din søvndagbog. Tak for din indsats!';
+      await deleteDraft();
+      clearCSDState();
+      recoveredBlob = null;
+      return;
+    } catch (e) {
+      // F1-4-fallback: POST fejlede → nuværende fil+SMS-flow (intet er tabt).
+    }
+    status.textContent = 'Forbindelsen drillede — vi bruger fil-metoden i stedet. Krypterer …';
+  } else {
+    status.textContent = 'Krypterer …';
+  }
   try {
     const r = await delDiaryFil(await byggDiaryContainerJSON(true), 'Søvndagbog til min psykolog');
     status.innerHTML = r === 'delt'
@@ -1037,7 +1135,8 @@ async function shareDiaryEncrypted() {
   }
 }
 
-// IKKE-TERMINAL: ugentlig opdatering. Eksportér nuværende kladde → FORTSÆT
+// IKKE-TERMINAL: ugentlig opdatering. Ingest-mode → direkte POST til Worker-
+// postkassen (m. fil+SMS-fallback ved fejl); ellers eksportér fil → FORTSÆT
 // forløbet (ryd IKKE, slet IKKE). Til open-ended monitorering.
 async function sendDiaryOpdatering() {
   const status = document.getElementById('diary-update-status');
@@ -1052,9 +1151,28 @@ async function sendDiaryOpdatering() {
     status.textContent = 'Udfyld mindst én nat, før du sender en opdatering.';
     return;
   }
+  // W3: vagt-dialog m. dag-kontekst (samme mønster som "Afslut og send").
+  const done = diaryState.entries.length;
+  const N = diaryState.plannedDays;
+  const ok = window.confirm(
+    `Du har udfyldt ${done} af ${N} dage.\n\nVil du sende en opdatering til din psykolog nu? Forløbet fortsætter bagefter som normalt.`);
+  if (!ok) return;
   btn.disabled = true;
   status.style.color = 'var(--accent)';
-  status.textContent = 'Krypterer opdatering …';
+  if (ingestEnabled()) {
+    status.textContent = 'Krypterer og sender …';
+    try {
+      await ingestPost(false);
+      status.textContent = 'Sendt ✓ — din psykolog har modtaget opdateringen. Du kan roligt fortsætte dagbogen.';
+      btn.disabled = false;
+      return;
+    } catch (e) {
+      // F1-4-fallback: POST fejlede (offline/serverfejl) → nuværende fil+SMS-flow.
+      status.textContent = 'Forbindelsen drillede — vi bruger fil-metoden i stedet …';
+    }
+  } else {
+    status.textContent = 'Krypterer opdatering …';
+  }
   try {
     const r = await delDiaryFil(await byggDiaryContainerJSON(false), 'Søvndagbog-opdatering til min psykolog');
     status.innerHTML = (r === 'delt'
