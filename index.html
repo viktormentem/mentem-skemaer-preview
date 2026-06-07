@@ -334,9 +334,9 @@ const testDayOffset = (TEST_HOST && params.get('testday')) ? (parseInt(params.ge
 // NØGLE-DISCIPLIN: ingest-pubkey er et SEPARAT X25519-par fra Mentems
 // IngestKeyStore — ALDRIG journal-nøglen (8aa536a1). Håndhæves dobbelt
 // (her + hård guard i byggIngestSubmitBody).
-const INGEST_API_BASE = '';   // Worker-URL — sættes ved blok B-deploy. Tom → ingest FRA.
-const INGEST_PUBKEY   = '';   // ingest-X25519-public-key (raw 32B base64url) fra ingestPublicKeyB64url()
-const INGEST_KEY_ID   = '';   // første 8 hex af SHA-256(ingest-pubkey) — SKAL ≠ 8aa536a1
+const INGEST_API_BASE = 'https://ingest.mycel.dk';   // Worker custom_domain (B3-deploy). Tom → ingest FRA.
+const INGEST_PUBKEY   = 't6ZBVtH41pVBECxELB1eBH6WvEgdguw9HLEUOMdl_Ec';   // ingest-X25519-public-key (raw 32B base64url) fra ingestPublicKeyB64url()
+const INGEST_KEY_ID   = '2af28306';   // første 8 hex af SHA-256(ingest-pubkey) — SKAL ≠ 8aa536a1 (journal-nøglen)
 // TEST-overrides (?ingest= ?ipk= ?ikid=) KUN på preview/test-hosts — aldrig prod.
 const ingestApiBase = (((TEST_HOST && params.get('ingest')) || INGEST_API_BASE) + '').trim().replace(/\/+$/, '');
 const ingestPub     = (TEST_HOST && params.get('ipk'))  || INGEST_PUBKEY;
