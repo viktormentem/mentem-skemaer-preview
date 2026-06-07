@@ -151,6 +151,20 @@
   label.diary-q { display:block; }
   fieldset.diary-field { min-width:0; }
   legend.diary-q { padding:0; }
+
+  /* W2 — klient-samtykke til morgen-SMS-påmindelse (Espie 2012 s.771, opt-in) */
+  .diary-consent { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:24px 0 4px; text-align:left; }
+  .diary-consent.set { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; }
+  .diary-consent-q { font-size:15px; line-height:1.5; margin:0 0 14px; color:var(--ink); }
+  .diary-consent-actions { display:flex; gap:12px; }
+  .diary-consent-actions .btn-secondary { margin-top:0; }
+  .diary-consent-label { font-size:14px; color:var(--muted); }
+  .btn-link { background:none; border:none; color:var(--accent); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; padding:6px 8px; text-decoration:underline; min-height:44px; }
+
+  /* W3 — udløbet/deaktiveret link (venlig fejlside i stedet for tom dagbog) */
+  .expired-wrap { max-width:560px; margin:80px auto; padding:0 24px; text-align:center; }
+  .expired-wrap h2 { font-family:'DM Serif Display',serif; font-size:30px; margin-bottom:14px; }
+  .expired-wrap p { color:var(--muted); font-size:16px; line-height:1.6; margin-bottom:24px; }
 </style>
 <script>
   /* A11Y: gendan tekststørrelse FØR render (ingen flash). Non-PII UI-præference. */
@@ -240,9 +254,19 @@
     <button class="btn-secondary" id="diary-finish-now-btn" style="display:none">Afslut og send til psykolog</button>
     <p class="start-note" id="diary-note"></p>
     <div class="done-status" id="diary-update-status" style="min-height:0"></div>
+    <div id="diary-consent" class="diary-consent" style="display:none"></div>
     <div class="disclaimer" id="diary-privacy"></div>
     <p class="footer-credit" id="diary-attribution"></p>
     <p class="footer-credit" id="diary-key-fp"></p>
+  </div>
+</div>
+
+<!-- W3: UDLØBET/DEAKTIVERET LINK — venlig fejlside i stedet for tom dagbog -->
+<div id="screen-link-expired" class="screen">
+  <div class="expired-wrap">
+    <h2>Dette link er udløbet</h2>
+    <p>Linket her er ikke længere aktivt. Brug det nyeste link, du har fået fra din psykolog — eller skriv en besked, så sender vi et nyt.</p>
+    <a class="safety-sms-btn" id="expired-sms-btn" href="#">Skriv til din psykolog</a>
   </div>
 </div>
 
@@ -344,6 +368,23 @@ const ingestKeyId   = (TEST_HOST && params.get('ikid')) || INGEST_KEY_ID;
 const ingestToken   = (draftToken && /^v1\./.test(draftToken)) ? draftToken : null;
 function ingestEnabled() {
   return !!(ingestToken && ingestApiBase && ingestPub && ingestKeyId && ingestKeyId !== PINNED_KEY_ID);
+}
+
+// ── W3 (§2): klient-side revokeret-liste (triviel config) ─────────────────
+// Psykologen kan tilføje et dødt token-id her + redeploy → klienten ser en
+// VENLIG fejlside i stedet for en tom dagbog. Dette er IKKE den reelle
+// sikkerhedsgrænse: server-side afviser ingest-postet, og §1-gensend-guarden
+// (app-batch C) beskytter fil-flowet. Listen er kun et UX-løfte for KENDTE
+// døde links. Tom som standard.
+const REVOKED_TOKENS = [
+  // 'v1.xxxxxxxx…',            // eksempel: udløbet ingest-token
+  // '0123456789abcdef0123456789abcdef',  // eksempel: udløbet legacy-token
+];
+function tokenRevoked() {
+  // See-it: ?revoked=1 fremviser W3-fejlsiden — KUN på preview/test-host
+  // (samme gate som ?testday=, ALDRIG aktiv i prod).
+  if (TEST_HOST && params.get('revoked') === '1') return true;
+  return !!(draftToken && REVOKED_TOKENS.includes(draftToken));
 }
 
 // SIKKERHED: krypteringsnøglen er PINNED i koden (ikke fra ?pk=). Et ?pk= i
@@ -623,7 +664,8 @@ async function pushDraft() {
   try {
     const payload = buildPayloadCSD(diaryState.entries, {
       startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
-      forloebId: draftToken, contentVersion: diaryState.contentVersion });
+      forloebId: draftToken, contentVersion: diaryState.contentVersion,
+      consent: diaryState.consent });   // W2: følger den krypterede kladde
     const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);
     const res = await fetch(draftUrl(), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(container) });
     diaryState.dirty = !res.ok;
@@ -734,9 +776,51 @@ function renderDiaryWelcome() {
     if (backfillBtn) backfillBtn.style.display = 'none';
   }
 
+  renderDiaryConsent();
+
   document.getElementById('diary-attribution').textContent = diarySkema.attribution || '';
   const fp = document.getElementById('diary-key-fp');
-  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+  // W1: footeren viser PRIMÆR-vejens keyId (ingest-mode → ingest-nøglen; ellers
+  // den pinnede journal-nøgle). Den FAKTISK brugte nøgle vises i kvitteringen
+  // efter send — fil-fallback krypterer ALTID til den pinnede nøgle, så
+  // footeren alene kan vildlede i ingest-mode.
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + (ingestEnabled() ? ingestKeyId : PINNED_KEY_ID);
+}
+
+// ── W2 (§4): klient-samtykke til morgen-SMS-påmindelse ────────────────────
+// Espie 2012 s.771 — opt-in, blød framing. Stemples {optIn, timestamp} i
+// diaryState.consent → følger payload.meta.consent (klartekst INDE i ciphertext;
+// kontrakt-frys-sikkert, jf. core.js). Klient-NEJ stemples lige så troværdigt
+// som JA (autonomi). Kan ændres undervejs via toggle.
+function setDiaryConsent(optIn) {
+  diaryState.consent = { optIn: !!optIn, timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+  saveCSDState(diaryState);
+  renderDiaryConsent();
+}
+function renderDiaryConsent() {
+  const box = document.getElementById('diary-consent');
+  if (!box) return;
+  const c = diaryState && diaryState.consent;
+  box.style.display = 'block';
+  if (!c) {
+    // Første åbning: spørg blødt, frivilligt.
+    box.className = 'diary-consent ask';
+    box.innerHTML =
+      '<p class="diary-consent-q">Vil du have en kort SMS-påmindelse hver morgen, mens dagbogen kører? Det er helt frivilligt, og du kan altid ændre det.</p>' +
+      '<div class="diary-consent-actions">' +
+      '<button type="button" class="btn-secondary" id="consent-yes">Ja tak</button>' +
+      '<button type="button" class="btn-secondary" id="consent-no">Nej tak</button>' +
+      '</div>';
+    document.getElementById('consent-yes').addEventListener('click', () => setDiaryConsent(true));
+    document.getElementById('consent-no').addEventListener('click', () => setDiaryConsent(false));
+  } else {
+    // Indstillings-hjørne: vis tilstand + lad klienten skifte når som helst.
+    box.className = 'diary-consent set';
+    box.innerHTML =
+      '<span class="diary-consent-label">Morgen-påmindelse på SMS: <strong>' + (c.optIn ? 'Til' : 'Fra') + '</strong></span>' +
+      '<button type="button" class="btn-link" id="consent-toggle">' + (c.optIn ? 'Slå fra' : 'Slå til') + '</button>';
+    document.getElementById('consent-toggle').addEventListener('click', () => setDiaryConsent(!c.optIn));
+  }
 }
 
 function lastEntryBefore(dateStr) {
@@ -1032,6 +1116,7 @@ async function byggDiaryContainerJSON(afslut) {
     startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
     forloebId: draftToken || null, contentVersion: diaryState.contentVersion,
     endedAt: afslut ? new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+    consent: diaryState.consent,   // W2: følger eksport-filen (CS-klassen)
   });
   return JSON.stringify(await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId));   // ALTID pinned key
 }
@@ -1052,6 +1137,7 @@ async function ingestPost(afslut) {
     startedAt: diaryState.startedAt, plannedDays: diaryState.plannedDays,
     forloebId: ingestToken, contentVersion: diaryState.contentVersion,
     endedAt: afslut ? new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
+    consent: diaryState.consent,   // W2: stemples i payload.meta.consent ved POST
   });
   const body = await byggIngestSubmitBody({
     token: ingestToken, payloadObj: payload,
@@ -1120,7 +1206,8 @@ async function shareDiaryEncrypted() {
     status.textContent = 'Krypterer og sender …';
     try {
       await ingestPost(true);
-      status.textContent = 'Sendt ✓ — din psykolog har modtaget din søvndagbog. Tak for din indsats!';
+      // W1: kvitteringen viser den FAKTISK brugte nøgle (POST → ingest-nøglen).
+      status.textContent = 'Sendt ✓ — din psykolog har modtaget din søvndagbog. Tak for din indsats! · Krypteret til ID ' + ingestKeyId;
       await deleteDraft();
       clearCSDState();
       recoveredBlob = null;
@@ -1134,9 +1221,11 @@ async function shareDiaryEncrypted() {
   }
   try {
     const r = await delDiaryFil(await byggDiaryContainerJSON(true), 'Søvndagbog til min psykolog');
-    status.innerHTML = r === 'delt'
+    // W1: fil-fallback krypterer ALTID til den pinnede nøgle → vis den i kvitteringen.
+    status.innerHTML = (r === 'delt'
       ? 'Filen er klar til at sende. Tak!'
-      : 'Filen er hentet til din enhed. Vedhæft den nu i SMS-tråden til din psykolog.';
+      : 'Filen er hentet til din enhed. Vedhæft den nu i SMS-tråden til din psykolog.')
+      + ' · Krypteret til ID ' + keyCheck.keyId;
     await deleteDraft();   // ryd server-kladde efter delt (én eksport)
     clearCSDState();       // + ryd lokal dagbog
     recoveredBlob = null;
@@ -1175,7 +1264,7 @@ async function sendDiaryOpdatering() {
     status.textContent = 'Krypterer og sender …';
     try {
       await ingestPost(false);
-      status.textContent = 'Sendt ✓ — din psykolog har modtaget opdateringen. Du kan roligt fortsætte dagbogen.';
+      status.textContent = 'Sendt ✓ — din psykolog har modtaget opdateringen. Du kan roligt fortsætte dagbogen. · Krypteret til ID ' + ingestKeyId;
       btn.disabled = false;
       return;
     } catch (e) {
@@ -1189,7 +1278,8 @@ async function sendDiaryOpdatering() {
     const r = await delDiaryFil(await byggDiaryContainerJSON(false), 'Søvndagbog-opdatering til min psykolog');
     status.innerHTML = (r === 'delt'
       ? 'Opdateringen er klar til at sende. Tak!'
-      : 'Opdateringen er hentet — vedhæft den i tråden til din psykolog.') + ' Du kan roligt fortsætte dagbogen.';
+      : 'Opdateringen er hentet — vedhæft den i tråden til din psykolog.')
+      + ' Du kan roligt fortsætte dagbogen. · Krypteret til ID ' + keyCheck.keyId;
   } catch (e) {
     status.style.color = '#c0392b';
     status.textContent = 'Noget gik galt. Prøv igen, eller kontakt din psykolog.';
@@ -1372,8 +1462,18 @@ async function shareBaselineEncrypted() {
   }
 }
 
-// ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
-if (baselineId) {
+// W3 (§2): kendt-dødt link → venlig fejlside i stedet for tom dagbog/skema.
+function showExpiredLink() {
+  const btn = document.getElementById('expired-sms-btn');
+  if (btn) btn.setAttribute('href', 'sms:' + SOEVN_SAFETY_TEKST4.smsTo);
+  showScreen('screen-link-expired');
+  window.scrollTo(0, 0);
+}
+
+// ── BOOTSTRAP: revokeret link ELLER baseline ELLER dagbog ELLER spørgeskema ─
+if (tokenRevoked()) {
+  showExpiredLink();
+} else if (baselineId) {
   runBaseline(baselineId);
 } else if (diaryId) {
   runDiary(diaryId);

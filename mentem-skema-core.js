@@ -399,6 +399,11 @@ export function buildPayloadCSD(entries, meta = {}) {
       periodCompleted: sleepDiary.length,
       startedAt,
       endedAt: meta.endedAt || null,
+      // W2 (§4 Espie 2012 s.771): klient-vendt SMS-påmindelse-samtykke. Additivt,
+      // klartekst INDE i ciphertext (serveren ser det aldrig). Klient-NEJ skal
+      // kunne nå Mentem lige så troværdigt som JA (autonomi) → stemples når sat,
+      // udelades helt når ikke sat (bagudkompatibelt; Swift ignorerer ukendt felt).
+      ...(meta.consent ? { consent: meta.consent } : {}),
     },
     sleepDiary,
   };
