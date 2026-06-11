@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mentem · Journal-auto-log (Klient-360 §3) — preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papir:#f6f3ec; --blæk:#1d2b29; --dæmpet:#5d6b67; --linje:#d8d2c4;
+  --grøn:#0e6b5c; --grøn-lys:#e2efec; --rust:#b4502e; --rust-lys:#f4e4dc;
+  --kort:#fffdf8; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'IBM Plex Sans',sans-serif; background:var(--papir); color:var(--blæk);
+  line-height:1.55; padding:0 0 4rem;
+  background-image:radial-gradient(rgba(29,43,41,.045) 1px, transparent 1px);
+  background-size:22px 22px;
+}
+.bånd{
+  background:var(--blæk); color:var(--papir); font-family:var(--mono); font-size:.72rem;
+  letter-spacing:.14em; text-transform:uppercase; padding:.55rem 1.2rem; text-align:center;
+}
+.bånd b{color:#e8c46a}
+main{max-width:880px; margin:0 auto; padding:2.2rem 1.2rem 0}
+h1{
+  font-family:'Fraunces',serif; font-weight:700; font-size:clamp(1.9rem,5.5vw,3rem);
+  line-height:1.08; letter-spacing:-.01em; margin:.4rem 0 .6rem;
+}
+h1 em{font-style:italic; color:var(--grøn)}
+.intro{max-width:62ch; color:var(--dæmpet); font-size:1.02rem}
+.sti{
+  font-family:var(--mono); font-size:.8rem; background:var(--grøn-lys); color:var(--grøn);
+  display:inline-block; padding:.3rem .8rem; border-radius:8px; margin-top:1rem;
+}
+section{margin-top:2.6rem; opacity:0; transform:translateY(14px); animation:ind .6s ease forwards}
+section:nth-of-type(1){animation-delay:.05s}
+section:nth-of-type(2){animation-delay:.15s}
+section:nth-of-type(3){animation-delay:.25s}
+section:nth-of-type(4){animation-delay:.35s}
+@keyframes ind{to{opacity:1; transform:none}}
+h2{
+  font-family:'Fraunces',serif; font-weight:600; font-size:1.45rem; margin-bottom:.2rem;
+  display:flex; align-items:baseline; gap:.6rem;
+}
+h2 .nr{font-family:var(--mono); font-size:.8rem; color:var(--grøn); letter-spacing:.1em}
+.under{color:var(--dæmpet); font-size:.92rem; max-width:64ch; margin-bottom:1.1rem}
+.kort{
+  background:var(--kort); border:1px solid var(--linje); border-radius:14px;
+  padding:1.3rem 1.4rem; margin-bottom:1.2rem; box-shadow:0 1px 0 rgba(29,43,41,.04), 0 10px 26px -18px rgba(29,43,41,.25);
+}
+.pille{
+  font-family:var(--mono); font-size:.72rem; padding:.18rem .6rem; border-radius:99px;
+  background:var(--grøn-lys); color:var(--grøn); font-weight:500;
+}
+.pille.rust{background:var(--rust-lys); color:var(--rust)}
+
+/* Tidslinje-rækker (samme idiom som faner.html) */
+.tl-række{display:flex; align-items:baseline; gap:.9rem; padding:.5rem .7rem; border-bottom:1px solid var(--linje); font-size:.92rem; flex-wrap:wrap}
+.tl-række:last-child{border-bottom:none}
+.tl-tid{font-family:var(--mono); font-size:.78rem; color:var(--dæmpet); white-space:nowrap}
+.tl-detalje{color:var(--dæmpet); font-size:.82rem}
+.tl-række.ny{background:var(--grøn-lys); border-radius:8px; animation:puls 2.4s ease 1}
+@keyframes puls{0%{background:#bfe0d8}100%{background:var(--grøn-lys)}}
+.tl-kæde{font-family:var(--mono); font-size:.72rem; color:var(--grøn)}
+
+table{width:100%; border-collapse:collapse; font-size:.88rem; margin-top:.4rem}
+th{
+  text-align:left; font-family:var(--mono); font-size:.7rem; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--dæmpet); font-weight:500; padding:.45rem .6rem; border-bottom:2px solid var(--blæk);
+}
+td{padding:.5rem .6rem; border-bottom:1px solid var(--linje)}
+td.mono{font-family:var(--mono); font-size:.82rem}
+.fod{
+  margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--linje);
+  font-size:.78rem; color:var(--dæmpet); font-family:var(--mono);
+}
+a{color:var(--grøn)}
+.flow{display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; font-family:var(--mono); font-size:.8rem}
+.flow .trin{background:var(--grøn-lys); color:var(--grøn); padding:.35rem .75rem; border-radius:8px}
+.flow .pil{color:var(--dæmpet)}
+@media (max-width:560px){ .kort{padding:1rem .9rem} td,th{padding:.4rem .35rem} }
+</style>
+</head>
+<body>
+
+<div class="bånd">SYNTETISK DEMO-DATA · <b>INGEN KLIENT-DATA</b> · preview af feature-branch — ikke prod</div>
+
+<main>
+<h1>Tidslinjen lever:<br>alt journalføres <em>automatisk</em></h1>
+<p class="intro">Klient-360 §3 er leveret: hver kontakt Mentem selv sender — og alt den selv modtager —
+lander nu som hændelser i klientens append-only journal, i samme øjeblik det sker.
+Tidslinje-fanen fra Fase 2 har dermed fået sin datakilde. Afgrænsningen er låst:
+<strong>kun Mentems egne sends og modtagelser — dine private Beskeder spejles aldrig.</strong></p>
+<span class="sti">Mentem → Statistik → klik på klient → Klient-360 → Tidslinje</span>
+
+<section>
+<h2><span class="nr">01</span>Sådan ser en levende tidslinje ud</h2>
+<p class="under">Syntetisk demo-klient. Hver række er et F-A-event som auto-loggen selv har skrevet —
+bemærk <strong>kvitteringen der kæde-refererer den modtagne fil</strong>, og at den indgående fil
+journalføres allerede ved poll (også hvis den ikke kunne dekrypteres).</p>
+<div class="kort" id="demo-tidslinje">
+  <div class="tl-række ny"><span class="tl-tid">11.06.26 14:32</span><span class="tl-titel">Kvittering</span><span class="tl-kæde">→ refererer “Fil modtaget” 14:05 (refEventId)</span></div>
+  <div class="tl-række ny"><span class="tl-tid">11.06.26 14:32</span><span class="tl-titel">Besvarelse importeret — soevndagbog</span><span class="tl-detalje">scoreRef: ingest:7F2A… · bekræftet fra import-bakken</span></div>
+  <div class="tl-række"><span class="tl-tid">11.06.26 14:05</span><span class="tl-titel">Fil modtaget — poll</span><span class="tl-detalje">ref: ingest:7F2A… (dedup: re-poll skriver aldrig dobbelt)</span></div>
+  <div class="tl-række"><span class="tl-tid">10.06.26 09:15</span><span class="tl-titel">SMS sendt — påmindelse</span><span class="tl-detalje">soevndagbog-auto (daglig scheduler)</span></div>
+  <div class="tl-række"><span class="tl-tid">08.06.26 11:40</span><span class="tl-titel">Besvarelse importeret — GAD-7</span><span class="tl-detalje">7/21 · rå totalscore · session-capture</span></div>
+  <div class="tl-række"><span class="tl-tid">05.06.26 10:02</span><span class="tl-titel">SMS sendt — dagbog-link</span></div>
+  <div class="tl-række"><span class="tl-tid">02.06.26 16:20</span><span class="tl-titel">Mail sendt — tc-invitation</span><span class="tl-detalje">forudfyldt-i-mail</span></div>
+  <div class="tl-række"><span class="tl-tid">02.06.26 16:18</span><span class="tl-titel">SMS sendt — bekræftelse</span><span class="tl-detalje">med-skema-link (booking)</span></div>
+</div>
+</section>
+
+<section>
+<h2><span class="nr">02</span>Hvad logges — alle 13 integrationspunkter</h2>
+<p class="under">Auto-loggen er syet ind dér hvor tingene faktisk sker — ikke som et lag ovenpå:</p>
+<div class="kort">
+<table id="punkter">
+<thead><tr><th>Flade i Mentem</th><th>Journal-hændelse</th></tr></thead>
+<tbody>
+<tr><td>Booking-bekræftelse (SMS + mail m. ICS)</td><td class="mono">smsSendt/mailSendt · bekræftelse</td></tr>
+<tr><td>Tidsforslag (Foreslå tid)</td><td class="mono">smsSendt/mailSendt · bekræftelse (tidsforslag)</td></tr>
+<tr><td>Baseline-/forberedelses-skema-link</td><td class="mono">smsSendt · skema-link</td></tr>
+<tr><td>Søvndagbog-link (forside, wizard, SRT-ordination)</td><td class="mono">smsSendt · dagbog-link</td></tr>
+<tr><td>Påmindelser (manuel, daglig auto, varm nudge)</td><td class="mono">smsSendt · påmindelse</td></tr>
+<tr><td>Therapy Copilot-invitation (SMS + mail)</td><td class="mono">smsSendt/mailSendt · tc-invitation</td></tr>
+<tr><td>Import-bakken: fil lander via poll</td><td class="mono">filModtaget · poll</td></tr>
+<tr><td>Import-bakken: 1-klik-bekræft</td><td class="mono">besvarelseImporteret + kvittering (kædet)</td></tr>
+<tr><td>Baseline-retur (drag-drop / manuel)</td><td class="mono">filModtaget + besvarelseImporteret</td></tr>
+<tr><td>Skema fanget under session</td><td class="mono">besvarelseImporteret (rå score + scoreRef)</td></tr>
+<tr><td>Therapy Copilot-eksport importeret</td><td class="mono">filModtaget + besvarelseImporteret pr. score</td></tr>
+</tbody>
+</table>
+<p class="under" style="margin-top:.8rem; font-size:.82rem">Sends udenom Mentem journalføres ikke automatisk —
+de kan tilføjes som manuel <span class="pille">note</span>. “Korrektion”-varianten er reserveret i
+event-skemaet, men har endnu ingen send-flade i appen.</p>
+</div>
+</section>
+
+<section>
+<h2><span class="nr">03</span>Migrationen: tør-kørsel før der skrives én byte</h2>
+<p class="under">Eksisterende historik tilbydes migreret ind ved app-start — efter en disciplin
+der aldrig kan tage fejl tavst:</p>
+<div class="kort">
+<div class="flow" id="migrationflow">
+  <span class="trin">1 · DRY-RUN mod temp-mappe</span><span class="pil">→</span>
+  <span class="trin">2 · optælling vises FØR ægte kørsel</span><span class="pil">→</span>
+  <span class="trin">3 · kun ved fuldt match: migrér</span><span class="pil">→</span>
+  <span class="trin">4 · hash-kæde-verify</span>
+</div>
+<p class="under" style="margin-top:.9rem; font-size:.85rem">Kun <strong>ægte</strong> data migreres:
+rigtige besvarelser med deres rigtige datoer og rå scores, plus aktive forløb. Fabrikerede
+pladsholder-hændelser med syntetiske datoer holdes UDE af en journal man ikke kan slette fra.
+Kørslen er idempotent (klienter der allerede har journal røres aldrig), og kildedata ændres aldrig.</p>
+<p class="under" style="font-size:.85rem"><strong>Status i praksis:</strong> tør-kørslen mod de levende data viste
+24 klienter og 0 historiske hændelser at flytte (ingen gemte skemaresultater endnu) — så tidslinjens liv
+kommer fra auto-loggen fremadrettet, fra første send efter denne build.</p>
+</div>
+</section>
+
+<section>
+<h2><span class="nr">04</span>Garantierne</h2>
+<div class="kort">
+<table id="garantier">
+<thead><tr><th>Garanti</th><th>Hvordan</th></tr></thead>
+<tbody>
+<tr><td>Append-only</td><td>Journal-storen udstiller ingen ret/slet-API — en rettelse er et nyt event</td></tr>
+<tr><td>Tamper-evident</td><td>SHA-256-hash-kæde pr. klient; verify() fanger enhver manipulation</td></tr>
+<tr><td>Krypteret</td><td>Hver blok krypteres til Mentems egen nøgle (samme krypto som .tcexport)</td></tr>
+<tr><td>Fail-safe</td><td>En journal-fejl kan aldrig vælte selve sendingen/importen</td></tr>
+<tr><td>Idempotent</td><td>Indgående events dedup'es på reference — re-poll/re-import skriver aldrig dobbelt</td></tr>
+<tr><td>Test-sikret</td><td>Tests kan ikke skrive til den rigtige journal (P0-guard) — 15 nye tests, suite 1007/0</td></tr>
+<tr><td>Privatliv</td><td>KUN Mentems egne sends/modtagelser — chat.db/Beskeder spejles ALDRIG</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<p class="fod">Mentem · Klient-360 Fase 1-GO: journal-auto-log §3 + live-migration (JournalAutoLog.swift,
+build 482) · interaktiv fane-demo: <a href="faner.html">faner-previewet</a> · al data på denne side er
+syntetisk demo-data.</p>
+</main>
+</body>
+</html>
