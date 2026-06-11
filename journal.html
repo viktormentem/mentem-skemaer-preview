@@ -164,7 +164,49 @@ kommer fra auto-loggen fremadrettet, fra første send efter denne build.</p>
 </section>
 
 <section>
-<h2><span class="nr">04</span>Garantierne</h2>
+<h2><span class="nr">04</span>Fase 3: søvn-historikken er flyttet ind</h2>
+<p class="under">Søvn-hubbens egen hændelseslog er nu <strong>engangs-migreret ind i klient-journalen</strong>
+(Viktor-GO 11/6) — så screeninger, baseline-links og modtagne baselines står i samme tidslinje som alt
+andet. Kilden er <strong>bevaret urørt</strong>: søvn-hubben læser den præcis som før.</p>
+<div class="kort">
+<div class="flow" id="soevn-flow">
+  <span class="trin">TRIN 1 · DRY-RUN: tæl + klassificér ALT</span><span class="pil">→</span>
+  <span class="trin">GATE: 0 uafklarede</span><span class="pil">→</span>
+  <span class="trin">generalprøve i temp-mappe</span><span class="pil">→</span>
+  <span class="trin">TRIN 2 · migrér + hash-verify + stikprøve</span>
+</div>
+<p class="under" style="margin-top:.9rem; font-size:.85rem"><strong>Resultatet i praksis:</strong>
+14 hændelser hos 6 klienter — alle klassificeret entydigt (0 uafklarede), alle migreret, hash-kæde og
+stikprøve-sammenligning grøn. En gentaget kørsel genkender alt som allerede-migreret og skriver intet.</p>
+</div>
+<p class="under">Sådan ser den migrerede søvn-historik ud i tidslinjen (syntetisk demo-klient —
+hver migreret række bærer ærlig herkomst: <span class="pille">migreret</span> + reference til
+kilde-hændelsen):</p>
+<div class="kort" id="soevn-tidslinje">
+  <div class="tl-række"><span class="tl-tid">11.06.26 09:14</span><span class="tl-titel">SMS sendt — påmindelse</span><span class="tl-detalje">soevndagbog-auto</span><span class="pille rust">dedupet — var allerede auto-logget (dobbelt-log fra 11/6)</span></div>
+  <div class="tl-række ny"><span class="tl-tid">07.06.26 10:31</span><span class="tl-titel">Kvittering</span><span class="tl-detalje">søvn-safety kvitteret</span><span class="pille">migreret</span></div>
+  <div class="tl-række ny"><span class="tl-tid">06.06.26 00:00</span><span class="tl-titel">Safety-flag — soevn-sm3</span><span class="tl-detalje">Søvn-safety-flag (SM3) · dagbog-retur</span><span class="pille">migreret</span></div>
+  <div class="tl-række ny"><span class="tl-tid">05.06.26 13:52</span><span class="tl-titel">Fil modtaget — manuel-import</span><span class="tl-detalje">soevn-baseline · match: valgt</span><span class="pille">migreret</span></div>
+  <div class="tl-række ny"><span class="tl-tid">04.06.26 09:02</span><span class="tl-titel">Note</span><span class="tl-detalje">Søvn: Ordination sat #0 · 23:30–06:30</span><span class="pille">migreret</span></div>
+  <div class="tl-række ny"><span class="tl-tid">04.06.26 06:51</span><span class="tl-titel">SMS sendt — skema-link</span><span class="tl-detalje">baseline-link</span><span class="pille">migreret</span></div>
+  <div class="tl-række ny"><span class="tl-tid">04.06.26 06:51</span><span class="tl-titel">Note</span><span class="tl-detalje">Søvn: Screening: GRØN</span><span class="pille">migreret</span></div>
+</div>
+<div class="kort">
+<table id="soevn-klassifikation">
+<thead><tr><th>Klasse (dry-run-diffen)</th><th>Regel</th><th>Live-tal</th></tr></thead>
+<tbody>
+<tr><td><span class="pille">migreret</span></td><td>Præ-cutover + alle aldrig-dobbelt-loggede typer — ærlig herkomst-markør på hvert event</td><td class="mono">14</td></tr>
+<tr><td><span class="pille rust">dedupet</span></td><td>Post-cutover sends matches mod det auto-loggede F-A-event (variant + ±10 min, 1:1) — aldrig dobbeltposter</td><td class="mono">0</td></tr>
+<tr><td>udeladt (monitorering)</td><td>Dagbogs-nætter/bagud-status er monitorering, ikke journal-modtagelse — bor fortsat i søvn-storen</td><td class="mono">0</td></tr>
+<tr><td><strong>uafklaret</strong></td><td>Post-cutover send uden F-A-match (muligt fejlet send) → <strong>migreres ALDRIG i blinde — stopper hele kørslen</strong></td><td class="mono">0</td></tr>
+<tr><td>forældreløse nøgler</td><td>Søvn-log-nøgler uden klient (gamle test-læk) — migreres ikke, kilden bevares</td><td class="mono">48</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2><span class="nr">05</span>Garantierne</h2>
 <div class="kort">
 <table id="garantier">
 <thead><tr><th>Garanti</th><th>Hvordan</th></tr></thead>
@@ -182,7 +224,8 @@ kommer fra auto-loggen fremadrettet, fra første send efter denne build.</p>
 </section>
 
 <p class="fod">Mentem · Klient-360 Fase 1-GO: journal-auto-log §3 + live-migration (JournalAutoLog.swift,
-build 482) · interaktiv fane-demo: <a href="faner.html">faner-previewet</a> · al data på denne side er
+build 482) · Fase 3: søvn-migration SoevnEventLog→journal (SoevnJournalMigration.swift, build 502, 11/6) ·
+interaktiv fane-demo: <a href="faner.html">faner-previewet</a> · al data på denne side er
 syntetisk demo-data.</p>
 </main>
 </body>
