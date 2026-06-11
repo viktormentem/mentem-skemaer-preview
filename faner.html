@@ -71,6 +71,13 @@ h2 .nr{font-family:var(--mono); font-size:.8rem; color:var(--grøn); letter-spac
 .fanepanel{display:none}
 .fanepanel.aktiv{display:block}
 
+/* Tidslinje-filter (spejler NSPopUpButton-idiomet) */
+.tl-filterlinje{display:flex; align-items:center; gap:.8rem; margin-bottom:.7rem}
+#tl-filter{
+  font-family:'IBM Plex Sans',sans-serif; font-size:.88rem; color:var(--blæk);
+  background:#efe9dd; border:1px solid var(--linje); border-radius:8px; padding:.35rem .6rem;
+}
+
 /* Tidslinje-rækker */
 .tl-række{display:flex; align-items:baseline; gap:.9rem; padding:.5rem .7rem; border-bottom:1px solid var(--linje); font-size:.92rem}
 .tl-række:last-child{border-bottom:none}
@@ -132,19 +139,30 @@ for at blive skjult.</p>
   <div class="faneindhold">
 
     <div class="fanepanel aktiv" id="panel-tidslinje">
-      <div class="tl-række pinned">
+      <div class="tl-filterlinje">
+        <select id="tl-filter" aria-label="Filtrér tidslinjen efter hændelsestype">
+          <option value="">Alle typer</option>
+        </select>
+        <span class="pille ny">NY 11/6: filtrér + bookinger logges</span>
+      </div>
+      <div id="tl-rækker">
+      <div class="tl-række pinned" data-type="safetyFlag">
         <span class="tl-tid">04.06.26 09:12</span>
         <span class="tl-titel">Safety-flag — gul&nbsp;&nbsp;·&nbsp;&nbsp;ÅBEN — afventer kvittering</span>
       </div>
-      <div class="tl-række"><span class="tl-tid">09.06.26 14:30</span><span class="tl-titel">Besvarelse importeret — gad7</span></div>
-      <div class="tl-række"><span class="tl-tid">09.06.26 14:29</span><span class="tl-titel">Fil modtaget — vagt</span></div>
-      <div class="tl-række"><span class="tl-tid">07.06.26 10:02</span><span class="tl-titel">SMS sendt — skema-link</span></div>
-      <div class="tl-række"><span class="tl-tid">05.06.26 16:44</span><span class="tl-titel">Note</span><span class="tl-detalje">Klient ringede — flyttet til torsdag (syntetisk)</span></div>
-      <div class="tl-række"><span class="tl-tid">02.06.26 11:00</span><span class="tl-titel">Tid booket</span></div>
-      <div class="tl-række tl-ukendt"><span class="tl-tid">01.06.26 08:15</span><span class="tl-titel">Hændelse: notatOprettet</span><span class="tl-detalje">(lag 2-type — vises opakt, skjules ikke)</span></div>
+      <div class="tl-række" data-type="tidBooket"><span class="tl-tid">10.06.26 18:21</span><span class="tl-titel">Tid booket — cal</span><span class="tl-detalje">Booket tid: 16.06.26 10:00</span></div>
+      <div class="tl-række" data-type="besvarelseImporteret"><span class="tl-tid">09.06.26 14:30</span><span class="tl-titel">Besvarelse importeret — gad7</span></div>
+      <div class="tl-række" data-type="filModtaget"><span class="tl-tid">09.06.26 14:29</span><span class="tl-titel">Fil modtaget — vagt</span></div>
+      <div class="tl-række" data-type="smsSendt"><span class="tl-tid">07.06.26 10:02</span><span class="tl-titel">SMS sendt — skema-link</span></div>
+      <div class="tl-række" data-type="note"><span class="tl-tid">05.06.26 16:44</span><span class="tl-titel">Note</span><span class="tl-detalje">Klient ringede — flyttet til torsdag (syntetisk)</span></div>
+      <div class="tl-række" data-type="tidBooket"><span class="tl-tid">02.06.26 11:00</span><span class="tl-titel">Tid booket — manuel</span><span class="tl-detalje">Booket tid: 11.06.26 13:00</span></div>
+      <div class="tl-række tl-ukendt" data-type="notatOprettet"><span class="tl-tid">01.06.26 08:15</span><span class="tl-titel">Hændelse: notatOprettet</span><span class="tl-detalje">(lag 2-type — vises opakt, skjules ikke)</span></div>
+      </div>
       <p class="under" style="margin-top:.8rem; font-size:.82rem">Tidslinjen er en ren projektion af den
-      append-only klient-journal (F-A, hash-kædet). Opdatering 11/6: auto-logning af sends/besvarelser
-      er nu LIVE (Fase 1-GO) — se <a href="journal.html">journal-auto-log-previewet</a> for den levende tidslinje.</p>
+      append-only klient-journal (F-A, hash-kædet). Auto-logning af sends/besvarelser er LIVE (Fase 1-GO,
+      <a href="journal.html">journal-previewet</a>) — og fra 11/6 logges også selve <strong>bookingerne</strong>
+      (rækkerne “Tid booket” ovenfor: kilden cal/manuel + den bookede tid). Prøv filteret: vælg fx
+      “Tid booket” i dropdown'en.</p>
     </div>
 
     <div class="fanepanel" id="panel-besvarelser">
@@ -179,8 +197,28 @@ for at blive skjult.</p>
 </div>
 </section>
 
+<section id="tidbooket">
+<h2><span class="nr">02</span>Nyt 11/6: bookinger journalføres — ad to veje</h2>
+<p class="under">Tidslinjen manglede én hændelsestype: selve <strong>bookingen</strong>. Den logges nu
+(canonical-payload <span class="pille">tidBooket {aftaleId, tid, kilde}</span>) — adskilt fra
+bekræftelses-SMS'en, for et send og en booking er to forskellige hændelser:</p>
+<div class="kort">
+<table id="bookingveje">
+<thead><tr><th>Vej</th><th>Hvornår</th><th>Garantier</th></tr></thead>
+<tbody>
+<tr><td class="mono">kilde: manuel</td><td>Du booker en tid (invitation med fast tid) — én hændelse pr. booket session</td><td>Deterministisk aftale-id pr. tid → <span class="ok">“Gentag invitation” duplikerer aldrig</span></td></tr>
+<tr><td class="mono">kilde: cal</td><td>Kalenderen hentes fra Cal.eu — nye bookinger for kendte klienter journalføres automatisk</td><td>Dedup pr. booking-uid på tværs af opslag · <span class="ok">ukendte navne oprettes aldrig som klienter</span> · annullerede skippes</td></tr>
+</tbody>
+</table>
+<p class="under" style="margin-top:.8rem; font-size:.82rem">Begge veje arver auto-loggens fail-safe:
+en journal-fejl kan aldrig vælte selve bookingen eller kalender-opslaget. Rækken gemmer den
+<strong>bookede</strong> tid adskilt fra hændelses-tidspunktet — derfor kan tidslinjen vise
+“Tid booket — cal · Booket tid: 16.06.26 10:00”.</p>
+</div>
+</section>
+
 <section>
-<h2><span class="nr">02</span>Start-fanen er datadreven</h2>
+<h2><span class="nr">03</span>Start-fanen er datadreven</h2>
 <p class="under">Skelettet åbner ikke bare på første fane i blinde — det åbner hvor der ER noget at se:</p>
 <div class="kort">
 <table id="startfane">
@@ -195,7 +233,7 @@ for at blive skjult.</p>
 </section>
 
 <section>
-<h2><span class="nr">03</span>Under motorhjelmen: navn → klientID</h2>
+<h2><span class="nr">04</span>Under motorhjelmen: navn → klientID</h2>
 <p class="under">Skemaresultater har hidtil været keyet på klient-<em>navn</em> (skrøbeligt ved omdøbning
 og navne-sammenfald). Fase 2 starter F-B-migrationen til klient-<em>ID</em>:</p>
 <div class="kort">
@@ -211,8 +249,8 @@ og navne-sammenfald). Fase 2 starter F-B-migrationen til klient-<em>ID</em>:</p>
 </div>
 </section>
 
-<p class="fod">Mentem · Klient-360 Fase 2 faneblads-skelet (Klient360FaneView.swift + Klient360Tidslinje.swift +
-Klient360Besvarelser.swift, 26 nye XCTests) · al data på denne side er syntetisk demo-data.</p>
+<p class="fod">Mentem · Klient-360 Fase 2 faneblads-skelet + tidslinje-komplettering 11/6 (tidBooket-live-log ad 2 veje
++ filter-popup; Klient360TidslinjeFilterView, +11 XCTests → 1018 grøn) · al data på denne side er syntetisk demo-data.</p>
 </main>
 
 <script>
@@ -224,6 +262,24 @@ faner.addEventListener('click', e => {
   faner.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b === knap ? 'true' : 'false'));
   document.querySelectorAll('.fanepanel').forEach(p => p.classList.remove('aktiv'));
   document.getElementById('panel-' + knap.dataset.fane).classList.add('aktiv');
+});
+
+// Tidslinje-filter (spejler Klient360TidslinjeFilterView: popup'en bygges af de
+// typer der faktisk forekommer, og filtreringen er ren model-delegation).
+const visningsnavne = { tidBooket:'Tid booket', smsSendt:'SMS sendt', mailSendt:'Mail sendt',
+  filModtaget:'Fil modtaget', besvarelseImporteret:'Besvarelse importeret', kvittering:'Kvittering',
+  note:'Note', safetyFlag:'Safety-flag' };
+const tlFilter = document.getElementById('tl-filter');
+const tlRækker = [...document.querySelectorAll('#tl-rækker .tl-række')];
+const typer = [...new Set(tlRækker.map(r => r.dataset.type))]
+  .sort((a,b) => (visningsnavne[a] ?? a).localeCompare(visningsnavne[b] ?? b, 'da'));
+typer.forEach(t => {
+  const o = document.createElement('option');
+  o.value = t; o.textContent = visningsnavne[t] ?? t;   // ukendt type: rå navn (ærlighed)
+  tlFilter.appendChild(o);
+});
+tlFilter.addEventListener('change', () => {
+  tlRækker.forEach(r => { r.style.display = (!tlFilter.value || r.dataset.type === tlFilter.value) ? '' : 'none'; });
 });
 
 // Grafer-fanens demo-graf — samme formler som ROMReliableChange.swift (paritet
