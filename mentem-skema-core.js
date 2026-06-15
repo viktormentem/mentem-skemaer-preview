@@ -187,33 +187,7 @@ export const CSD_SOEVNDAGBOG = {
     { key: 'quality',         kind: 'scale',  text: 'Hvordan vil du vurdere kvaliteten af din søvn?',
       scale: ['Meget dårlig', 'Dårlig', 'Nogenlunde', 'God', 'Meget god'] },
     { key: 'naps',            kind: 'text',   text: 'Tog du dig en lur eller blund i løbet af gårsdagen? (antal og samlet varighed, valgfrit)', optional: true, default: 'Nej' },
-    { key: 'medication',      kind: 'text',   text: 'Tog du søvnmedicin, alkohol eller koffein i går? (hvad og hvornår, valgfrit)', optional: true, default: 'Intet' },
-    // SM3-safety-felt ("Sikkerhed i dag") — klient-rejst SM3-trigger i dagbogen.
-    // Tekster LÅST verbatim (srt-klient-tekst-laas-2026-06-02 §"Dagbogs-safety-felt").
-    // Ved "Ja" → render-motoren afslører fritekst (safetyNote) + den låste Tekst 4
-    // + "Skriv til Viktor"-SMS-knap (single-source SOEVN_SAFETY_TEKST4 nedenfor).
-    { key: 'safetyFlag',      kind: 'radio',  text: 'Sikkerhed i dag',
-      prompt: 'Var du i dag tæt på en ulykke på grund af træthed — eller faldt du i søvn et sted, hvor det kunne være farligt (fx bag rattet, ved en maskine)?',
-      microtext: 'Det her er ikke noget, du kan svare forkert på. Vælger du "Ja", hører jeg det med det samme, og vi finder ud af det sammen.',
-      options: ['Nej', 'Ja'] },
-    { key: 'safetyNote',      kind: 'text',   text: 'Vil du fortælle kort, hvad der skete? (valgfrit)',
-      placeholder: 'Du behøver ikke skrive noget — men hvis du vil, kan du fortælle kort, hvad der skete.',
-      optional: true, showIf: { field: 'safetyFlag', equals: 'Ja' } },
-  ],
-};
-
-// SM3 AKTIV failsafe — Tekst 4 (LÅST verbatim, Viktor 2026-06-02; single-source).
-// Vises i stedet for det stramme søvnvindue ved klient-rejst "Ja" på safetyFlag.
-// `lines` = afsnit/bullets i rækkefølge; `bullet:true` → punktopstilling.
-export const SOEVN_SAFETY_TEKST4 = {
-  smsTo: '+4553537585',
-  lines: [
-    { text: 'Tak fordi du fortæller mig det.' },
-    { text: 'Din krop er for søvnig lige nu til, at det er sikkert at fortsætte med det stramme søvnvindue. Det er ikke noget, du har gjort forkert — vi justerer.' },
-    { text: 'Gør det her nu:' },
-    { text: 'Sov efter dine vante tider i nat. Læg dig, når du plejer, og bliv i sengen, så længe du har brug for.', bullet: true },
-    { text: 'Lad være med at køre bil eller betjene maskiner, før du føler dig udhvilet.', bullet: true },
-    { text: 'Skriv til mig hurtigst muligt, så finder vi den rigtige justering sammen.', bullet: true },
+    { key: 'substans',        kind: 'substans', ramme: 'igaar', text: 'Tog du søvnmedicin, alkohol eller koffein i går?', optional: true },
   ],
 };
 
@@ -243,15 +217,10 @@ export const SOEVN_BASELINE = {
       options: ['Svært ved at falde i søvn i starten af natten', 'Vågner meget i løbet af natten', 'Vågner for tidligt om morgenen', 'En blanding'] },
     { key: 'varighed',         kind: 'radio',  text: 'Hvor længe har du haft søvnvanskeligheder?',
       options: ['Under 3 måneder', '3 måneder eller mere'] },
-    { key: 'sovemedicin',      kind: 'text',   text: 'Tager du sovemedicin? (hvad og hvor ofte — valgfrit)', optional: true },
-    { key: 'stimulanser',      kind: 'text',   text: 'Kaffe/te, alkohol og nikotin på en typisk dag? (valgfrit)', optional: true },
+    { key: 'substans',         kind: 'substans', ramme: 'vanligt', text: 'Dit vanlige mønster: søvnmedicin, alkohol eller koffein?', optional: true },
     { key: 'lure',             kind: 'radio',  text: 'Tager du dig lure i dagtimerne?',
       options: ['Nej', 'Ja, under 30 min', 'Ja, 30-60 min', 'Ja, over 60 min'] },
-    { key: 'vanligOpvaagning', kind: 'time',
-      text: 'Hvad tid står du normalt op om morgenen på hverdage? (det tidspunkt du står ud af sengen — ikke hvornår du vågner)',
-      hint: 'fx 06:30' },
-    { key: 'vanligOpvaagningWeekend', kind: 'time', optional: true,
-      text: 'Og i weekenden? (valgfrit)', hint: 'fx 08:00' },
+    { key: 'vanligOpvaagning', kind: 'time',   text: 'Hvad tid står du normalt op om morgenen?' },
   ],
 };
 SKEMAER['soevn-baseline'] = SOEVN_BASELINE;
@@ -399,11 +368,6 @@ export function buildPayloadCSD(entries, meta = {}) {
       periodCompleted: sleepDiary.length,
       startedAt,
       endedAt: meta.endedAt || null,
-      // W2 (§4 Espie 2012 s.771): klient-vendt SMS-påmindelse-samtykke. Additivt,
-      // klartekst INDE i ciphertext (serveren ser det aldrig). Klient-NEJ skal
-      // kunne nå Mentem lige så troværdigt som JA (autonomi) → stemples når sat,
-      // udelades helt når ikke sat (bagudkompatibelt; Swift ignorerer ukendt felt).
-      ...(meta.consent ? { consent: meta.consent } : {}),
     },
     sleepDiary,
   };
@@ -442,7 +406,7 @@ export function buildPayloadBaseline(answers, meta = {}) {
     const v = answers[f.key];
     if (v != null && v !== '') baseline[f.key] = v;
   }
-  const out = {
+  return {
     version: 1,
     exportedAt: now,
     clientName: meta.name || '',
@@ -451,11 +415,6 @@ export function buildPayloadBaseline(answers, meta = {}) {
     baselineType: 'soevn-intake',
     baseline,
   };
-  // P1b: fold forløb-token (fra ?t=) ind i payloaden, så Mentem kan AUTO-matche en
-  // retur til det ventende klient-card. Kun rent 32-hex (samme regel som linket);
-  // ellers udeladt → bagudkompatibelt (ydre kuvert bærer fortsat intet token).
-  if (typeof meta.token === 'string' && /^[0-9a-f]{32}$/.test(meta.token)) out.token = meta.token;
-  return out;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -549,54 +508,5 @@ export async function mentemEncrypt(recipientPubB64, payloadObj, keyId = PINNED_
     tag: bytesToB64(tag),
     salt: bytesToB64(salt),
     keyId,
-  };
-}
-
-// ════════════════════════════════════════════════════════════════════════
-//  INGEST-POSTKASSE (F1-4) — konvolut (§5) + submit-envelope (§2.2)
-// ════════════════════════════════════════════════════════════════════════
-// Wire-kontrakt: noter/ingest-kontrakt-v1-2026-06-06.md (🔒 HÅRD FRYS).
-// Klient krypterer konvolutten til den SEPARATE ingest-public-key → POSTer
-// ciphertext+pseudonym-token til Worker'en. Worker ser ALDRIG klartekst.
-//
-// NØGLE-GUARD (kontrakt §4 pinning-note): ingest-nøglen er et SEPARAT X25519-
-// par — journal-nøglen (PINNED_PUBKEY/8aa536a1) MÅ ALDRIG bruges som ingest-
-// modtager. Håndhæves hårdt her (defense-in-depth mod fejl-konfiguration).
-export const INGEST_ENVELOPE_VERSION = 1;   // klartekst-envelope (§8.8)
-export const INGEST_SCHEMA_VERSION = 1;     // ciphertext-konvolut
-
-/// Byg ciphertext-konvolutten (kontrakt §5) omkring et payload-objekt.
-/// `clientUA` = "åbnet-i-kanal"-signal (§6, valgfrit; i ciphertext → nul-viden).
-export function byggIngestKonvolut(payloadObj, { schemaType = 'soevndagbog', respondentPseudonym = null, clientUA = 'web' } = {}) {
-  return {
-    schemaVersion: INGEST_SCHEMA_VERSION,
-    schemaType,
-    clientTimestamp: isoNoFrac(new Date()),
-    respondentPseudonym,
-    clientUA,
-    data: payloadObj,
-  };
-}
-
-/// Byg den fulde POST /submit-body (kontrakt §2.2): konvolut → mentemEncrypt
-/// til ingest-pubkey → container-JSON som `ciphertext`-streng.
-/// Kaster ved nøgle-guard-brud (ingest-nøgle mangler eller == journal-nøgle).
-export async function byggIngestSubmitBody({ token, payloadObj, ingestPubB64, ingestKeyId, submissionUUID, schemaType = 'soevndagbog', clientUA = 'web' }) {
-  if (!ingestPubB64 || !ingestKeyId) throw new Error('ingest_key_missing');
-  if (normKey(ingestPubB64) === normKey(PINNED_PUBKEY) || ingestKeyId === PINNED_KEY_ID) {
-    throw new Error('ingest_key_guard');   // journal-nøglen (T4) må ALDRIG være ingest-modtager
-  }
-  if (!token || !/^v1\./.test(token)) throw new Error('ingest_token_format');
-  if (!submissionUUID) throw new Error('ingest_uuid_missing');
-  const konvolut = byggIngestKonvolut(payloadObj, { schemaType, clientUA });
-  const container = await mentemEncrypt(ingestPubB64, konvolut, ingestKeyId);
-  const ciphertext = JSON.stringify(container);
-  return {
-    token,
-    envelopeVersion: INGEST_ENVELOPE_VERSION,
-    submissionUUID,
-    size: ciphertext.length,
-    schemaType,
-    ciphertext,
   };
 }
