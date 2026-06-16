@@ -292,8 +292,97 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- TC-F1 FØRSTE-KONTAKT (værdi-først, ?s=tc-f1) — Fase 1 (pre-F3/pre-G3).  -->
+<!-- Verbatim strings LÅST: noter/draft-tc-f1-foerste-kontakt-flow-2026-06-16 -->
+<!-- §"Final verbatim strings". Trin 1-3 = nul-data; trin 4 = let andet-faktor -->
+<!-- (fødselsdato) FØR trin 5; trin 5 = KUN T0 (non-sensitivt). T1 = G3-gated. -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
+<!-- F1.1: Velkomst (ingen data udbedt) -->
+<div id="screen-f1-welcome" class="screen">
+  <div class="wrap">
+    <h1>Velkommen — godt du er her.</h1>
+    <p class="intro">Det her er dit private rum hos psykolog Viktor Nielsen. Du behøver ikke gøre noget lige nu. Tag et kig rundt, så finder vi ud af resten sammen.</p>
+    <button class="btn-primary" id="f1-welcome-next-btn">Se hvad du kan forvente</button>
+    <button class="btn-secondary" id="f1-welcome-skip-btn">Hop til min tid</button>
+  </div>
+</div>
+
+<!-- F1.2: Hvad kan du forvente -->
+<div id="screen-f1-expect" class="screen">
+  <div class="wrap">
+    <h1>Hvad kan du <em>forvente</em></h1>
+    <p class="intro">Den første samtale handler om at lære dig at kende. Der er ikke noget rigtigt eller forkert at sige.</p>
+    <button class="btn-primary" id="f1-expect-next-btn">Se min tid</button>
+  </div>
+</div>
+
+<!-- F1.3: Din tid (pre-F3 = statisk; F3 kobler Cal.eu senere) -->
+<div id="screen-f1-time" class="screen">
+  <div class="wrap">
+    <h1>Din tid</h1>
+    <p class="intro">Din tid bekræftes på SMS.</p>
+    <button class="btn-primary" id="f1-time-next-btn">Forbered dig (valgfrit)</button>
+  </div>
+</div>
+
+<!-- F1.4: Let andet-faktor (FØR sensitivt) — frontend-fødselsdato-gate -->
+<div id="screen-f1-gate" class="screen">
+  <div class="wrap">
+    <h1>Et lille sikkerhedstjek</h1>
+    <p class="intro">For at beskytte dine oplysninger bekræft din fødselsdato.</p>
+    <div class="form-field">
+      <label for="f1-birthdate">Fødselsdato</label>
+      <input type="date" id="f1-birthdate" autocomplete="bday">
+    </div>
+    <button class="btn-primary" id="f1-gate-next-btn" disabled>Fortsæt</button>
+  </div>
+</div>
+
+<!-- F1.5: Progressiv intake — KUN T0 (non-sensitivt). T1 = G3-gated (ikke her). -->
+<div id="screen-f1-intake" class="screen">
+  <div class="wrap">
+    <h1>Lidt praktisk</h1>
+    <p class="intro">Det her hjælper Viktor med at forberede sig. Udfyld det du har lyst til — resten tager vi sammen.</p>
+    <div class="form-field">
+      <label for="f1-preferred-name">Hvad vil du gerne kaldes?</label>
+      <input type="text" id="f1-preferred-name" autocomplete="off">
+    </div>
+    <div class="form-field">
+      <label>Hvordan vil du helst kontaktes?</label>
+      <div class="radio-group" id="f1-contact-method" role="radiogroup" aria-label="Foretrukken kontaktform"></div>
+    </div>
+    <label class="diary-consent-label" for="f1-reminder-consent">
+      <input type="checkbox" id="f1-reminder-consent">
+      <span>Ja tak, send mig venlige påmindelser om mine tider.</span>
+    </label>
+    <div class="form-field" style="margin-top:18px">
+      <label for="f1-time-preference">Er der tidspunkter der passer dig bedst? (valgfrit)</label>
+      <input type="text" id="f1-time-preference" autocomplete="off">
+    </div>
+    <div class="form-field">
+      <label for="f1-heard-about">Hvordan hørte du om praksis? (valgfrit)</label>
+      <input type="text" id="f1-heard-about" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="f1-intake-finish-btn" style="margin-top:8px">Gem og afslut</button>
+    <button class="btn-secondary" id="f1-intake-skip-btn">Spring over — vi tager det til samtalen</button>
+    <div class="disclaimer"><span aria-hidden="true" style="display:inline-flex;width:1em;height:1em;vertical-align:-2px;margin-right:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><strong>Privatliv:</strong> Det du skriver her krypteres i din browser, før det gemmes. Kun din psykolog kan åbne det.</div>
+  </div>
+</div>
+
+<!-- F1.6: Kvittering -->
+<div id="screen-f1-done" class="screen">
+  <div class="wrap">
+    <div class="done-mark" aria-hidden="true"><span style="display:inline-flex;width:56px;height:56px;color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9"/></svg></span></div>
+    <h1>Tak — det er noteret</h1>
+    <p class="intro" id="f1-done-note">Vi ses til din samtale. Du kan altid lukke siden nu.</p>
+  </div>
+</div>
+
 <script type="module">
-import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
+import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline,
+         buildPayloadF1Intake, F1_INTAKE_SCHEMA_ID, mentemEncrypt,
          CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD,
          PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
 
@@ -302,6 +391,7 @@ const params   = new URLSearchParams(location.search);
 const sParam   = params.get('s');
 const sessionN = params.get('n') ? parseInt(params.get('n'), 10) : null;
 const dParam   = params.get('d') ? parseInt(params.get('d'), 10) : null;   // dagbog-periode (dage)
+const f1Surface = (sParam === 'tc-f1');   // ?s=tc-f1 → TC første-kontakt-flow (Fase 1)
 
 // ── Server draft-store (Mulighed A) ───────────────────────────────────────
 // token = forløbs-id (128-bit, fra Mentem). {BASE} er KONFIGURERBAR (ikke
@@ -328,6 +418,17 @@ const apiOverride = params.get('api');
 function draftBase() { if (LOCAL_ONLY) return ''; return ((apiOverride || DRAFT_API_BASE || '').trim()).replace(/\/+$/, ''); }
 function draftEnabled() { return !!(draftToken && /^[0-9a-f]{32}$/.test(draftToken) && draftBase()); }
 function draftUrl() { return `${draftBase()}/api/soevn-draft/${draftToken}`; }
+
+// ── TC-F1 T0-draft-write (uafhængig af soevndagbogens LOCAL_ONLY) ──────────
+// T0 er Viktor-ratificeret pre-G3-OK FORDI draftstore kun holder CIPHERTEXT
+// (mentemEncrypt-konvolut). Derfor er F1's T0-PUT IKKE underlagt soevndagbogens
+// LOCAL_ONLY-gate (som handler om sundhedsdata/T1). F1 skriver ALDRIG plaintext
+// til server og skriver ALDRIG T1 (helbred) — kun T0-konvolut via buildPayloadF1Intake
+// (whitelist). ?api= override til preview/test. Tom base + intet ?api= →
+// server-write FRA (ren localStorage). Samme route-kontrakt: /api/soevn-draft/{token}.
+function f1DraftBase() { return ((apiOverride || DRAFT_API_BASE || '').trim()).replace(/\/+$/, ''); }
+function f1DraftEnabled() { return !!(draftToken && /^[0-9a-f]{32}$/.test(draftToken) && f1DraftBase()); }
+function f1DraftUrl() { return `${f1DraftBase()}/api/soevn-draft/${draftToken}`; }
 
 // TEST-only dag-advance: ?testday=N rykker "i dag" N dage frem så dag 2 + slet-
 // flow kan device-testes uden at vente et døgn. GATET til preview/test-hosts →
@@ -1555,8 +1656,112 @@ async function shareBaselineEncrypted() {
   }
 }
 
-// ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
-if (baselineId) {
+// ════════════════════════════════════════════════════════════════════════
+//  TC-F1 FØRSTE-KONTAKT-FLOW (?s=tc-f1) — Fase 1 (pre-F3/pre-G3)
+// ════════════════════════════════════════════════════════════════════════
+// Værdi-først: trin 1-3 beder om INGEN data. Trin 4 = let andet-faktor
+// (fødselsdato) FØR trin 5. Trin 5 = KUN T0 (non-sensitivt). Gem-undervejs i
+// localStorage (klientens egen browser). Server-write = CIPHERTEXT-ONLY T0.
+const F1_CONTACT_OPTIONS = ['SMS', 'Mail', 'Telefon'];
+const F1_LS_KEY = 'tc-f1-intake-t0';   // gem-undervejs (KUN klientens egen browser)
+let f1Birthdate = '';                    // andet-faktor — KUN i hukommelsen, skrives aldrig
+let f1Contact = '';
+
+function f1LoadT0() {
+  try { return JSON.parse(localStorage.getItem(F1_LS_KEY)) || {}; } catch (e) { return {}; }
+}
+function f1SaveT0(t0) {
+  try { localStorage.setItem(F1_LS_KEY, JSON.stringify(t0)); } catch (e) { /* privat-browsing → spring lokal gem over */ }
+}
+function f1CollectT0() {
+  return {
+    preferredName:   (document.getElementById('f1-preferred-name').value || '').trim(),
+    contactMethod:   f1Contact,
+    reminderConsent: document.getElementById('f1-reminder-consent').checked,
+    timePreference:  (document.getElementById('f1-time-preference').value || '').trim(),
+    heardAbout:      (document.getElementById('f1-heard-about').value || '').trim(),
+  };
+}
+
+// T0-submit: gem lokalt + (hvis aktiveret) krypter T0-konvolut → PUT draftstore.
+// ALDRIG plaintext til server; ALDRIG T1. Server-fejl/offline blokerer ALDRIG klienten.
+async function f1SubmitT0() {
+  const t0 = f1CollectT0();
+  f1SaveT0(t0);
+  if (f1DraftEnabled() && keyCheck.ok) {
+    try {
+      const payload = buildPayloadF1Intake(t0, { forloebId: draftToken });
+      const container = await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId);
+      await fetch(f1DraftUrl(), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(container) });
+    } catch (e) { /* offline → T0 forbliver i localStorage; ingen hård fejl mod klienten */ }
+  }
+}
+
+function runFirstContact() {
+  // Manipuleret link (ukendt nøgle) → bloker FØR nogen data udfyldes.
+  if (!keyCheck.ok) {
+    document.querySelector('#screen-f1-welcome .intro').innerHTML =
+      '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    document.getElementById('f1-welcome-next-btn').disabled = true;
+    document.getElementById('f1-welcome-skip-btn').disabled = true;
+    showScreen('screen-f1-welcome');
+    return;
+  }
+
+  // Kontaktform-radios (samme .radio-option-mønster som skemaerne).
+  const cm = document.getElementById('f1-contact-method');
+  cm.innerHTML = '';
+  F1_CONTACT_OPTIONS.forEach(opt => {
+    const lab = document.createElement('label');
+    lab.className = 'radio-option';
+    lab.innerHTML = `<input type="radio" name="f1-contact" value="${opt}"><span>${opt}</span>`;
+    lab.querySelector('input').addEventListener('change', () => {
+      cm.querySelectorAll('.radio-option').forEach(o => o.classList.remove('checked'));
+      lab.classList.add('checked');
+      f1Contact = opt;
+    });
+    cm.appendChild(lab);
+  });
+
+  // Prefill fra localStorage (gem-undervejs — klient kan vende tilbage).
+  const saved = f1LoadT0();
+  if (saved.preferredName)  document.getElementById('f1-preferred-name').value = saved.preferredName;
+  if (saved.timePreference) document.getElementById('f1-time-preference').value = saved.timePreference;
+  if (saved.heardAbout)     document.getElementById('f1-heard-about').value = saved.heardAbout;
+  if (saved.reminderConsent) document.getElementById('f1-reminder-consent').checked = true;
+  if (saved.contactMethod) {
+    const pre = cm.querySelector(`input[value="${saved.contactMethod}"]`);
+    if (pre) { pre.checked = true; pre.closest('.radio-option').classList.add('checked'); f1Contact = saved.contactMethod; }
+  }
+
+  const go = (id) => { showScreen(id); window.scrollTo(0, 0); };
+  document.getElementById('f1-welcome-next-btn').addEventListener('click', () => go('screen-f1-expect'));
+  document.getElementById('f1-welcome-skip-btn').addEventListener('click', () => go('screen-f1-time'));
+  document.getElementById('f1-expect-next-btn').addEventListener('click', () => go('screen-f1-time'));
+  document.getElementById('f1-time-next-btn').addEventListener('click', () => go('screen-f1-gate'));
+
+  // Fødselsdato-gate (frontend andet-faktor): kræver en udfyldt dato for at fortsætte.
+  // Fase 1 = ingen server-side bind (det er F3/G3-gated); datoen skrives ALDRIG.
+  const bd = document.getElementById('f1-birthdate');
+  const gateNext = document.getElementById('f1-gate-next-btn');
+  bd.addEventListener('input', () => { gateNext.disabled = !bd.value; });
+  gateNext.addEventListener('click', () => { f1Birthdate = bd.value; go('screen-f1-intake'); });
+
+  document.getElementById('f1-intake-finish-btn').addEventListener('click', async () => {
+    await f1SubmitT0();
+    go('screen-f1-done');
+  });
+  document.getElementById('f1-intake-skip-btn').addEventListener('click', () => {
+    go('screen-f1-done');   // springer T0 over → intet skrives (lokalt eller server)
+  });
+
+  showScreen('screen-f1-welcome');
+}
+
+// ── BOOTSTRAP: F1-flow ELLER baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──
+if (f1Surface) {
+  runFirstContact();
+} else if (baselineId) {
   runBaseline(baselineId);
 } else if (diaryId) {
   runDiary(diaryId);

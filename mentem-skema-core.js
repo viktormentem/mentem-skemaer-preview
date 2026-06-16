@@ -425,6 +425,50 @@ export function buildPayloadBaseline(answers, meta = {}) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+//  TC-F1 FØRSTE-KONTAKT-INTAKE — T0-payload (KUN non-sensitivt)
+// ════════════════════════════════════════════════════════════════════════
+// Fase 1 (pre-F3/pre-G3): den værdi-først første-kontakt-flade indsamler KUN
+// T0 (ikke-sundhedsdata: praktisk/kontakt). Felt-klassifikation:
+// noter/draft-tc-intake-skema-klassifikation-2026-06-16.md.
+//   T0 = preferredName · contactMethod · reminderConsent · timePreference · heardAbout.
+//   T1 (helbred/symptomer = GDPR Art.9) er IKKE i denne payload — den er G3-gated +
+//   server-side fødselsdato-bind og bygges først når DPA + EU-residency er grøn.
+// HÅRD invariant: kun T0_KEYS slipper igennem (whitelist) → ingen sundhedsdata kan
+// lække ind selv hvis kalderen sender ekstra felter. `schemaId` adskiller intake-type
+// (Prescriba/egenbetaler = 2 skema-id'er senere, samme krypto-konvolut). Output går
+// gennem mentemEncrypt → draftstore CIPHERTEXT-ONLY (T0 pre-G3-OK fordi processor kun
+// holder ciphertext; gemmes en T0-sti nogensinde PLAINTEXT på server → G3 re-gælder).
+export const F1_INTAKE_SCHEMA_ID = 'tc-f1-intake-t0';
+export function buildPayloadF1Intake(t0, meta = {}) {
+  const now = isoNoFrac(new Date());
+  const T0_KEYS = ['preferredName', 'contactMethod', 'reminderConsent', 'timePreference', 'heardAbout'];
+  const intake = {};
+  for (const k of T0_KEYS) {
+    const v = (t0 || {})[k];
+    if (v != null && v !== '') intake[k] = v;
+  }
+  return {
+    version: 1,
+    exportedAt: now,
+    clientName: meta.name || (intake.preferredName || ''),
+    therapistName: 'Viktor Nielsen',
+    categories: ['tc-f1-intake'],
+    intakeType: 'tc-first-contact',
+    tier: 'T0',
+    intake,
+    // Versions-blok — klartekst INDE i ciphertext (serveren ser den aldrig).
+    meta: {
+      schemaVersion: SCHEMA_VERSION,
+      schemaId: F1_INTAKE_SCHEMA_ID,
+      tier: 'T0',
+      protocolVersion: PROTOCOL_VERSION,
+      siteBuild: SITE_BUILD,
+      forloebId: meta.forloebId || null,          // = token (mapping kun i Mentem)
+    },
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════
 //  KEY-PINNING (sikkerheds-hærdning, P1a) — trust anchor i siden
 // ════════════════════════════════════════════════════════════════════════
 // Mentems E2E X25519-public-key er PINNED i koden — IKKE taget fra ?pk=-URL-
