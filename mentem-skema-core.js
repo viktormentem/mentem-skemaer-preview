@@ -1,14 +1,14 @@
-// mentem-skema-core.js — MCT-skema-kadence kerne (P1a)
+// mentem-skema-core.js - MCT-skema-kadence kerne (P1a)
 //
 // Miljø-agnostisk ES-modul: kører identisk i browser (<script type="module">)
-// OG i Node 18+ (round-trip-harness + selftest). Ren WebCrypto — INGEN
+// OG i Node 18+ (round-trip-harness + selftest). Ren WebCrypto - INGEN
 // tredjeparts-krypto-lib, INGEN privat/prod-nøgle (KRYPTO-GUARD: static-site
 // har KUN modtagerens PUBLIC X25519-nøgle og KRYPTERER; kun Mentem dekrypterer).
 //
 // Krypto-kontrakt (SKAL matche Mentems E2EKryptering.swift PRÆCIST):
 //   Curve25519 (X25519) ECDH → HKDF-SHA256(salt, info="TherapyCopilot-E2E-Export-v1", 32B)
 //   → AES-256-GCM. Container = KrypteretEksportContainer (ciphertext + tag SEPARAT,
-//   ISO8601-datoer UDEN fraktioner — CryptoKit .iso8601 afviser millisekunder).
+//   ISO8601-datoer UDEN fraktioner - CryptoKit .iso8601 afviser millisekunder).
 //
 // Spec: noter/spec-mct-skema-kadence-2026-05-31.md v1.3 (§3, §4, §9, §12, R3, R5).
 
@@ -77,6 +77,9 @@ export const SKEMAER = {
     vasMin: 'Helt uenig', vasMax: 'Helt enig',
   },
   // ── Symptom (frit/public domain) ───────────────────────────────────────
+  // emdash-guard:instrument-start (validerede instrumenter GAD-7/PHQ-9/WHO-5/WSAS): gengivet
+  // VERBATIM fra kilden; em-dash-reglen gælder IKKE reproducerede instrumenter (CLAUDE.md-undtagelse,
+  // Viktor 2026-06-19). Vores EGEN copy (CAS/MCB ovenfor, anmod, §2b) forbliver em-dash-fri + guardet.
   gad7: {
     id: 'gad7', kind: 'radio', title: 'GAD-7', short: 'Bekymring og uro', icon: 'sky', badge: '7 spørgsmål',
     instruction: 'Hvor tit har du været generet af følgende problemer i løbet af de seneste 2 uger?',
@@ -134,6 +137,7 @@ export const SKEMAER = {
       'Nære relationer — familie og parforhold',
     ],
   },
+  // emdash-guard:instrument-end
   // ── Alliance (frit/public domain, alliance-checkpoints) ────────────────
   waisr: {
     id: 'waisr', kind: 'radio', title: 'WAI-SR', short: 'Samarbejde', icon: 'samarbejde', badge: '12 spørgsmål',
@@ -157,7 +161,7 @@ export const SKEMAER = {
 };
 
 // ════════════════════════════════════════════════════════════════════════
-//  SØVNDAGBOG — udskifteligt indholds-modul (B5 swap-arkitektur)
+//  SØVNDAGBOG - udskifteligt indholds-modul (B5 swap-arkitektur)
 // ════════════════════════════════════════════════════════════════════════
 // DROP-IN-KONTRAKT: dette objekt er CSD-INDHOLDET (felt-listen) holdt ISOLERET
 // fra render-motoren (renderDiary i index.html) + krypto/akkumulering. En
@@ -167,18 +171,46 @@ export const SKEMAER = {
 // render-motoren kender → indholdet er frit udskifteligt.
 //
 // NU (Viktors egen praksis): ÆGTE Consensus Sleep Diary (Carney et al. 2012,
-// SLEEP 35(2):287-302 — "The Consensus Sleep Diary: Standardizing prospective
+// SLEEP 35(2):287-302 - "The Consensus Sleep Diary: Standardizing prospective
 // sleep self-monitoring"). Fri klinisk brug. Gengivet uændret med kildeangivelse.
 // Felterne følger CSD-M (morgen-versionen): udfyldes om morgenen for natten der gik.
+
+// ════════════════════════════════════════════════════════════════════════
+//  M1.6 LÅSTE KLIENT-TEKSTER (F1 søvnigheds-item + ESS milepæls-ramme)
+// ════════════════════════════════════════════════════════════════════════
+// Single-source-of-truth = SoevnKlientTekstLaas.swift (PsykologInvitation,
+// `f1Soevnighed*`/`essMilepaelsRamme`, Viktor-låst verbatim @aa8e47a, 7/7
+// lås-tests grøn). Gengivet ORDRET her (web kan ikke importere Swift). 0 em-dash,
+// æøå. RØR ALDRIG ordlyden uden at opdatere Swift-single-source + lås-tests FØRST.
+// Forankring: srt-klient-tekst-laas-2026-06-02 §F1 (A4-konstrukt = søvnighed/
+// dozing, ikke fatigue) + §ESS · safety-spec §2 (uge-1-dagligt, derefter ugentligt).
+export const SOEVN_F1 = {
+  titel:   'Søvnighed i dag',
+  prompt:  'Hvor søvnig har du følt dig i løbet af dagen i dag? Tænk på, hvor tæt du har været på at døse hen eller falde i søvn, mens du var i gang med noget.',
+  anker0:  'slet ikke søvnig, klar og vågen hele dagen',
+  anker10: 'ekstremt søvnig, kæmpede for at holde mig vågen',
+};
+// ESS milepæls-INTRO-ramme = VORES egen ramme om instrumentet (Viktor-låst), IKKE
+// licens-bunden. KUN denne ramme renderes nu; selve ESS-items (8 spørgsmål + skala
+// + scoring) er licens-bundne (Johns 1990-1997, Special Terms 140135) og STUBBES
+// bag licens-gate til Mapi/ICON LS-screenshot-godkendelse er i hus (Viktor 26/6;
+// ess-licens/ESS-licens-vurdering-2026-06-26.md). Wrappen nævner bevidst ikke
+// "Epworth"/score-tal; ESS-scoren går kun til Viktor.
+export const ESS_MILEPAEL_RAMME =
+`**Et kort tjek af din søvnighed**
+Nu og da beder jeg dig svare på nogle få spørgsmål om, hvor let du falder i søvn i forskellige hverdagssituationer. Det hjælper mig med at følge, hvordan din krop har det med det nye søvnvindue, og at holde øje med, at vi ikke strammer for hårdt.
+
+Der er ingen rigtige eller forkerte svar. Svar bare ud fra, hvordan det typisk har været for dig på det seneste.`;
+
 export const CSD_SOEVNDAGBOG = {
   id: 'soevndagbog', kind: 'diary', title: 'Søvndagbog', short: 'Søvndagbog', icon: 'maane',
   badge: 'én gang om morgenen',
   attribution: 'Consensus Sleep Diary (Carney et al., 2012, SLEEP). Gengivet uændret med kildeangivelse.',
-  instruction: 'Udfyld om morgenen for natten, der lige er gået. Svar så godt du kan — du behøver ikke kigge på uret om natten, et skøn er fint. Der er ingen rigtige eller forkerte svar.',
+  instruction: 'Udfyld om morgenen for natten, der lige er gået. Svar så godt du kan. Du behøver ikke kigge på uret om natten, et skøn er fint. Der er ingen rigtige eller forkerte svar.',
   fields: [
     { key: 'bedtime',         kind: 'time',   text: 'Hvad tid gik du i seng i aftes?' },
     { key: 'lightsOut',       kind: 'time',   text: 'Hvad tid forsøgte du at falde i søvn (slukkede lyset)?',
-      hint: 'Tit samme tid som du gik i seng — men hvis du lå og læste eller var på mobilen lidt først, så skriv hvornår du faktisk prøvede at sove. Samme tid er helt fint.' },
+      hint: 'Tit samme tid som du gik i seng, men hvis du lå og læste eller var på mobilen lidt først, så skriv hvornår du faktisk prøvede at sove. Samme tid er helt fint.' },
     { key: 'sleepLatencyMin', kind: 'number', text: 'Hvor lang tid tog det dig at falde i søvn?', unit: 'minutter', min: 0, max: 600 },
     { key: 'awakeningsCount', kind: 'number', text: 'Hvor mange gange vågnede du i løbet af natten (ud over den endelige opvågning)?', unit: 'gange', min: 0, max: 30 },
     { key: 'awakeningsMin',   kind: 'number', text: 'Hvor længe var du vågen i alt under disse opvågninger?', unit: 'minutter', min: 0, max: 600 },
@@ -186,25 +218,35 @@ export const CSD_SOEVNDAGBOG = {
     { key: 'outOfBed',        kind: 'time',   text: 'Hvad tid stod du op af sengen?' },
     { key: 'quality',         kind: 'scale',  text: 'Hvordan vil du vurdere kvaliteten af din søvn?',
       scale: ['Meget dårlig', 'Dårlig', 'Nogenlunde', 'God', 'Meget god'] },
-    // Ingen `default` — et felt må ALDRIG bære en committed default der tæller som
+    // Ingen `default` - et felt må ALDRIG bære en committed default der tæller som
     // svar (spec-ux-soevndagbog-udfyldning §1: fantom-defaults korrumperer kliniske
     // data). Tomt = ubesvaret. Det eneste der må forudfylde er "Samme som i går".
     { key: 'naps',            kind: 'text',   text: 'Tog du dig en lur eller blund i løbet af gårsdagen? (antal og samlet varighed, valgfrit)', optional: true },
     { key: 'substans',        kind: 'substans', ramme: 'igaar', text: 'Tog du søvnmedicin, alkohol eller koffein i går?', optional: true },
+    // F1 dagtræthed/søvnigheds-item (M1.6) — ADDITIVT monitorerings-item EFTER
+    // CSD-instrumentet (Carney gengives uændret/kontigvist; F1 er VORES eget
+    // A4-konstrukt = søvnighed/dozing, ikke en del af CSD). 0-10 NRS m. ord-ankre
+    // KUN i enderne. Vises DAGLIGT i uge 1, derefter UGENTLIGT (`weekOneDaily`;
+    // safety-spec §2/SM1). INGEN tal-/score-/SE-feedback til klienten (scoren går
+    // kun til motor+Viktor). Eksport-nøgle `daytimeSleepiness_0_10` = M1.3-kontrakt
+    // (additiv/bagudkompat; flyder gennem buildPayloadCSD FIELD_KEYS uændret).
+    { key: 'daytimeSleepiness_0_10', kind: 'nrs', weekOneDaily: true,
+      titel: SOEVN_F1.titel, text: SOEVN_F1.prompt,
+      anker0: SOEVN_F1.anker0, anker10: SOEVN_F1.anker10, min: 0, max: 10 },
   ],
 };
 
-// Registrér søvndagbogen i SKEMAER (men IKKE i SKEMA_ORDER — den er en
+// Registrér søvndagbogen i SKEMAER (men IKKE i SKEMA_ORDER - den er en
 // standalone monitorerings-dagbog, aldrig en del af det booking-koblede
 // spørgeskema-batteri).
 SKEMAER.soevndagbog = CSD_SOEVNDAGBOG;
 
 // ════════════════════════════════════════════════════════════════════════
-//  SØVN-BASELINE — engangs intake-skema (IKKE-akkumulerende)
+//  SØVN-BASELINE - engangs intake-skema (IKKE-akkumulerende)
 // ════════════════════════════════════════════════════════════════════════
 // Adskilt fra den daglige CSD: sendes ÉN gang ved forløbs-start, udfyldes én
 // gang, deles én gang. KUN deskriptive/kontekst-variable (data-minimering,
-// GDPR) — hver variabel ændrer en klinisk beslutning (spec-baseline-intake §1).
+// GDPR) - hver variabel ændrer en klinisk beslutning (spec-baseline-intake §1).
 // D3-SIKKERHEDSSCREEN (epilepsi/bipolar/OSA/suicidalitet/…) er BEVIDST IKKE her:
 // den hører i Viktors kliniske intake (B-Q1/Riemann "clinical interview"), ikke
 // et self-serve-link. Nul-score: ingen tolkning vises klienten.
@@ -229,7 +271,21 @@ export const SOEVN_BASELINE = {
 SKEMAER['soevn-baseline'] = SOEVN_BASELINE;
 
 // ════════════════════════════════════════════════════════════════════════
-//  SCORING (intern — bruges til opaque payload; klienten ser ALDRIG resultatet)
+//  ESS MILEPÆLS-TJEK (kind:'essMilepael') — kun VORES låste intro-ramme nu
+// ════════════════════════════════════════════════════════════════════════
+// Standalone milepæls-visning (baseline · M+2 uger · M+stabil · afslutning · ad
+// hoc), eget flow (renderEss). Vises via ?s=ess. Den Viktor-låste intro-ramme
+// (ESS_MILEPAEL_RAMME) renderes FØR ESS-items; selve items er licens-bundne →
+// STUB (skjult/placeholder) til Mapi-screenshot-godkendelse er i hus. Aldrig en
+// del af SKEMA_ORDER (booking-batteriet) eller den daglige dagbog.
+export const ESS_MILEPAEL = {
+  id: 'ess', kind: 'essMilepael', title: 'Et kort tjek af din søvnighed', short: 'Søvnigheds-tjek',
+  icon: 'soevnighed', badge: 'ved milepæle', ramme: ESS_MILEPAEL_RAMME,
+};
+SKEMAER.ess = ESS_MILEPAEL;
+
+// ════════════════════════════════════════════════════════════════════════
+//  SCORING (intern - bruges til opaque payload; klienten ser ALDRIG resultatet)
 // ════════════════════════════════════════════════════════════════════════
 function val(a) { return (a && typeof a === 'object') ? a.value : a; }
 function sumSkema(answers, id) {
@@ -266,7 +322,31 @@ export function computeScores(answers) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  PAYLOAD (TerapiEksportPayload-shape — matcher E2EKryptering.swift)
+//  INGEST-KONVOLUT (transport-form - matcher app IngestKonvolut)
+// ════════════════════════════════════════════════════════════════════════
+// Producent-side envelope-wrap (PR-2): web emitterer den ÆGTE konvolut-form
+// {schemaVersion, schemaType, clientTimestamp, data, clientUA} i stedet for en
+// flad payload. Den hidtidige FLADE payload pakkes UÆNDRET i `data` (0 tab).
+// App-adapteren (IngestKonvolutAdapter.normalisér) ser dermed `.konvolutDirekte`
+// - ingen felt-syntese - mens gamle flade containere fortsat dekoder
+// (.fladCSD/.fladBatteri). Felt-kontrakt: IngestEnvelopeDecryptor.swift /
+// IngestKonvolutRouter.swift. clientUA='web' = ærlig kanal-markør (kontrakt §6,
+// valgfrit) → føder app §8.4-adherence. respondentPseudonym sættes IKKE web-side
+// (kommer fra poll-/fil-laget - adapter-note, ikke payload).
+// NB: RØR ALDRIG skema-felt-definitionerne (CSD_SOEVNDAGBOG osv.) - kun
+// payload-BYGGERNE wrappes (transport-form, ikke skema-felter).
+function buildIngestKonvolut(data, { schemaType, schemaVersion, clientTimestamp } = {}) {
+  return {
+    schemaVersion,
+    schemaType,
+    clientTimestamp,
+    data,
+    clientUA: 'web',
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  PAYLOAD (TerapiEksportPayload-shape - matcher E2EKryptering.swift)
 // ════════════════════════════════════════════════════════════════════════
 function isoNoFrac(d) { return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); }
 
@@ -316,14 +396,21 @@ export function buildPayload(answers, meta = {}) {
       rating: r.rating,
     }));
   }
-  return payload;
+  // Envelope-wrap (PR-2): flad payload UÆNDRET i `data`; konvolut-felter afledt af
+  // payloadens egne værdier (categories[0]→schemaType, version→schemaVersion,
+  // exportedAt→clientTimestamp). Fallback-schemaType matcher app-adapterens flad-batteri-gren.
+  return buildIngestKonvolut(payload, {
+    schemaType: payload.categories[0] || 'questionnaire-batteri',
+    schemaVersion: payload.version,
+    clientTimestamp: payload.exportedAt,
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════
 //  SØVNDAGBOG-PAYLOAD (akkumuleret periode → ÉN opaque eksport)
 // ════════════════════════════════════════════════════════════════════════
 // REN data-capture: payloaden bærer KUN de rå dagbogs-felter (ingen scoring,
-// ingen TST/SE) — nul-score-invarianten bevares, og den AUTORITATIVE
+// ingen TST/SE) - nul-score-invarianten bevares, og den AUTORITATIVE
 // TST/SE-beregning sker Mentem-side (Swift `Soevnberegning`), så formlen har
 // én sandhedskilde. `sleepDiary` er en NY gren ved siden af questionnaireScores
 // /casTrends/beliefRatings; Swift `TerapiEksportPayload` ignorerer ukendte
@@ -350,7 +437,7 @@ export function buildPayloadCSD(entries, meta = {}) {
 
   const startedAt = meta.startedAt || (sleepDiary[0] && sleepDiary[0].date) || now;
 
-  return {
+  const data = {
     version: 1,
     exportedAt: now,
     clientName: meta.name || '',
@@ -359,11 +446,11 @@ export function buildPayloadCSD(entries, meta = {}) {
     diaryType: 'consensus-sleep-diary',
     diaryStartedAt: startedAt,
     plannedDays: (meta.plannedDays != null) ? meta.plannedDays : null,
-    // Art.9-samtykke (server-opbevaring) — data-minimalt, INDE i ciphertext.
+    // Art.9-samtykke (server-opbevaring) - data-minimalt, INDE i ciphertext.
     // Additivt: ældre containere mangler feltet (=> null), ingen krypto-/format-
     // ændring, ingen migration. Localstorage-variant => null (intet samtykke krævet).
     consent: meta.consent || null,
-    // Versions-blok (§6) — klartekst INDE i ciphertext (serveren ser den aldrig).
+    // Versions-blok (§6) - klartekst INDE i ciphertext (serveren ser den aldrig).
     meta: {
       schemaVersion: SCHEMA_VERSION,
       contentVersion: (meta.contentVersion != null) ? meta.contentVersion : CONTENT_VERSION,
@@ -378,10 +465,18 @@ export function buildPayloadCSD(entries, meta = {}) {
     },
     sleepDiary,
   };
+
+  // Envelope-wrap (PR-2): flad CSD-payload UÆNDRET i `data`; konvolut-felter afledt
+  // (categories[0]→schemaType, meta.schemaVersion→schemaVersion, exportedAt→clientTimestamp).
+  return buildIngestKonvolut(data, {
+    schemaType: data.categories[0],
+    schemaVersion: data.meta.schemaVersion,
+    clientTimestamp: data.exportedAt,
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  DRAFT-MERGE (newest-wins pr. entry-dato) — readable-side reconcile
+//  DRAFT-MERGE (newest-wins pr. entry-dato) - readable-side reconcile
 // ════════════════════════════════════════════════════════════════════════
 // Bruges hvor BEGGE sider er læsbare plaintext-entries (fx Mentem-decrypt-side,
 // eller fremtidig klient-læsbar kladde). Server-draften er pinned-key-ciphertext
@@ -425,9 +520,169 @@ export function buildPayloadBaseline(answers, meta = {}) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  KEY-PINNING (sikkerheds-hærdning, P1a) — trust anchor i siden
+//  FORLØBS-ANMODNING (ANMOD-V1) - ingest-skema "forloebs-anmodning"
 // ════════════════════════════════════════════════════════════════════════
-// Mentems E2E X25519-public-key er PINNED i koden — IKKE taget fra ?pk=-URL-
+// FROSSET kontrakt: noter/contract-forloebs-anmodning-ingest-2026-06-19.md (§1–§3),
+// afledt 1:1 af PsykologInvitation/ForloebsAnmodningKonvolut.swift (parser = ground-truth).
+// Web-form OG app-submit-UI OG bakke-parser SKAL matche §1–§3 byte-for-byte (kontrakt-drift
+// = søvndagbog-ULÆSELIG-rod). Den FLADE §2-payload pakkes i `data` på SAMME envelope-wrap-måde
+// som søvndagbog (buildIngestKonvolut → {schemaVersion, schemaType, clientTimestamp, data, clientUA}).
+// Krypto er UÆNDRET (mentemEncrypt mod INGEST-X25519-pubkey, zero-knowledge - siden har KUN
+// public-key). RØR ALDRIG skema-felt-definitionerne; kun transport-formen tilføjes her.
+
+export const ANMOD_SCHEMA_TYPE = 'forloebs-anmodning';   // §1 AUTORITATIV wire-streng (ren ASCII, ø→oe)
+
+// §2 enums (wire-værdier - IKKE visningstekst). v2.1 (adaptiv-grundlags-betinget):
+//   grundlag 4→3-vejs; FJERNET forloebstype/holdDag/holdTid; TILFØJET henvisning_psykiater/
+//   forloeb_tilbudt/tid_praeference. forloeb_resolved er SYSTEM-AFLEDT (aldrig på wire).
+export const ANMOD_GRUNDLAG             = ['psykiater', 'forsikring', 'egenbetaler'];
+export const ANMOD_HENVISNING_PSYKIATER = ['vestegnsklinikken', 'westergaard', 'ved_ikke']; // KUN psykiater (valgfri)
+export const ANMOD_FORLOEB_TILBUDT      = ['gruppe', 'individuelt', 'ved_ikke'];             // KUN psykiater (REQ); = TILBUDT
+export const ANMOD_TID_DAGE             = ['tirsdag', 'onsdag', 'torsdag', 'fredag'];        // KUN forloeb_tilbudt=gruppe
+export const ANMOD_TID_TIDER            = ['14:00', '15:30'];                                // KUN forloeb_tilbudt=gruppe
+export const ANMOD_TID_VED_IKKE         = 'ved_ikke';                                        // "Ved ikke endnu" → wire-token
+// Grundlag der STILLER psykiater-grenens spørgsmål (henvisning + forloeb_tilbudt) i UI.
+export const ANMOD_SPOERG_PSYKIATER     = ['psykiater'];
+
+// §6 art.9-deny - disse keys må ALDRIG bære helbreds-/CPR-data; til stede => hård parse-fejl.
+export const ANMOD_ART9_DENY = ['cpr', 'helbred', 'diagnose', 'diagnosis', 'medicin', 'sygdom', 'symptom', 'health', 'journal'];
+
+// §2 visningsnavne (korrekt æøå - IKKE wire-værdier). Single source for web + app.
+// Psykiater-klinik: personnavn (Hoff/Westergaard) er display-only (wire = klinik-id).
+export const ANMOD_DISPLAY = {
+  grundlag:            { psykiater: 'Henvist via egen læge til psykiater', forsikring: 'Via forsikring', egenbetaler: 'Egenbetaler' },
+  henvisning_psykiater:{ vestegnsklinikken: 'Vestegnsklinikken (Andreas Hoff)', westergaard: 'Westergaard Psykiatri (Casper Westergaard)', ved_ikke: 'Ved ikke' },
+  forloeb_tilbudt:     { gruppe: 'Gruppeforløb', individuelt: 'Individuelt forløb', ved_ikke: 'Ved ikke' },
+  tid_dage:            { tirsdag: 'Tirsdag', onsdag: 'Onsdag', torsdag: 'Torsdag', fredag: 'Fredag' },
+  tid_tider:           { '14:00': 'kl. 14:00', '15:30': 'kl. 15:30' },
+  tid_ved_ikke:        'Ved ikke endnu',
+};
+
+// §2b PINNET samtykke-ordlyd (wording-version v2-2026-06-19, em-dash-fri): renderes PRÆCIST på
+// BEGGE flader (web + app). `[privatlivspolitikken]` = dp.dk-skabelon-link-TODO (interim-placeholder).
+// Brand siger ALTID "Psykolog Viktor Nielsen", ALDRIG "Mycel". Betydning UÆNDRET fra v1-interim
+// (kun em-dash → komma; endelig jur. ordlyd stadig pending review).
+export const ANMOD_CONSENT_WORDING_VERSION = 'v2-2026-06-19';
+export const ANMOD_CONSENT_WORDING =
+  'Jeg samtykker til, at Psykolog Viktor Nielsen behandler de oplysninger, jeg giver i denne anmodning, '
+  + 'herunder at oplysningerne kan afsløre, at jeg søger psykologbehandling, med det formål at behandle '
+  + 'og besvare min anmodning om forløbsadgang. Jeg kan til enhver tid trække anmodningen og mit samtykke '
+  + 'tilbage. Læs hvordan dine oplysninger behandles i [privatlivspolitikken].';
+
+function anmodFejl(code, felt) {
+  const e = new Error(felt ? `${code}:${felt}` : code);
+  e.code = code; if (felt) e.felt = felt;
+  return e;
+}
+function anmodText(v, felt) {
+  if (typeof v !== 'string' || !v.trim()) throw anmodFejl('paakraevet_mangler', felt);
+  return v.trim();
+}
+function anmodEnum(v, allow, felt) {
+  if (!allow.includes(v)) throw anmodFejl('ugyldig_enum', felt);
+  return v;
+}
+
+// tid_praeference (KUN forloeb_tilbudt=gruppe): null (udeladt) | 'ved_ikke' | {dage:[...],tider:[...]}
+// (enum-valideret, dedup'et; tom-tom → 'ved_ikke'). 1:1 m. Swift parseTidPraeference.
+function byggTidListe(arr, allow, felt) {
+  if (arr === null || arr === undefined) return [];
+  if (!Array.isArray(arr)) throw anmodFejl('ugyldig_tid_praeference', felt);
+  const out = [];
+  for (const el of arr) {
+    if (!allow.includes(el)) throw anmodFejl('ugyldig_enum', felt);
+    if (!out.includes(el)) out.push(el);
+  }
+  return out;
+}
+function byggTidPraeference(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'string') {
+    if (v === ANMOD_TID_VED_IKKE) return ANMOD_TID_VED_IKKE;
+    throw anmodFejl('ugyldig_tid_praeference', 'tid_praeference');
+  }
+  if (typeof v !== 'object' || Array.isArray(v)) throw anmodFejl('ugyldig_tid_praeference', 'tid_praeference');
+  const dage  = byggTidListe(v.dage,  ANMOD_TID_DAGE,  'tid_dage');
+  const tider = byggTidListe(v.tider, ANMOD_TID_TIDER, 'tid_tider');
+  if (dage.length === 0 && tider.length === 0) return ANMOD_TID_VED_IKKE;
+  return { dage, tider };
+}
+
+/// Byg den FROSNE forløbs-anmodnings-konvolut fra rå form-input (fail-loud).
+/// Validerer §2 (påkrævede felter + enums + gruppe-eksklusiv slot + atten/samtykke=true +
+/// art.9-deny) og wrapper i IngestKonvolut (§3). Kaster Error med `.code`/`.felt` ved afvigelse
+/// (kalderen mapper til en dansk fejlbesked). Returnerer konvolut-objektet (klar til mentemEncrypt).
+export function buildAnmodKonvolut(input = {}) {
+  // §6 art.9-deny FØRST: en lækket flade må aldrig kunne importere art.9-data tavst.
+  for (const k of Object.keys(input)) {
+    if (ANMOD_ART9_DENY.includes(String(k).toLowerCase())) throw anmodFejl('art9Forbudt', k);
+  }
+
+  // Rækkefølge 1:1 med Swift-parseren (ForloebsAnmodningKonvolut.parse): fornavn/efternavn →
+  // grundlag → atten → samtykke → forloebstype → hold-slot (samme fejl-præcedens).
+  const data = { type: ANMOD_SCHEMA_TYPE };                 // informativ mirror (parseren keyer på konvolut-schemaType)
+  data.fornavn   = anmodText(input.fornavn, 'fornavn');
+  data.efternavn = anmodText(input.efternavn, 'efternavn');
+  data.grundlag  = anmodEnum(input.grundlag, ANMOD_GRUNDLAG, 'grundlag');
+
+  if (input.atten !== true)         throw anmodFejl('atten_paakraevet', 'atten');           // 18+ gate, MÅ være true
+  data.atten = true;
+  if (input.anmodSamtykke !== true) throw anmodFejl('samtykke_paakraevet', 'anmodSamtykke'); // art.9(2)(a), MÅ være true
+  data.anmodSamtykke = true;
+
+  // forloeb_resolved er SYSTEM-AFLEDT (Swift-side: grundlag∈{forsikring,egenbetaler} → "individuelt").
+  // Det er ALDRIG et wire-felt → en flade må ikke smugle det ind (defense-in-depth; 1:1 m. parseren,
+  // der afviser forloeb_resolved på wire). Bygges derfor ALDRIG ind i `data`.
+  if (input.forloeb_resolved != null && input.forloeb_resolved !== '') {
+    throw anmodFejl('forloeb_resolved_ikke_tilladt', 'forloeb_resolved');
+  }
+
+  // v2.1 adaptiv forgrening (grundlag styrer; fail-loud kryds-felt-validering, 1:1 m. Swift-parseren).
+  const erPsykiater = ANMOD_SPOERG_PSYKIATER.includes(data.grundlag);
+  const hRaw  = (input.henvisning_psykiater != null && input.henvisning_psykiater !== '') ? input.henvisning_psykiater : null;
+  const tRaw  = (input.forloeb_tilbudt      != null && input.forloeb_tilbudt      !== '') ? input.forloeb_tilbudt      : null;
+  const tidIn = (input.tid_praeference      != null && input.tid_praeference      !== '') ? input.tid_praeference      : null;
+
+  if (erPsykiater) {
+    // henvisning_psykiater: VALGFRI (udeladt/ved_ikke ok); enum-valideret hvis angivet.
+    if (hRaw !== null) data.henvisning_psykiater = anmodEnum(hRaw, ANMOD_HENVISNING_PSYKIATER, 'henvisning_psykiater');
+    // forloeb_tilbudt: REQUIRED (semantik = hvad psykiateren har TILBUDT, ikke ønsket).
+    if (tRaw === null) throw anmodFejl('paakraevet_mangler', 'forloeb_tilbudt');
+    data.forloeb_tilbudt = anmodEnum(tRaw, ANMOD_FORLOEB_TILBUDT, 'forloeb_tilbudt');
+    // tid_praeference: tilladt KUN iff forloeb_tilbudt=gruppe (FORBUDT ellers).
+    if (data.forloeb_tilbudt === 'gruppe') {
+      const tp = byggTidPraeference(tidIn);          // null (udeladt) | 'ved_ikke' | {dage,tider}
+      if (tp !== null) data.tid_praeference = tp;
+    } else if (tidIn !== null) {
+      throw anmodFejl('tid_praeference_ikke_tilladt', 'tid_praeference');
+    }
+  } else {
+    // forsikring/egenbetaler: psykiater-grenens felter FORBUDT (fail-loud). forloeb_resolved afledes
+    // Swift-side ("individuelt - fast") - bygges ALDRIG ind i wire-payloaden her.
+    if (hRaw  !== null) throw anmodFejl('henvisning_ikke_tilladt', 'henvisning_psykiater');
+    if (tRaw  !== null) throw anmodFejl('forloeb_tilbudt_ikke_tilladt', 'forloeb_tilbudt');
+    if (tidIn !== null) throw anmodFejl('tid_praeference_ikke_tilladt', 'tid_praeference');
+  }
+
+  // S1 (v2.1): telefon PÅKRÆVET (adgangslinket sendes via SMS) => fail-loud hvis tom/whitespace.
+  // email VALGFRI (anbefales for desktop). FJERNET det kombinerede `kontakt`-felt.
+  if (typeof input.telefon !== 'string' || !input.telefon.trim()) throw anmodFejl('telefonPaakraevet', 'telefon');
+  data.telefon = input.telefon.trim();
+  // Valgfri: tom/whitespace => behandles som fraværende (udeladt af payload).
+  if (typeof input.email === 'string' && input.email.trim()) data.email = input.email.trim();
+  if (typeof input.note === 'string'  && input.note.trim())  data.note  = input.note.trim();
+
+  return buildIngestKonvolut(data, {
+    schemaType: ANMOD_SCHEMA_TYPE,
+    schemaVersion: 1,
+    clientTimestamp: isoNoFrac(new Date()),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  KEY-PINNING (sikkerheds-hærdning, P1a) - trust anchor i siden
+// ════════════════════════════════════════════════════════════════════════
+// Mentems E2E X25519-public-key er PINNED i koden - IKKE taget fra ?pk=-URL-
 // feltet. Det forhindrer en manipuleret URL i at få klienten til at kryptere
 // helbredsdata til en FREMMED nøgle (attacker-in-the-middle via link).
 // KRYPTO-GUARD: kun den OFFENTLIGE nøgle her. Rotation = redeploy med ny
@@ -456,7 +711,7 @@ export function resolveRecipientKey(pkParam) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  KRYPTO — public-key-only opaque output (R3)
+//  KRYPTO - public-key-only opaque output (R3)
 // ════════════════════════════════════════════════════════════════════════
 function b64ToBytes(b64) {
   // Accepter både standard-base64 OG base64url (?pk=-transport).
@@ -474,21 +729,88 @@ function bytesToB64(bytes) {
   return btoa(bin);
 }
 
+/// 🔴 SHIP-GATE-FLAG: aktivér den rene-JS X25519-fallback (browser-uafhængig kryptering).
+/// DEFAULT false => uændret adfærd (X25519-løse browsere får "åbn i Chrome/Safari"; fallback
+/// er dormant). Flip til true KUN efter BEGGE gates er grønne:
+///   1. test/x25519-fallback-roundtrip.mjs (JS-side, RFC-vektorer + WebCrypto-oracle).
+///   2. app-side CryptoKit-roundtrip (StaticSiteCryptoRoundTripTests mod en fallback-container,
+///      via `node test/encrypt-fixture.mjs <pub> --force-fallback`) + Viktor-GO.
+/// Aktivering uden den gate => risiko for silent decrypt-fail (værre end den synlige fejl nu).
+export const X25519_FALLBACK_AKTIV = true;
+
+/// Findes WebCrypto subtle + secure context (forudsætning for HKDF+AES-GCM, som begge stier bruger)?
+/// `isSecureContext` er undefined i Node (CryptoKit-gate-harnessen), hvor subtle altid er sikker;
+/// bloker derfor KUN når den eksplicit er false (usikker http-browser-kontekst).
+function subtleTilgaengelig() {
+  const s = globalThis.crypto && globalThis.crypto.subtle;
+  return !!s && globalThis.isSecureContext !== false;
+}
+
+/// Feature-test: understøtter crypto.subtle X25519? Ældre/indlejrede Android-browsere mangler
+/// primitiven (selv når subtle findes) => nøglegenerering kaster. Cachet (ét forsøg pr. side-load).
+let _x25519WC = null;
+async function x25519WebCryptoStoettet() {
+  if (_x25519WC !== null) return _x25519WC;
+  try {
+    if (!subtleTilgaengelig()) { _x25519WC = false; return false; }
+    await globalThis.crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+    _x25519WC = true;
+  } catch (_e) { _x25519WC = false; }
+  return _x25519WC;
+}
+
+/// "Kan vi faktisk kryptere?" Feature-detektér FØR udfyldning/Send. Med fallback AKTIV rækker
+/// WebCrypto subtle (X25519-hullet dækkes af ren-JS-fallbacken); uden fallback (default) kræves
+/// WebCrypto-X25519. Bruges af klient-UI til banner/fejl-besked.
+export async function kryptoStoettet() {
+  if (!subtleTilgaengelig()) return false;
+  if (X25519_FALLBACK_AKTIV) return true;
+  return await x25519WebCryptoStoettet();
+}
+
 /// Krypter et payload-objekt mod modtagerens X25519-public-key (base64 / base64url).
 /// Returnerer et KrypteretEksportContainer-objekt (klar til JSON.stringify).
 /// `keyId` stemples i containeren (default = PINNED_KEY_ID) så Mentem kan
 /// detektere nøgle-version-mismatch ved decrypt. Swift-decrypt ignorerer
 /// ukendte felter → bagudkompatibelt.
-export async function mentemEncrypt(recipientPubB64, payloadObj, keyId = PINNED_KEY_ID) {
+export async function mentemEncrypt(recipientPubB64, payloadObj, keyId = PINNED_KEY_ID, opts = {}) {
+  // Forudsætning: WebCrypto subtle (HKDF+AES-GCM, som begge ECDH-stier bruger). Mangler den,
+  // kast en TYPET fejl FØR vi rører nøgler/data, så kalderen viser "åbn i Chrome/Safari" i
+  // stedet for en generisk krypto-fejl.
+  if (!subtleTilgaengelig()) {
+    const err = new Error('WebCrypto (subtle) er ikke tilgængelig i denne browser');
+    err.name = 'CryptoUnsupportedError';
+    throw err;
+  }
   const subtle = globalThis.crypto.subtle;
-  const recipientPub = await subtle.importKey('raw', b64ToBytes(recipientPubB64), { name: 'X25519' }, false, []);
+  const recipientPubBytes = b64ToBytes(recipientPubB64);
 
-  // Sender-ephemeral keypair (fresh pr. kryptering → forward secrecy).
-  const eph = await subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
-  const ephPubRaw = await subtle.exportKey('raw', eph.publicKey);
+  // ECDH-sti-valg. PRIMÆR: WebCrypto-X25519 (uændret). FALLBACK: ren-JS X25519 (RFC 7748,
+  // byte-eksakt mod WebCrypto/CryptoKit; se test/x25519-fallback-roundtrip.mjs). Krypto-outputtet
+  // (format/contract) er identisk i begge stier, så zero-knowledge er urørt. opts.tvingFallback
+  // tvinger fallback-stien (kun til roundtrip-fixturen / CryptoKit-gaten).
+  const x25519WC = await x25519WebCryptoStoettet();
+  const brugFallback = opts.tvingFallback === true || (!x25519WC && X25519_FALLBACK_AKTIV);
+  if (!x25519WC && !brugFallback) {
+    const err = new Error('X25519-WebCrypto er ikke understøttet i denne browser');
+    err.name = 'CryptoUnsupportedError';
+    throw err;
+  }
 
-  // ECDH → rå 32-byte shared secret (matcher CryptoKit sharedSecretFromKeyAgreement).
-  const shared = new Uint8Array(await subtle.deriveBits({ name: 'X25519', public: recipientPub }, eph.privateKey, 256));
+  // Rå 32-byte ephemeral public key + shared secret (sti-uafhængigt format; fresh ephemeral
+  // pr. kryptering giver forward secrecy). Matcher CryptoKit sharedSecretFromKeyAgreement.
+  let ephPubRaw, shared;
+  if (brugFallback) {
+    const { x25519 } = await import('./mentem-x25519-fallback.js');
+    const ephPriv = x25519.utils.randomPrivateKey();
+    ephPubRaw = x25519.getPublicKey(ephPriv);
+    shared = x25519.getSharedSecret(ephPriv, recipientPubBytes);
+  } else {
+    const recipientPub = await subtle.importKey('raw', recipientPubBytes, { name: 'X25519' }, false, []);
+    const eph = await subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+    ephPubRaw = new Uint8Array(await subtle.exportKey('raw', eph.publicKey));
+    shared = new Uint8Array(await subtle.deriveBits({ name: 'X25519', public: recipientPub }, eph.privateKey, 256));
+  }
 
   // HKDF-SHA256 (salt random 32B, info låst til Mentem-kontrakten).
   const salt = globalThis.crypto.getRandomValues(new Uint8Array(32));

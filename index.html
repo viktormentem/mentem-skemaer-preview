@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Udfyld dine forberedelses-skemaer sikkert i din browser. Dine svar krypteres lokalt og deles kun med din psykolog.">
 <meta name="author" content="Viktor Nielsen, Mentem Psykologpraksis">
-<meta property="og:title" content="Mentem — Forberedelse til din samtale">
+<meta property="og:title" content="Mycel: Forberedelse til din samtale">
 <meta property="og:description" content="Udfyld dine forberedelses-skemaer sikkert i din browser.">
 <meta property="og:type" content="website">
-<title>Mentem — Forberedelse til din samtale</title>
+<title>Mycel: Forberedelse til din samtale</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
   :root {
@@ -107,6 +107,14 @@
   .diary-consent-label input { margin-top:3px; width:18px; height:18px; flex:none; cursor:pointer; }
   .diary-consent-status { margin:10px 0 0; font-size:13px; color:var(--muted); }
   .footer-credit { font-size:11px; color:var(--muted); margin-top:20px; line-height:1.5; text-align:center; }
+  /* Patientsikkerhed: diskret, ikke-alarmerende "Akut hjælp"-boks — altid findbar i bunden af hver skærm. */
+  .akut-hjaelp { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:8px; padding:13px 16px; margin-top:26px; text-align:left; font-size:13px; color:var(--ink); line-height:1.55; }
+  .akut-hjaelp-head { display:flex; align-items:center; gap:7px; font-weight:600; color:var(--accent); margin-bottom:6px; }
+  .akut-hjaelp ul { margin:0; padding-left:18px; }
+  .akut-hjaelp li { margin:3px 0; }
+  .akut-hjaelp a { color:var(--accent); }
+  .item9-nudge { margin-top:10px; padding:10px 13px; background:var(--accent-light); border-radius:8px; font-size:13px; color:var(--ink); line-height:1.5; }
+  .item9-nudge a { color:var(--accent); font-weight:600; cursor:pointer; }
 
   @keyframes fadeIn { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
 
@@ -124,6 +132,24 @@
   .diary-field.answered { border-color:var(--accent); }
   .diary-q { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.4; }
   .diary-q .question-num { font-size:12px; color:var(--muted); font-weight:400; margin-right:8px; }
+  /* F1 søvnigheds-NRS (0-10): titel + 0..10-segmenter + ord-ankre i enderne. */
+  .nrs-titel { display:block; font-size:16px; font-weight:600; color:var(--accent); margin-bottom:4px; }
+  .nrs-scale { display:grid; grid-template-columns:repeat(11, 1fr); gap:6px; margin-top:4px; }
+  .nrs-option { display:flex; align-items:center; justify-content:center; min-height:44px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; background:white; font-size:15px; font-weight:500; transition:all 0.12s; }
+  .nrs-option:hover { border-color:var(--accent); background:#f0faf5; }
+  .nrs-option.checked { border-color:var(--accent); background:var(--accent); color:white; }
+  .nrs-option input[type=radio] { position:absolute; opacity:0; width:1px; height:1px; }
+  .nrs-ankre { display:flex; justify-content:space-between; gap:14px; margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.4; }
+  .nrs-ankre span:last-child { text-align:right; }
+  @media (max-width:430px) { .nrs-scale { grid-template-columns:repeat(6, 1fr); } }
+  /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
+  .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
+  .ess-ramme p { margin:0 0 14px; }
+  .ess-ramme strong { display:block; font-size:18px; font-weight:600; color:var(--accent); margin-bottom:4px; }
+  .ess-ramme p:not(:first-child) strong { display:inline; font-size:inherit; color:inherit; }
+  .ess-stub { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; background:var(--accent-light); border:1px dashed var(--accent); border-radius:12px; padding:24px 22px; }
+  .ess-stub-icon { width:32px; height:32px; color:var(--accent); }
+  .ess-stub-text { font-size:14px; color:var(--muted); line-height:1.5; margin:0; }
   .diary-optional { font-size:12px; color:var(--muted); font-weight:400; font-style:italic; margin-left:6px; }
   .diary-hint { font-size:13px; color:var(--muted); font-weight:400; line-height:1.45; margin:-6px 0 14px; }
   .diary-input-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -165,7 +191,7 @@
 
 <div class="header">
   <div>
-    <div class="header-logo">Mentem</div>
+    <div class="header-logo">Mycel</div>
     <div class="header-sub">Forberedelse · Viktor Nielsen, autoriseret psykolog</div>
   </div>
   <div class="header-right">
@@ -189,8 +215,8 @@
     <p class="intro" id="welcome-intro"></p>
     <div class="schema-cards" id="schema-cards"></div>
     <button class="btn-primary" id="start-btn" disabled>Start</button>
-    <p class="start-note">Til sidst får du én fil, som du nemt deler med din psykolog — vi viser dig hvordan.</p>
-    <div class="disclaimer"><span aria-hidden="true" style="display:inline-flex;width:1em;height:1em;vertical-align:-2px;margin-right:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="disc-body" data-autosend="<strong>Privatliv:</strong> Du udfylder alt i din egen browser. Når du er færdig, sendes svarene sikkert og krypteret direkte til din psykolog — kun din psykolog kan åbne dem."><strong>Privatliv:</strong> Du udfylder alt i din egen browser. Når du er færdig, samles svarene i én krypteret fil, som kun din psykolog kan åbne. Intet gemmes på en server, og du sender selv filen.</span></div>
+    <p class="start-note">Til sidst får du én fil, som du nemt deler med din psykolog. Vi viser dig hvordan.</p>
+    <div class="disclaimer"><span aria-hidden="true" style="display:inline-flex;width:1em;height:1em;vertical-align:-2px;margin-right:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="disc-body" data-autosend="<strong>Privatliv:</strong> Du udfylder alt i din egen browser. Når du er færdig, sendes svarene sikkert og krypteret direkte til din psykolog. Kun din psykolog kan åbne dem. Har du det akut svært, skal du ikke vente til samtalen. Se Akut hjælp nederst."><strong>Privatliv:</strong> Du udfylder alt i din egen browser. Når du er færdig, samles svarene i én krypteret fil, som kun din psykolog kan åbne. Intet gemmes på en server, og du sender selv filen. Har du det akut svært, skal du ikke vente til samtalen. Se Akut hjælp nederst.</span></div>
     <p class="footer-credit">Skemaerne bygger på anerkendte spørgeskemaer (GAD-7, PHQ-9, WHO-5, WSAS), som din psykolog bruger til at følge din udvikling.</p>
     <p class="footer-credit" id="key-fp"></p>
   </div>
@@ -219,11 +245,11 @@
 <div id="screen-done" class="screen">
   <div class="done-wrap">
     <div class="done-mark" aria-hidden="true"><span style="display:inline-flex;width:56px;height:56px;color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9"/></svg></span></div>
-    <h2>Tak — du er færdig</h2>
+    <h2>Tak. Du er færdig</h2>
     <p>Dine svar er nu samlet i én krypteret fil. Tryk nedenfor for at sende filen til din psykolog i den samme SMS-tråd, hvor du fik linket.</p>
     <button class="btn-primary" id="share-btn">Send filen til din psykolog</button>
     <div class="done-status" id="done-status"></div>
-    <div class="disclaimer" style="text-align:left;margin-top:28px">Filen indeholder kun dine svar og er krypteret, så kun din psykolog kan læse den. Du får ikke en score eller en vurdering her — det gennemgår I sammen til samtalen.</div>
+    <div class="disclaimer" style="text-align:left;margin-top:28px">Filen indeholder kun dine svar og er krypteret, så kun din psykolog kan læse den. Du får ikke en score eller en vurdering her. Det gennemgår I sammen til samtalen. <strong>Har du det akut svært, skal du ikke vente til samtalen</strong>. Se Akut hjælp nederst (eller ring 112 / Livslinien 70 201 201).</div>
   </div>
 </div>
 
@@ -273,7 +299,7 @@
     <p class="intro" id="baseline-intro"></p>
     <button class="btn-primary" id="baseline-start-btn">Start</button>
     <p class="start-note">Det tager et par minutter og udfyldes kun denne ene gang.</p>
-    <div class="disclaimer"><span aria-hidden="true" style="display:inline-flex;width:1em;height:1em;vertical-align:-2px;margin-right:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="disc-body" data-autosend="<strong>Privatliv:</strong> Du udfylder alt i din egen browser. Til sidst sendes svarene sikkert og krypteret direkte til din psykolog — kun din psykolog kan åbne dem."><strong>Privatliv:</strong> Du udfylder alt i din egen browser. Til sidst samles svarene i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv. Intet gemmes på en server.</span></div>
+    <div class="disclaimer"><span aria-hidden="true" style="display:inline-flex;width:1em;height:1em;vertical-align:-2px;margin-right:5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="disc-body" data-autosend="<strong>Privatliv:</strong> Du udfylder alt i din egen browser. Til sidst sendes svarene sikkert og krypteret direkte til din psykolog. Kun din psykolog kan åbne dem. Har du det akut svært, skal du ikke vente til samtalen. Se Akut hjælp nederst."><strong>Privatliv:</strong> Du udfylder alt i din egen browser. Til sidst samles svarene i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv. Intet gemmes på en server. Har du det akut svært, skal du ikke vente til samtalen. Se Akut hjælp nederst.</span></div>
     <p class="footer-credit" id="baseline-key-fp"></p>
   </div>
 </div>
@@ -292,9 +318,19 @@
   </div>
 </div>
 
+<!-- E1: ESS MILEPÆLS-TJEK: kun vores låste intro-ramme; ESS-items licens-gated (stub) -->
+<div id="screen-ess" class="screen">
+  <div class="wrap">
+    <h1>Et kort tjek af din <em>søvnighed</em></h1>
+    <div class="ess-ramme" id="ess-ramme"></div>
+    <div class="ess-stub" id="ess-stub"></div>
+    <p class="footer-credit" id="ess-key-fp"></p>
+  </div>
+</div>
+
 <script type="module">
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
-         CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD,
+         CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD, kryptoStoettet,
          PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
 
 // ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
@@ -342,12 +378,12 @@ const testDayOffset = (TEST_HOST && params.get('testday')) ? (parseInt(params.ge
 // krypterer til en SEPARAT ingest-X25519-HPKE-nøgle (INGEST_PUBKEY/INGEST_KEY_ID,
 // hash-pin) — IKKE journal-nøglen 8aa536a1 (download/del-stien). Konvolutten
 // dekrypteres modtager-side med ingest-privatnøglen, ikke journal-nøglen.
-// SYNTETISK pin nu (worker ej deployet) → ægte INGEST_PUBKEY sættes ved go-live
-// (rotation = redeploy web med ny pin, spec §4). it=-links møntes først ved
-// Viktor-GO + G3 grøn → ingen prod-adfærdsændring før da.
-const INGEST_API_BASE = 'https://ingest.mycel.dk';                   // contracted domæne (worker p.t. ikke deployet → POST fejler → fallback)
-const INGEST_PUBKEY   = '4NtWE2ZkITiNAkpXPVksNArWrnaTXaG0u0aJRhEHYRc'; // SYNTETISK hash-pin; ægte sættes ved go-live
-const INGEST_KEY_ID   = 'cce9b373';                                  // = første 8 hex af SHA-256(rå ingest-pubkey)
+// ÆGTE prod-pin nu (B4 go-live 2026-06-18: worker deployet, D1-EU). Rotation =
+// redeploy web med ny pin (spec §4). it=-links møntes først ved Viktor-GO + G3
+// grøn → ingen prod-adfærdsændring uden it= før da.
+const INGEST_API_BASE = 'https://ingest.mycel.dk';                   // contracted domæne (worker LIVE på D1-EU; POST kun ved gyldigt it=)
+const INGEST_PUBKEY   = 't6ZBVtH41pVBECxELB1eBH6WvEgdguw9HLEUOMdl_Ec'; // ÆGTE prod ingest-X25519-pubkey (B4)
+const INGEST_KEY_ID   = '2af28306';                                  // = første 8 hex af SHA-256(rå ingest-pubkey)
 const ingestToken = params.get('it');                                // v1.<pseudonym>.<udløb>.<scope>.<Ed25519-sig> (auth)
 // Manipuleret-nøgle-/endpoint-forsvar: pin er autoritativ; override KUN på TEST_HOST (som ?testday).
 const ingestPkOverride  = TEST_HOST ? params.get('ingestpk')  : null;
@@ -357,6 +393,10 @@ function ingestBase() { return (ingestApiOverride || INGEST_API_BASE || '').repl
 function autoSendEnabled() {
   return !!(ingestToken && /^v1\.[^.]+\.\d+\.[^.]+\.[^.]+$/.test(ingestToken) && ingestBase());
 }
+// Footer-fingeraftryk: i auto-send-tilstand seal'es data til INGEST-nøglen
+// (INGEST_KEY_ID), ikke den pinnede journal-nøgle. Vis derfor den nøgle dataen
+// FAKTISK krypteres til, så footer-ID ikke er misvisende (footer-ID-fix, PR-2).
+function aktivKeyId() { return autoSendEnabled() ? INGEST_KEY_ID : PINNED_KEY_ID; }
 // Returnerer 'sendt' | null (null → kalderen falder til leverKrypteretFil download/del).
 async function sendTilIngest(payload, schemaType) {
   try {
@@ -390,10 +430,87 @@ const rawSelected = (sParam ? sParam.split(',').map(x => x.trim().toLowerCase())
 const diaryId = rawSelected.find(id => SKEMAER[id].kind === 'diary') || null;
 // Søvn-baseline (kind:'baseline') = engangs intake-skema, eget flow (runBaseline).
 const baselineId = rawSelected.find(id => SKEMAER[id].kind === 'baseline') || null;
+// ESS milepæls-tjek (kind:'essMilepael') = standalone milepæls-visning, eget flow
+// (renderEss). Kun vores låste intro-ramme nu; ESS-items licens-gated → stub.
+const essId = rawSelected.find(id => SKEMAER[id].kind === 'essMilepael') || null;
 let selected = SKEMA_ORDER.filter(id => rawSelected.includes(id));   // kanonisk rækkefølge (kun spørgeskemaer)
 const fixedFromLink = selected.length > 0;                    // ?s= → låst batteri
 
 const answers = {};
+
+// ── P0 incident-hærdning: krypto-fallback + diagnostik (klient-facing) ───────
+// Baggrund: indlejrede/forældede Android-browsere mangler X25519 i crypto.subtle
+// → kryptering kaster. Vi feature-detekterer FØR udfyldning og ved Send, bevarer
+// svar lokalt, guider til Chrome/Safari, og tilbyder en METADATA-ONLY diagnostik-SMS.
+const BATTERI_LS_KEY = 'mentem_batteri_svar_v1';
+const DIAG_TELEFON   = '+4553537585';
+
+// Bevar klientens svar lokalt (samme-browser-retry; localStorage er origin/enheds-bundet,
+// så et browser-SKIFT bærer dem ikke med — derfor er Chrome/Safari-guiden primær).
+function gemSvarLokalt() {
+  try {
+    const navnEl = document.getElementById('patient-name');
+    localStorage.setItem(BATTERI_LS_KEY, JSON.stringify({
+      answers, navn: (navnEl && navnEl.value) || '', ts: Date.now(),
+    }));
+  } catch (e) { /* private mode / quota → bedst-anstrengelse */ }
+}
+
+// Diagnostik-linje: KUN ikke-PII metadata. 🔴 ALDRIG et klient-svar, fritekst eller
+// fuldt token. token vises KORTET (6 tegn), aldrig fuldt; ingen navn/svar/fri-tekst.
+async function byggDiagnostikLinje(fejl) {
+  const kortToken = draftToken ? String(draftToken).slice(0, 6) + '…' : '-';
+  const ua = (navigator.userAgent || '').replace(/[·\n]/g, ' ').slice(0, 120);
+  return [
+    'MENTEM-DIAG',
+    's=' + (sParam || '-'),
+    'd=' + (dParam != null ? dParam : '-'),
+    'tok=' + kortToken,
+    'sec=' + (!!globalThis.isSecureContext),
+    'crypto=' + (await kryptoStoettet()),
+    'fejl=' + ((fejl && fejl.name) ? fejl.name : 'ukendt'),
+    'ver=' + (typeof SITE_BUILD !== 'undefined' ? SITE_BUILD : '-'),
+    'ts=' + new Date().toISOString(),
+    'ua=' + ua,
+  ].join(' · ');
+}
+
+function smsLink(telefon, body) {
+  return 'sms:' + telefon + '?&body=' + encodeURIComponent(body);
+}
+
+// Krypto-fejl-tilstand (C3): bevar svar + guide til anden browser + diagnostik-knap
+// (metadata-only). Ingen blind rød fejl. `unsupported` styrer ordlyden.
+async function visKryptoFallback(statusEl, fejl, btn, unsupported) {
+  gemSvarLokalt();
+  const diag = await byggDiagnostikLinje(fejl);
+  statusEl.style.color = '#c0392b';
+  statusEl.innerHTML = '';
+  const p = document.createElement('p');
+  p.style.margin = '0 0 10px';
+  p.innerHTML = unsupported
+    ? '<strong>Din browser kan ikke sende sikkert.</strong> Åbn siden i <strong>Chrome</strong> eller <strong>Safari</strong> for at sende. Dine svar er gemt på denne enhed, så du ikke skal udfylde igen.'
+    : '<strong>Noget gik galt under kryptering.</strong> Prøv igen, eller åbn siden i Chrome eller Safari. Dine svar er gemt på denne enhed.';
+  const a = document.createElement('a');
+  a.href = smsLink(DIAG_TELEFON, diag);
+  a.className = 'btn-secondary';
+  a.style.display = 'inline-block';
+  a.textContent = 'Send teknisk info til psykolog (uden dine svar)';
+  statusEl.appendChild(p);
+  statusEl.appendChild(a);
+  if (btn) btn.disabled = false;
+}
+
+// P0-B: tjek ved INDLÆSNING — kan browseren ikke kryptere, vis straks en banner FØR
+// klienten udfylder noget, så ingen spilder tid på en udfyldning der ikke kan sendes.
+async function tjekKryptoVedIndlaesning() {
+  if (await kryptoStoettet()) return;
+  const b = document.createElement('div');
+  b.setAttribute('role', 'alert');
+  b.style.cssText = 'background:#c0392b;color:#fff;padding:12px 16px;font-size:14px;line-height:1.5;text-align:center';
+  b.innerHTML = '<strong>Denne browser kan ikke sende sikkert.</strong> Åbn siden i Chrome eller Safari, før du udfylder, så dine svar kan krypteres og sendes til din psykolog.';
+  document.body.insertBefore(b, document.body.firstChild);
+}
 
 // Neutrale line-ikoner (stroke = currentColor; pale-grøn cirkel via .schema-icon).
 const SVG = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
@@ -410,6 +527,10 @@ const ICONS = {
   laas:        SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   hoejttaler:  SVG('<path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9.7a3.2 3.2 0 0 1 0 4.6"/><path d="M18 7.6a6 6 0 0 1 0 8.8"/>'),
   maane:       SVG('<path d="M19 14.2A7 7 0 1 1 9.8 5a5.6 5.6 0 0 0 9.2 9.2z"/>'),
+  // Søvnighed (F1/ESS): eget house-style line-ikon: et halvlukket/døsigt øje
+  // (nedadbuet øjenlåg + tre korte nedadgående streger). Egen vektor, ikke emoji,
+  // bevidst distinkt fra `maane` (nat) — dette er dagtræthed/dozing-konstruktet.
+  soevnighed:  SVG('<path d="M3.5 11.5c2.4 3 5.4 4.5 8.5 4.5s6.1-1.5 8.5-4.5"/><line x1="7.5" y1="15.2" x2="6.5" y2="17.4"/><line x1="12" y1="16.4" x2="12" y2="18.8"/><line x1="16.5" y1="15.2" x2="17.5" y2="17.4"/>'),
   lup:         SVG('<circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20"/>'),
   check:       SVG('<path d="M5 12.5l4.5 4.5L19 7"/>'),
   // Substans-ikoner (Q10) — egne house-style line-ikoner, ikke emoji/lånte glyffer.
@@ -420,6 +541,42 @@ const ICONS = {
 const iconSVG = (key) => ICONS[key] || SVG('<circle cx="12" cy="12" r="8"/>');
 // Lille inline-ikon foran chip-tekst; aria-hidden så oplæsning kun læser navnet.
 const chipIcon = (key) => `<span aria-hidden="true" style="display:inline-flex;width:16px;height:16px;vertical-align:-3px;margin-right:6px">${iconSVG(key)}</span>`;
+
+// ── PATIENTSIKKERHED: "Akut hjælp"-boks (review §1/§7 P0) ────────────────────
+// Diskret, ikke-alarmerende, men ALTID findbar i bunden af hver skærm (alle skemaer).
+// Egne inline-streg-ikoner (aldrig emoji). Ressourcer verificeret-aktuelle 19/6.
+// Telefon-ikon i samme streg-stil som husets øvrige ikoner.
+const AKUT_TELEFON_SVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>';
+const AKUT_HJAELP_HTML = `
+  <div class="akut-hjaelp" role="complementary" aria-label="Akut hjælp">
+    <div class="akut-hjaelp-head"><span aria-hidden="true" style="display:inline-flex">${AKUT_TELEFON_SVG}</span>Akut hjælp</div>
+    <ul>
+      <li>Akut fare lige nu: ring <a href="tel:112">112</a></li>
+      <li>Livslinien: <a href="tel:70201201">70 201 201</a> (hver dag kl. 11-05, anonym og gratis &middot; <a href="https://livslinien.dk" target="_blank" rel="noopener">chat: livslinien.dk</a>)</li>
+      <li>Kontakt din psykolog, Viktor Nielsen, direkte</li>
+    </ul>
+  </div>`;
+// Indsæt boksen i bunden af HVER skærm-container (intro, formular og send — alle flows).
+function injectAkutHjaelp() {
+  document.querySelectorAll('.screen').forEach(s => {
+    if (!s.querySelector('.akut-hjaelp')) s.insertAdjacentHTML('beforeend', AKUT_HJAELP_HTML);
+  });
+}
+// PHQ-9 item-9-nudge: blid linje under item 9 der peger på boksen (≥1). Idempotent.
+function toggleItem9Nudge(block, show) {
+  let n = block.nextElementSibling;
+  const erNudge = n && n.classList && n.classList.contains('item9-nudge');
+  if (show && !erNudge) {
+    block.insertAdjacentHTML('afterend', '<div class="item9-nudge">Tak, fordi du svarer ærligt. Hvis det er svært lige nu, så se <a data-akut-scroll>Akut hjælp</a> nederst på siden. Du behøver ikke vente til samtalen.</div>');
+    const link = block.nextElementSibling.querySelector('[data-akut-scroll]');
+    if (link) link.addEventListener('click', () => {
+      const box = block.closest('.screen')?.querySelector('.akut-hjaelp') || document.querySelector('.akut-hjaelp');
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  } else if (!show && erNudge) {
+    n.remove();
+  }
+}
 
 // ── VELKOMST ─────────────────────────────────────────────────────────────
 // Kortene er en INFORMATIV liste over det batteri din psykolog har valgt —
@@ -432,7 +589,7 @@ function renderWelcome() {
   // SIKKERHED: hvis linket peger på en ukendt nøgle, så advar straks og
   // bloker — klienten skal ikke engang udfylde via et manipuleret link.
   if (!keyCheck.ok) {
-    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE. Kontakt din psykolog for et nyt link.';
     document.getElementById('schema-cards').innerHTML = '';
     startBtn.disabled = true;
     startBtn.textContent = 'Linket kan ikke bruges';
@@ -442,7 +599,7 @@ function renderWelcome() {
   const battery = fixedFromLink ? selected : SKEMA_ORDER;
   selected = battery;   // hele batteriet udfyldes
 
-  intro.textContent = 'Din psykolog har sammensat nogle korte skemaer, der hjælper jer med at få mest ud af jeres samtale. Tag dem i dit eget tempo — det tager omkring 10 minutter, og der er ingen rigtige eller forkerte svar.';
+  intro.textContent = 'Din psykolog har sammensat nogle korte skemaer, der hjælper jer med at få mest ud af jeres samtale. Tag dem i dit eget tempo. Det tager omkring 10 minutter, og der er ingen rigtige eller forkerte svar.';
 
   cardsEl.innerHTML = '';
   battery.forEach(id => {
@@ -461,7 +618,7 @@ function renderWelcome() {
   startBtn.addEventListener('click', startForm);
 
   const fp = document.getElementById('key-fp');
-  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + aktivKeyId();
 }
 
 // ── FORMULAR ───────────────────────────────────────────────────────────────
@@ -501,6 +658,8 @@ function radioBlock(id, i, q, options) {
       lbl.classList.add('checked');
       block.classList.add('answered');
       updateProgress();
+      // Patientsikkerhed: PHQ-9 item 9 (selvmordstanker, index 8) ≥1 → vis blid nudge mod Akut hjælp-boksen.
+      if (id === 'phq9' && i === 8) toggleItem9Nudge(block, Number(opt.value) >= 1);
     });
     group.appendChild(lbl);
   });
@@ -630,7 +789,7 @@ async function shareEncrypted() {
   // SIKKERHED: nægt at kryptere hvis linket peger på en ukendt nøgle.
   if (!keyCheck.ok) {
     status.style.color = '#c0392b';
-    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar. Kontakt din psykolog for et nyt link.';
     return;
   }
   btn.disabled = true;
@@ -644,9 +803,7 @@ async function shareEncrypted() {
     containerJSON = JSON.stringify(await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId)); // ALTID pinned key
   } catch (e) {
     console.error('[mentem] kryptering fejlede', e && e.name, e && e.message, e);
-    status.style.color = '#c0392b';
-    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
-    btn.disabled = false;
+    await visKryptoFallback(status, e, btn, e && e.name === 'CryptoUnsupportedError');
     return;
   }
   // AUTO-SEND (#1/#2): kun it=-links. Lykkes → færdig; ellers fald til download/del.
@@ -794,7 +951,7 @@ function renderDiaryWelcome() {
 
   // SIKKERHED: samme key-pin-guard som spørgeskema-flowet.
   if (!keyCheck.ok) {
-    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE. Kontakt din psykolog for et nyt link.';
     startBtn.disabled = true; startBtn.textContent = 'Linket kan ikke bruges';
     finishNow.style.display = 'none';
     document.getElementById('diary-dots').innerHTML = '';
@@ -805,7 +962,7 @@ function renderDiaryWelcome() {
   const done = diaryState.entries.length;
   const filledToday = diaryHasToday();
 
-  intro.textContent = 'Udfyld dagbogen kort hver morgen for natten, der gik. Det tager et øjeblik — skriv bare som du husker den. Til sidst samler vi alle dagene i én fil, som du sender til din psykolog.';
+  intro.textContent = 'Udfyld dagbogen kort hver morgen for natten, der gik. Det tager et øjeblik. Skriv bare som du husker den. Til sidst samler vi alle dagene i én fil, som du sender til din psykolog.';
 
   // Privatlivstekst.
   // - localStorage-variant: v1-tekst i diary-privacy (under knappen, uændret).
@@ -814,7 +971,7 @@ function renderDiaryWelcome() {
   //   diary-privacy tømmes for at undgå dublet. Se renderDiaryConsent().
   const priv = document.getElementById('diary-privacy');
   if (priv) priv.innerHTML = LOCAL_ONLY
-    ? chipIcon('laas') + '<strong>Privatliv:</strong> Dine svar gemmes kun i denne browser på din egen enhed — de sendes ikke nogen steder undervejs. Udfyld alle dagene på den samme enhed. Når du er klar, ' + (autoSendEnabled() ? 'sendes de sikkert og krypteret direkte til din psykolog, så kun din psykolog kan åbne dem.' : 'samles svarene i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv til sidst.') + ' <strong>Bemærk:</strong> rydder du browseren eller skifter enhed, mistes de dage, du har gemt, og du må starte forfra.'
+    ? chipIcon('laas') + '<strong>Privatliv:</strong> Dine svar gemmes kun i denne browser på din egen enhed. De sendes ikke nogen steder undervejs. Udfyld alle dagene på den samme enhed. Når du er klar, ' + (autoSendEnabled() ? 'sendes de sikkert og krypteret direkte til din psykolog, så kun din psykolog kan åbne dem.' : 'samles svarene i én krypteret fil, som kun din psykolog kan åbne, og du sender den selv til sidst.') + ' <strong>Bemærk:</strong> rydder du browseren eller skifter enhed, mistes de dage, du har gemt, og du må starte forfra.'
     : '';
   renderDiaryConsent();
 
@@ -837,7 +994,7 @@ function renderDiaryWelcome() {
 
   if (filledToday) {
     startBtn.textContent = 'Ret dagens svar';
-    note.textContent = 'Du har allerede udfyldt for i dag. Kom tilbage i morgen — eller ret dagens svar.';
+    note.textContent = 'Du har allerede udfyldt for i dag. Kom tilbage i morgen, eller ret dagens svar.';
   } else {
     startBtn.textContent = 'Udfyld for i nat';
     note.textContent = `Gemt: ${done} ${done === 1 ? 'dag' : 'dage'}. Kom tilbage hver morgen.`;
@@ -846,7 +1003,7 @@ function renderDiaryWelcome() {
 
   finishNow.style.display = done >= 1 ? 'block' : 'none';
   if (done >= N) {
-    finishNow.textContent = 'Perioden er fuldført — send til psykolog';
+    finishNow.textContent = 'Perioden er fuldført. Send til psykolog';
     note.textContent = `Du har udfyldt alle ${N} dage. Tryk for at sende til din psykolog.`;
   } else {
     finishNow.textContent = 'Afslut og send til psykolog nu';
@@ -864,7 +1021,7 @@ function renderDiaryWelcome() {
 
   // Server-recovery (ITP-wipe): lokal kladde væk, men serveren havde en krypteret.
   if (recoveredBlob && done === 0) {
-    note.textContent = 'Vi fandt en tidligere gemt dagbog (krypteret) hos din psykolog — den er sikker. Du kan udfylde flere dage, eller sende den nu.';
+    note.textContent = 'Vi fandt en tidligere gemt dagbog (krypteret) hos din psykolog. Den er sikker. Du kan udfylde flere dage, eller sende den nu.';
     finishNow.style.display = 'block';
     finishNow.textContent = 'Send gendannet dagbog til psykolog';
     if (backfillBtn) backfillBtn.style.display = 'none';
@@ -872,7 +1029,7 @@ function renderDiaryWelcome() {
 
   document.getElementById('diary-attribution').textContent = diarySkema.attribution || '';
   const fp = document.getElementById('diary-key-fp');
-  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + aktivKeyId();
 }
 
 // §1 (privatliv, verbatim) + §2 (Art.9-samtykke, verbatim checkbox) — server-path.
@@ -889,12 +1046,12 @@ function renderDiaryConsent() {
   // UI (ikke låst tekst): viser at server-PUT er blokeret til samtykke er givet.
   el.innerHTML = `
     <h3>Sådan opbevares dine svar</h3>
-    <p>Dine svar gemmes <strong>krypteret</strong>, så du kan vende tilbage til dem fra det samme link — også hvis du skifter telefon eller rydder din browser. Det betyder, at du ikke mister de dage, du allerede har udfyldt.</p>
+    <p>Dine svar gemmes <strong>krypteret</strong>, så du kan vende tilbage til dem fra det samme link, også hvis du skifter telefon eller rydder din browser. Det betyder, at du ikke mister de dage, du allerede har udfyldt.</p>
     <ul>
-      <li><strong>Kun jeg (din psykolog) kan låse dine svar op.</strong> De opbevares krypteret, så ingen andre kan læse dem — heller ikke der, hvor de ligger.</li>
+      <li><strong>Kun jeg (din psykolog) kan låse dine svar op.</strong> De opbevares krypteret, så ingen andre kan læse dem, heller ikke der, hvor de ligger.</li>
       <li><strong>Linket indeholder ikke dit navn</strong> eller andre oplysninger om dig.</li>
       <li>Dine data ligger på en server i <strong>EU</strong> og <strong>slettes automatisk efter 45 dage</strong>.</li>
-      <li>Du kan <strong>når som helst bede mig om at slette dem</strong> — eller trække dit samtykke tilbage.</li>
+      <li>Du kan <strong>når som helst bede mig om at slette dem</strong>, eller trække dit samtykke tilbage.</li>
     </ul>
     <label class="diary-consent-label">
       <input type="checkbox" id="diary-consent-cb"${accepted ? ' checked' : ''}>
@@ -902,7 +1059,7 @@ function renderDiaryConsent() {
     </label>
     <p class="diary-consent-status">${accepted
       ? 'Tak. Dine svar gemmes nu krypteret, så du kan fortsætte på tværs af enheder.'
-      : 'Indtil du sætter flueben, gemmes dine svar kun på denne enhed — de sendes ikke til serveren.'}</p>`;
+      : 'Indtil du sætter flueben, gemmes dine svar kun på denne enhed. De sendes ikke til serveren.'}</p>`;
   const cb = document.getElementById('diary-consent-cb');
   cb.addEventListener('change', () => {
     recordConsent(cb.checked);
@@ -963,7 +1120,7 @@ function startDiaryEntry(forDate, prefillEntry) {
       sameBtn.onclick = () => {
         startDiaryEntry(diaryFillDate, prev);
         // a11y: annoncér effekten (spec-ux §3) — felterne bærer nu gårsdagens svar.
-        announceA11y('Udfyldt med dine svar fra i går — du kan rette dem.');
+        announceA11y('Udfyldt med dine svar fra i går. Du kan rette dem.');
       };
     } else {
       sameBtn.style.display = 'none';
@@ -987,6 +1144,26 @@ function diaryFieldFilled(f) {
 }
 function markDiaryField(block, f) {
   if (!f.optional) block.classList.toggle('answered', diaryFieldFilled(f));
+}
+
+// ── Felt-kadence: F1-søvnigheds-item dagligt i uge 1, derefter ugentligt ─────
+// Signal = hele kalenderdage mellem forløbets `startedAt` og den dag formularen
+// udfylder (`diaryFillDate`). Robust mod manglende/sprungne dage (kalender-, ikke
+// entry-tælling). Safety-spec §2/SM1: uge 1 = front-loadet harm → dagligt; derefter
+// ugentligt anker (dag 7,14,21,…). tn-param-hook (titrerings-nr=0) kommer med
+// ordinations-vinduet (M1.6 render-struktur §2.1), ikke wired her.
+function diaryDayIndex() {
+  const startISO = (diaryState && diaryState.startedAt) || todayISO();
+  const fillISO  = diaryFillDate || todayISO();
+  const a = new Date(startISO + 'T00:00:00');
+  const b = new Date(fillISO  + 'T00:00:00');
+  if (isNaN(a) || isNaN(b)) return 0;
+  return Math.max(0, Math.round((b - a) / 86400000));
+}
+function diaryFieldVisible(f) {
+  if (!f.weekOneDaily) return true;        // alm. felter: altid synlige
+  const di = diaryDayIndex();
+  return di < 7 || (di % 7 === 0);         // uge 1 (dag 0-6) dagligt; derefter ugentligt
 }
 
 // ── Q10 substans-komponent (tap-først) — delt af daglig dagbog + baseline ──
@@ -1045,7 +1222,7 @@ function buildSubstansField(f, draft, afterChange) {
     });
     if (entry.tidspunkt === 'Nat') {
       const flag = document.createElement('div');
-      flag.innerHTML = chipIcon('maane') + 'Tæt på sengetid — markeres til din psykolog.';
+      flag.innerHTML = chipIcon('maane') + 'Tæt på sengetid. Markeres til din psykolog.';
       flag.style.cssText = 'flex-basis:100%;font-size:12px;color:#8a6d00;margin-top:2px';
       wrap.appendChild(flag);
     }
@@ -1174,6 +1351,7 @@ function renderDiaryFields() {
   const root = document.getElementById('diary-fields');
   root.innerHTML = '';
   diarySkema.fields.forEach((f, i) => {
+    if (!diaryFieldVisible(f)) return;   // F1 skjult uden for sin kadence (uge 1 dagligt → ugentligt)
     const inputId = `dfield-${f.key}`;
     const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
     // Nummeret er KUN en visuel ordinal — skjult for skærmlæser (aria-hidden) så
@@ -1181,6 +1359,44 @@ function renderDiaryFields() {
     // (oplæsnings-venlig tilstand), så et oplæst "8." foran ville være redundant.
     const qHtml = `<span class="question-num" aria-hidden="true">${i + 1}.</span>${f.text}${optTag}`;
     const val = diaryDraft[f.key];
+
+    // NRS 0-10 (F1 søvnigheds-item, M1.6): titel + prompt + 0..10-segmenter m.
+    // ord-ankre KUN i enderne. INGEN tal-/score-/SE-feedback efter valg (ingen
+    // "du valgte X", ingen tolkning) — segmenterne er ren input-affordance; tallet
+    // er nødvendigt for at vælge punkt 1-9, men der gives aldrig en score tilbage.
+    if (f.kind === 'nrs') {
+      const fs = document.createElement('fieldset');
+      fs.className = 'diary-field nrs-field';
+      const legend = document.createElement('legend');
+      legend.className = 'diary-q';
+      legend.innerHTML = `<span class="question-num" aria-hidden="true">${i + 1}.</span>`
+        + (f.titel ? `<span class="nrs-titel">${f.titel}</span>` : '') + f.text;
+      fs.appendChild(legend);
+      const group = document.createElement('div'); group.className = 'nrs-scale'; group.setAttribute('role', 'radiogroup');
+      for (let v = f.min; v <= f.max; v++) {
+        const rid = `${inputId}-${v}`;
+        const opt = document.createElement('label');
+        opt.className = 'nrs-option' + (val === v ? ' checked' : '');
+        opt.setAttribute('for', rid);
+        const aria = v === f.min ? `${v}, ${f.anker0}` : v === f.max ? `${v}, ${f.anker10}` : `${v}`;
+        opt.innerHTML = `<input type="radio" id="${rid}" name="${f.key}" value="${v}" aria-label="${aria}" ${val === v ? 'checked' : ''}><span aria-hidden="true">${v}</span>`;
+        opt.querySelector('input').addEventListener('change', () => {
+          diaryDraft[f.key] = v;
+          group.querySelectorAll('.nrs-option').forEach(o => o.classList.remove('checked'));
+          opt.classList.add('checked'); markDiaryField(fs, f); updateDiaryProgress();
+        });
+        group.appendChild(opt);
+      }
+      fs.appendChild(group);
+      const ankre = document.createElement('div'); ankre.className = 'nrs-ankre';
+      const a0 = document.createElement('span'); a0.textContent = f.anker0;
+      const a10 = document.createElement('span'); a10.textContent = f.anker10;
+      ankre.appendChild(a0); ankre.appendChild(a10);
+      fs.appendChild(ankre);
+      markDiaryField(fs, f);
+      root.appendChild(fs);
+      return;
+    }
 
     // Scale → <fieldset>/<legend> om radioknapperne (semantisk gruppe, A11Y).
     if (f.kind === 'scale') {
@@ -1267,7 +1483,7 @@ function renderDiaryFields() {
 }
 
 function updateDiaryProgress() {
-  const req = diarySkema.fields.filter(f => !f.optional);
+  const req = diarySkema.fields.filter(f => !f.optional && diaryFieldVisible(f));   // skjult F1 tæller ikke
   const filled = req.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
   const pct = req.length ? Math.round(filled / req.length * 100) : 100;
   document.getElementById('diary-form-fill').style.width = pct + '%';
@@ -1361,12 +1577,13 @@ function substansHasContent(v) {
 }
 
 function saveDiaryEntry() {
-  const req = diarySkema.fields.filter(f => !f.optional);
+  const req = diarySkema.fields.filter(f => !f.optional && diaryFieldVisible(f));   // skjult F1 ikke krævet
   if (req.some(f => { const v = diaryDraft[f.key]; return v == null || v === ''; })) return;
 
   const date = diaryFillDate || todayISO();    // i dag ELLER i går-backfill
   const entry = { date, savedAt: new Date().toISOString() };   // savedAt → newest-wins-merge
   diarySkema.fields.forEach(f => {
+    if (!diaryFieldVisible(f)) return;          // persistér aldrig et felt uden for sin kadence
     const v = diaryDraft[f.key];
     if (v == null || v === '') return;
     if (f.kind === 'substans' && !substansHasContent(v)) return;   // urørt valgfrit felt = ubesvaret
@@ -1421,7 +1638,7 @@ async function shareDiaryEncrypted() {
   const btn = document.getElementById('share-btn');
   if (!keyCheck.ok) {
     status.style.color = '#c0392b';
-    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar. Kontakt din psykolog for et nyt link.';
     return;
   }
   if (diaryState.entries.length === 0 && !recoveredBlob) {
@@ -1438,9 +1655,7 @@ async function shareDiaryEncrypted() {
     containerJSON = await byggDiaryContainerJSON(true);
   } catch (e) {
     console.error('[mentem] kryptering fejlede (dagbog)', e && e.name, e && e.message, e);
-    status.style.color = '#c0392b';
-    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
-    btn.disabled = false;
+    await visKryptoFallback(status, e, btn, e && e.name === 'CryptoUnsupportedError');
     return;
   }
   // AUTO-SEND (#1/#2): kun it=-links + når der findes plaintext-entries (recoveredBlob-
@@ -1472,7 +1687,7 @@ async function sendDiaryOpdatering() {
   const btn = document.getElementById('diary-update-btn');
   if (!keyCheck.ok) {
     status.style.color = '#c0392b';
-    status.textContent = 'Sikkerhedstjek fejlede — kontakt din psykolog for et nyt link.';
+    status.textContent = 'Sikkerhedstjek fejlede. Kontakt din psykolog for et nyt link.';
     return;
   }
   if (diaryState.entries.length === 0) {
@@ -1489,9 +1704,7 @@ async function sendDiaryOpdatering() {
     containerJSON = await byggDiaryContainerJSON(false);
   } catch (e) {
     console.error('[mentem] kryptering fejlede (opdatering)', e && e.name, e && e.message, e);
-    status.style.color = '#c0392b';
-    status.textContent = 'Noget gik galt. Prøv igen, eller kontakt din psykolog.';
-    btn.disabled = false;
+    await visKryptoFallback(status, e, btn, e && e.name === 'CryptoUnsupportedError');
     return;
   }
   // AUTO-SEND (#1/#2): ikke-terminal → ryd ALDRIG kladden; knap forbliver brugbar.
@@ -1536,14 +1749,14 @@ function renderBaselineWelcome() {
   const intro = document.getElementById('baseline-intro');
   const startBtn = document.getElementById('baseline-start-btn');
   if (!keyCheck.ok) {
-    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE — kontakt din psykolog for et nyt link.';
+    intro.innerHTML = '<strong style="color:#c0392b">Sikkerhedstjek fejlede.</strong> Dette link peger på en ukendt sikkerhedsnøgle. Brug det IKKE. Kontakt din psykolog for et nyt link.';
     startBtn.disabled = true; startBtn.textContent = 'Linket kan ikke bruges';
     return;
   }
   intro.textContent = baselineSkema.instruction;
   startBtn.disabled = false;
   const fp = document.getElementById('baseline-key-fp');
-  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + PINNED_KEY_ID;
+  if (fp) fp.textContent = 'Krypteret til din psykologs nøgle · ID ' + aktivKeyId();
 }
 
 function startBaseline() {
@@ -1660,7 +1873,7 @@ async function shareBaselineEncrypted() {
   const btn = document.getElementById('share-btn');
   if (!keyCheck.ok) {
     status.style.color = '#c0392b';
-    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar — kontakt din psykolog for et nyt link.';
+    status.textContent = 'Sikkerhedstjek fejlede: linket peger på en ukendt nøgle. Del IKKE dine svar. Kontakt din psykolog for et nyt link.';
     return;
   }
   btn.disabled = true;
@@ -1675,9 +1888,7 @@ async function shareBaselineEncrypted() {
     containerJSON = JSON.stringify(await mentemEncrypt(keyCheck.key, payload, keyCheck.keyId)); // ALTID pinned key
   } catch (e) {
     console.error('[mentem] kryptering fejlede (baseline)', e && e.name, e && e.message, e);
-    status.style.color = '#c0392b';
-    status.textContent = 'Noget gik galt under kryptering. Prøv igen, eller kontakt din psykolog.';
-    btn.disabled = false;
+    await visKryptoFallback(status, e, btn, e && e.name === 'CryptoUnsupportedError');
     return;
   }
   // AUTO-SEND (#1/#2): kun it=-links. Lykkes → færdig; ellers fald til download/del.
@@ -1691,11 +1902,36 @@ async function shareBaselineEncrypted() {
   if (r === 'delt') { status.style.color = 'var(--accent)'; status.textContent = 'Filen er klar til at sende. Tak!'; }
 }
 
+// ── ESS MILEPÆLS-TJEK: render KUN vores låste intro-ramme; items licens-gated (stub)
+// ESS-items (8 spørgsmål + skala + scoring) er licens-bundne (Johns 1990-1997,
+// Special Terms 140135) → un-stubbes FØRST efter Mapi/ICON LS-screenshot-godkendelse
+// (Viktor 26/6). Wrappen (ESS_MILEPAEL_RAMME) er VORES egen, Viktor-låste ramme og
+// renderes verbatim. Ingen data-indsamling i denne visning (ren forhåndsvisning).
+function renderEss(id) {
+  const skema = SKEMAER[id];
+  const rammeEl = document.getElementById('ess-ramme');
+  rammeEl.innerHTML = (skema.ramme || '').split('\n\n').map(block => {
+    const html = block
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')   // **fed** → <strong> (låst kilde, ikke bruger-input)
+      .replace(/\n/g, '<br>');
+    return `<p>${html}</p>`;
+  }).join('');
+  const stub = document.getElementById('ess-stub');
+  stub.innerHTML = `<div class="ess-stub-icon" aria-hidden="true">${iconSVG('soevnighed')}</div>`
+    + `<p class="ess-stub-text">Selve spørgsmålene tilføjes her, så snart de er klar. Du skal ikke gøre noget nu.</p>`;
+  showScreen('screen-ess');
+  window.scrollTo(0, 0);
+}
+
 // ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
+injectAkutHjaelp();   // patientsikkerhed: Akut hjælp-boks i bunden af hver skærm (alle flows)
 if (baselineId) {
   runBaseline(baselineId);
 } else if (diaryId) {
   runDiary(diaryId);
+} else if (essId) {
+  renderEss(essId);
 } else {
   document.getElementById('finish-btn').addEventListener('click', goDone);
   document.getElementById('share-btn').addEventListener('click', shareEncrypted);
@@ -1835,7 +2071,8 @@ function initA11yMode() {
 initTextsize();
 initAloud();
 initA11yMode();
+tjekKryptoVedIndlaesning();
 </script>
-<p class="a11y-hint">Vil du have siden læst op? På iPhone: slå "Læs skærm op" til i Indstillinger → Tilgængelighed → Talt indhold, og stryg ned med to fingre.</p>
+<p class="a11y-hint">Vil du have siden læst op? På iPhone: slå "Læs skærm op" til i Indstillinger → Tilgængelighed → Talt indhold, og stryg ned med to fingre. På Android: tryk på "Få læst op" øverst på siden. Vil du bruge telefonens egen oplæsning, kan du i Chrome trykke på menuen (tre prikker) og vælge "Læs højt", eller slå "Vælg og oplæs" til i Indstillinger, Tilgængelighed.</p>
 </body>
 </html>
