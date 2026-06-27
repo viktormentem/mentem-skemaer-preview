@@ -134,6 +134,7 @@
   .diary-q .question-num { font-size:12px; color:var(--muted); font-weight:400; margin-right:8px; }
   /* F1 søvnigheds-NRS (0-10): titel + 0..10-segmenter + ord-ankre i enderne. */
   .nrs-titel { display:block; font-size:16px; font-weight:600; color:var(--accent); margin-bottom:4px; }
+  .nrs-titel-ikon { display:inline-flex; width:18px; height:18px; color:var(--accent); vertical-align:-3px; margin-right:7px; }
   .nrs-scale { display:grid; grid-template-columns:repeat(11, 1fr); gap:6px; margin-top:4px; }
   .nrs-option { display:flex; align-items:center; justify-content:center; min-height:44px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; background:white; font-size:15px; font-weight:500; transition:all 0.12s; }
   .nrs-option:hover { border-color:var(--accent); background:#f0faf5; }
@@ -150,6 +151,27 @@
   .ess-stub { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; background:var(--accent-light); border:1px dashed var(--accent); border-radius:12px; padding:24px 22px; }
   .ess-stub-icon { width:32px; height:32px; color:var(--accent); }
   .ess-stub-text { font-size:14px; color:var(--muted); line-height:1.5; margin:0; }
+  /* SRT uge-1 søvnvindue: roligt, ét budskab; klokkeslæt-vinduet visuelt dominant. */
+  .srt-uge1-badge { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--accent); background:var(--accent-light); border-radius:999px; padding:6px 14px; margin:0 0 18px; }
+  .srt-uge1-ikon { display:inline-flex; width:16px; height:16px; color:var(--accent); }
+  .srt-vindue-ur { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin:6px 0 28px; }
+  .srt-vindue-ur-ikon { display:inline-flex; width:30px; height:30px; color:var(--accent); }
+  .srt-vindue-ur-tider { display:inline-flex; align-items:center; gap:16px; font-family:'DM Serif Display',serif; font-size:40px; line-height:1; color:var(--text); }
+  .srt-vindue-ur-tider strong { font-weight:400; letter-spacing:0.5px; }
+  .srt-vindue-ur-pil { font-size:26px; color:var(--muted); }
+  .srt-blok { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
+  .srt-blok h2 { font-family:'DM Serif Display',serif; font-size:20px; font-weight:400; color:var(--accent); margin:0 0 10px; }
+  .srt-blok p { margin:0 0 12px; }
+  .srt-blok ul { margin:0; padding-left:20px; }
+  .srt-blok li { margin:0 0 9px; line-height:1.55; }
+  .srt-advarsel { background:var(--accent-light); border:1px solid var(--accent); border-radius:12px; padding:20px 22px; margin-bottom:22px; }
+  .srt-advarsel .srt-advarsel-head { display:flex; align-items:center; gap:9px; }
+  .srt-advarsel .srt-advarsel-ikon { display:inline-flex; width:22px; height:22px; color:var(--accent); flex:0 0 auto; }
+  .srt-advarsel h2 { font-family:'DM Serif Display',serif; font-size:19px; font-weight:400; color:var(--accent); margin:0; }
+  .srt-advarsel p { margin:12px 0 0; font-size:15px; line-height:1.6; color:var(--text); }
+  @media (max-width:430px) { .srt-vindue-ur-tider { font-size:32px; gap:12px; } }
+  @keyframes srtRo { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  #screen-soevnvindue.active .wrap > * { animation:srtRo 0.45s ease both; }
   .diary-optional { font-size:12px; color:var(--muted); font-weight:400; font-style:italic; margin-left:6px; }
   .diary-hint { font-size:13px; color:var(--muted); font-weight:400; line-height:1.45; margin:-6px 0 14px; }
   .diary-input-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -328,6 +350,21 @@
   </div>
 </div>
 
+<!-- SRT uge-1 søvnvindue: blokerende safety-entry FØR dagbog (vindue + SC-regler
+     + kørsels-advarsel hvis adv=1). Verbatim låst copy; klokkeslæt afledt af tib/wake. -->
+<div id="screen-soevnvindue" class="screen">
+  <div class="wrap">
+    <p class="srt-uge1-badge" id="srt-uge1-badge" hidden><span class="srt-uge1-ikon" aria-hidden="true"></span><span id="srt-uge1-tekst">Den første uge</span></p>
+    <div class="srt-vindue-ur" id="srt-vindue-ur" hidden>
+      <span class="srt-vindue-ur-ikon" aria-hidden="true"></span>
+      <span class="srt-vindue-ur-tider"><strong id="srt-vindue-fra">--:--</strong><span class="srt-vindue-ur-pil" aria-hidden="true">→</span><strong id="srt-vindue-til">--:--</strong></span>
+    </div>
+    <div class="srt-blok" id="srt-vindue-blok"></div>
+    <div class="srt-blok" id="srt-sc-blok"></div>
+    <div class="srt-advarsel" role="note" id="srt-advarsel-blok" hidden></div>
+  </div>
+</div>
+
 <script type="module">
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
          CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD, kryptoStoettet,
@@ -433,6 +470,10 @@ const baselineId = rawSelected.find(id => SKEMAER[id].kind === 'baseline') || nu
 // ESS milepæls-tjek (kind:'essMilepael') = standalone milepæls-visning, eget flow
 // (renderEss). Kun vores låste intro-ramme nu; ESS-items licens-gated → stub.
 const essId = rawSelected.find(id => SKEMAER[id].kind === 'essMilepael') || null;
+// SRT uge-1 søvnvindue (kind:'srtVindue') = standalone blokerende safety-entry,
+// eget flow (renderSoevnvindue). Vindue/SC/advarsel = verbatim låst copy; klokkeslæt
+// afledt af tib/wake. Ingen data-indsamling i denne visning (ren render).
+const vindueId = rawSelected.find(id => SKEMAER[id].kind === 'srtVindue') || null;
 let selected = SKEMA_ORDER.filter(id => rawSelected.includes(id));   // kanonisk rækkefølge (kun spørgeskemaer)
 const fixedFromLink = selected.length > 0;                    // ?s= → låst batteri
 
@@ -533,6 +574,11 @@ const ICONS = {
   soevnighed:  SVG('<path d="M3.5 11.5c2.4 3 5.4 4.5 8.5 4.5s6.1-1.5 8.5-4.5"/><line x1="7.5" y1="15.2" x2="6.5" y2="17.4"/><line x1="12" y1="16.4" x2="12" y2="18.8"/><line x1="16.5" y1="15.2" x2="17.5" y2="17.4"/>'),
   lup:         SVG('<circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20"/>'),
   check:       SVG('<path d="M5 12.5l4.5 4.5L19 7"/>'),
+  // SRT uge-1-vindue (egne house-style line-ikoner, ikke emoji/lånte glyffer):
+  // seng = søvnvindue · ur = klokkeslæt-vinduet · skjold = sikkerheds-advarsel.
+  seng:        SVG('<path d="M3 18v-5"/><path d="M21 18v-3a3 3 0 0 0-3-3H3"/><line x1="3" y1="15" x2="21" y2="15"/><path d="M7 12V9.5A1.5 1.5 0 0 1 8.5 8h2.5A1.5 1.5 0 0 1 12.5 9.5V12"/>'),
+  ur:          SVG('<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>'),
+  skjold:      SVG('<path d="M12 3l7 3v5c0 4.2-2.8 7.2-7 8.5-4.2-1.3-7-4.3-7-8.5V6z"/><path d="M9 12l2 2 4-4"/>'),
   // Substans-ikoner (Q10) — egne house-style line-ikoner, ikke emoji/lånte glyffer.
   medicin:   SVG('<rect x="3" y="8.5" width="18" height="7" rx="3.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/>'),
   alkohol:   SVG('<path d="M7.5 4h9l-1.2 6a3.3 3.3 0 0 1-6.6 0z"/><line x1="12" y1="13" x2="12" y2="19.5"/><line x1="8.5" y1="19.5" x2="15.5" y2="19.5"/>'),
@@ -1369,8 +1415,10 @@ function renderDiaryFields() {
       fs.className = 'diary-field nrs-field';
       const legend = document.createElement('legend');
       legend.className = 'diary-q';
+      // F1-titlen bærer sit eget house-style søvnigheds-ikon (drowsy-eye, F1/ESS-
+      // ikonet; egen SVG, 0 emoji/lånt glyf; aria-hidden så oplæsning kun læser titlen).
       legend.innerHTML = `<span class="question-num" aria-hidden="true">${i + 1}.</span>`
-        + (f.titel ? `<span class="nrs-titel">${f.titel}</span>` : '') + f.text;
+        + (f.titel ? `<span class="nrs-titel"><span class="nrs-titel-ikon" aria-hidden="true">${iconSVG('soevnighed')}</span>${f.titel}</span>` : '') + f.text;
       fs.appendChild(legend);
       const group = document.createElement('div'); group.className = 'nrs-scale'; group.setAttribute('role', 'radiogroup');
       for (let v = f.min; v <= f.max; v++) {
@@ -1910,7 +1958,17 @@ async function shareBaselineEncrypted() {
 function renderEss(id) {
   const skema = SKEMAER[id];
   const rammeEl = document.getElementById('ess-ramme');
-  rammeEl.innerHTML = (skema.ramme || '').split('\n\n').map(block => {
+  // Dedupe-overskrift (M1.6 Fase B, 3-linse 26/6): skærmen har allerede en serif-H1
+  // med samme titel som rammens første fede linje → den blev vist 2x. Strip KUN den
+  // dublerende heading-linje i RENDER; kilde-copy (ESS_MILEPAEL_RAMME) er uændret
+  // verbatim (Swift single-source-paritet bevaret). Resten af rammen urørt.
+  let ramme = skema.ramme || '';
+  const titel = (skema.title || '').trim();
+  if (titel) {
+    const esc = titel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    ramme = ramme.replace(new RegExp('^\\*\\*' + esc + '\\*\\*\\n?'), '');
+  }
+  rammeEl.innerHTML = ramme.split('\n\n').map(block => {
     const html = block
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')   // **fed** → <strong> (låst kilde, ikke bruger-input)
@@ -1924,9 +1982,113 @@ function renderEss(id) {
   window.scrollTo(0, 0);
 }
 
+// ── SRT UGE-1 SØVNVINDUE: blokerende safety-entry FØR dagbog ────────────────
+// Viser FØRST det ordinerede vindue (klokkeslæt afledt af tib/wake; ALDRIG SE-tal),
+// derefter SC-reglerne, og kørsels-advarslen KUN når adv=1 (spec §2.2 / safety §41).
+// tn=0 → uge-1-fremhævning. Verbatim Viktor-låst copy (em-dash-fri) fra core.js.
+// Ren render: ingen data-indsamling, NOT-TOUCH krypto/keyId.
+function srtHhmmToMin(s) {
+  var p = String(s).split(':');
+  if (p.length !== 2) return null;
+  var h = parseInt(p[0], 10), m = parseInt(p[1], 10);
+  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
+}
+function srtMinToHhmm(min) {
+  min = ((min % 1440) + 1440) % 1440;
+  var h = Math.floor(min / 60), m = min % 60;
+  return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+}
+function srtEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function srtInlineBold(s) { return srtEsc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
+// Minimal markdown (heading = fuldt fed førstelinje · "- " punktliste · **fed**) →
+// sikker HTML. .srt-aloud på hvert tekst-element så "Få læst op" rammer ALT verbatim
+// i visuel rækkefølge (safety-advarslen SKAL læses op). headIcon = ikon foran heading.
+function srtBlokHtml(md, opts) {
+  opts = opts || {};
+  var lines = String(md).split('\n'), html = '', inList = false;
+  for (var i = 0; i < lines.length; i++) {
+    var ln = lines[i];
+    if (ln.indexOf('- ') === 0) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li class="srt-aloud">' + srtInlineBold(ln.slice(2)) + '</li>';
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      var t = ln.trim();
+      if (!t.length) continue;
+      if (/^\*\*[^*]+\*\*$/.test(t)) {
+        var head = srtEsc(t.replace(/\*\*/g, ''));
+        html += opts.headIcon
+          ? '<div class="srt-advarsel-head"><span class="srt-advarsel-ikon" aria-hidden="true">' + iconSVG(opts.headIcon) + '</span><h2 class="srt-aloud">' + head + '</h2></div>'
+          : '<h2 class="srt-aloud">' + head + '</h2>';
+      } else {
+        html += '<p class="srt-aloud">' + srtInlineBold(ln) + '</p>';
+      }
+    }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+function renderSoevnvindue(id) {
+  var skema = SKEMAER[id] || {};
+  var tekst = skema.tekst || {};
+  // Leverance-URL-params (plaintext, L1.c; mapping = SRTOrdinationURLCodec, Code-confirmet).
+  var tibS = params.get('tib');
+  var tib = (tibS != null) ? parseInt(tibS, 10) : NaN;
+  var wake = params.get('wake');
+  var wakeMin = srtHhmmToMin(wake);
+  var advAktiv = params.get('adv') === '1';
+  var tnS = params.get('tn');
+  var ugeEt = (tnS != null) && (parseInt(tnS, 10) === 0);
+
+  // uge-1-fremhævning (tn=0)
+  if (ugeEt) {
+    var badge = document.getElementById('srt-uge1-badge');
+    badge.querySelector('.srt-uge1-ikon').innerHTML = iconSVG('seng');
+    badge.hidden = false;
+  }
+
+  // Klokkeslæt-vindue (sengetid = wake minus tib) — KUN klokkeslæt, ALDRIG SE-tal.
+  var sengetid = (!isNaN(tib) && wakeMin != null) ? srtMinToHhmm(wakeMin - tib) : null;
+  if (sengetid != null) {
+    var urEl = document.getElementById('srt-vindue-ur');
+    urEl.querySelector('.srt-vindue-ur-ikon').innerHTML = iconSVG('ur');
+    document.getElementById('srt-vindue-fra').textContent = sengetid;
+    document.getElementById('srt-vindue-til').textContent = wake;
+    urEl.hidden = false;
+  }
+
+  // Tekst 1 · vinduesTekst (klokkeslæt indsat). Defensiv fallback hvis link mangler params.
+  if (sengetid != null) {
+    var vindueMd = String(tekst.vindue || '')
+      .split('{sengetid}').join(sengetid)
+      .split('{opvågning}').join(wake);
+    document.getElementById('srt-vindue-blok').innerHTML = srtBlokHtml(vindueMd);
+  } else {
+    document.getElementById('srt-vindue-blok').innerHTML =
+      '<h2 class="srt-aloud">Dit søvnvindue</h2>'
+      + '<p class="srt-aloud">Vinduet kunne ikke vises her. Åbn linket fra din psykolog igen, eller kontakt din psykolog.</p>';
+  }
+
+  // Tekst 2 · scReglerTekst (valgfri-men-låst; medtaget verbatim, nul-risiko).
+  document.getElementById('srt-sc-blok').innerHTML = srtBlokHtml(tekst.scRegler || '');
+
+  // Tekst 3 · koerselsAdvarsel — KUN hvis adv=1.
+  if (advAktiv) {
+    var advEl = document.getElementById('srt-advarsel-blok');
+    advEl.innerHTML = srtBlokHtml(tekst.koerselsAdvarsel || '', { headIcon: 'skjold' });
+    advEl.hidden = false;
+  }
+
+  showScreen('screen-soevnvindue');
+  window.scrollTo(0, 0);
+}
+
 // ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
 injectAkutHjaelp();   // patientsikkerhed: Akut hjælp-boks i bunden af hver skærm (alle flows)
-if (baselineId) {
+if (vindueId) {
+  renderSoevnvindue(vindueId);
+} else if (baselineId) {
   runBaseline(baselineId);
 } else if (diaryId) {
   runDiary(diaryId);
@@ -1998,7 +2160,7 @@ function a11yVisibleText(el) {
 function visibleScreenText() {
   const scr = document.querySelector('.screen.active');
   if (!scr) return '';
-  const sel = 'h1, h2, .intro, .schema-title, .schema-instruction, .question-text, label.diary-q, legend.diary-q, .radio-option, .done-wrap p';
+  const sel = 'h1, h2, .intro, .schema-title, .schema-instruction, .question-text, label.diary-q, legend.diary-q, .radio-option, .done-wrap p, .srt-aloud';
   const parts = [];
   scr.querySelectorAll(sel).forEach(el => {
     if (el.offsetParent !== null && el.getAttribute('aria-hidden') !== 'true') {

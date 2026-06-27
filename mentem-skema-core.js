@@ -285,6 +285,47 @@ export const ESS_MILEPAEL = {
 SKEMAER.ess = ESS_MILEPAEL;
 
 // ════════════════════════════════════════════════════════════════════════
+//  SRT UGE-1 SØVNVINDUE-VISNING (kind:'srtVindue') — klinisk safety-slice
+// ════════════════════════════════════════════════════════════════════════
+// Standalone, BLOKERENDE uge-1-entry FØR dagbogen: klienten ser FØRST sit
+// ordinerede søvnvindue (hvad skal jeg gøre) + stimuluskontrol-reglerne +
+// (når aktiv) kørsels-/maskin-advarslen. Gated på leverance-URL-params:
+//   tib (min) · wake (HH:mm) → vindue = (wake minus tib) til wake (KUN klokkeslæt,
+//   ALDRIG SE-tal/score, jf. noSEInClientCopy) · adv=1 → vis koerselsAdvarsel ·
+//   tn=0 (titreringsNr) → uge-1-fremhævning. Mapping = SRTOrdinationURLCodec
+//   (Swift), Code-confirmet mod srt-ordination-render.js 2026-06-26.
+//
+// Teksterne er Viktor-låst ORD-FOR-ORD, em-dash-fri re-lås (Mycel V82, 2026-06-26;
+// srt-klient-tekst-relaas-emdash-fri-2026-06-26.md, kilde srt-klient-tekst-laas-
+// 2026-06-02.md). Forankring: Tekst 1/2 = Edinger & Carney 2014 + Perlis session-
+// guide p.12-13 (SC1 klokke-fri); Tekst 3 = Edinger p.50 verbatim (kørsels-advarsel,
+// spec-fase2-safety-monitorering §41: koerselsAdvarselAktiv ALTID synlig uge 1).
+// Single-source-of-truth = SoevnKlientTekst (Swift); gengivet ORDRET her (web kan
+// ikke importere Swift). RØR ALDRIG ordlyden uden at opdatere Swift + lås-tests FØRST.
+// 0 em-dash (em-dash-guarded), æøå. INGEN tal i copy (vindue-klokkeslæt afledes ved render).
+export const SRT_VINDUE_TEKST = {
+  // {sengetid}/{opvågning} indsættes ved render fra tib+wake; intet SE-tal vises.
+  vindue:
+`**Dit søvnvindue**
+Dit søvnvindue er den periode, du må være i sengen lige nu: fra **{sengetid}** til **{opvågning}**. Det kan føles kortere, end du er vant til. Det er meningen. Ved at samle din søvn i et fast vindue hjælper vi din krop med at sove mere sammenhængende. Stå op på det faste tidspunkt hver morgen, også i weekenden. Vi justerer vinduet undervejs ud fra din dagbog.`,
+  scRegler:
+`**Sådan bruger du sengen**
+- Gå kun i seng, når du er søvnig.
+- Brug kun sengen til søvn (og sex), ikke til at ligge vågen, se skærm eller bekymre dig.
+- **Forlad sengen, hvis du føler dig vågen eller frustreret, uden at kigge på uret.** Gå ind i et andet rum, og gå tilbage til sengen, når du føler dig søvnig nok til at falde i søvn.
+- Stå op på det samme tidspunkt hver morgen.
+- Undgå at sove eller blunde i løbet af dagen.`,
+  koerselsAdvarsel:
+`**Vigtigt om sikkerhed den første uge**
+Den første uge med dit nye søvnvindue kan gøre dig lidt mere træt om dagen, mens din krop vænner sig til det. Hvis du mærker øget træthed, så **undgå aktiviteter, hvor søvnighed kan være farlig for dig, for eksempel at køre langt eller betjene farlige maskiner.** Er du fortsat meget træt i dagtimerne efter den første uge, så sig til, så har vi sandsynligvis sat vinduet for stramt, og vi justerer det.`,
+};
+export const SRT_VINDUE = {
+  id: 'soevnvindue', kind: 'srtVindue', title: 'Dit søvnvindue', short: 'Søvnvindue',
+  icon: 'seng', tekst: SRT_VINDUE_TEKST,
+};
+SKEMAER.soevnvindue = SRT_VINDUE;
+
+// ════════════════════════════════════════════════════════════════════════
 //  SCORING (intern - bruges til opaque payload; klienten ser ALDRIG resultatet)
 // ════════════════════════════════════════════════════════════════════════
 function val(a) { return (a && typeof a === 'object') ? a.value : a; }
