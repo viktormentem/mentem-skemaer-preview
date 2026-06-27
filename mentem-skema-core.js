@@ -556,6 +556,7 @@ export const PHQ9_INSTRUMENT = {
 export const INSTRUMENTER = {
   who5: WHO5_INSTRUMENT,
   phq9: PHQ9_INSTRUMENT,
+  // gad7 registreres efter GAD7_INSTRUMENT-definitionen nedenfor (undgaar TDZ).
 };
 
 // Kanonisk [MYCEL]-feltorden pr. skabelon (spec §3). Bruges af emitter + guard.
@@ -563,6 +564,7 @@ export function instrumentFeltOrden(skema) {
   const items = skema.scoredItems.map((it) => it.key);
   if (skema.skabelon === 'who5') return [...items, 'who5_raw', 'who5_pct'];
   if (skema.skabelon === 'phq9') return [...items, 'phq9_sum', 'phq9_item9_flag', skema.funktion.key];
+  if (skema.skabelon === 'gad7') return [...items, 'gad7_sum'];   // INGEN funktion/flag (modsat PHQ-9)
   return items;
 }
 
@@ -587,6 +589,9 @@ export function instrumentDerived(skema, answers) {
   if (skema.skabelon === 'phq9') {
     const i9 = ints[skema.safetyKey];
     return { phq9_sum: sum, phq9_item9_flag: (i9 == null) ? null : (i9 > 0) };
+  }
+  if (skema.skabelon === 'gad7') {
+    return { gad7_sum: sum };   // sum af alle 7 (0-21); ingen flag/funktion
   }
   return {};
 }
@@ -623,27 +628,49 @@ export function buildInstrumentMycel(skema, answers = {}, meta = {}) {
   return linjer.join('\n');
 }
 
-// ── GAD-7 SKELET (bag feature-flag, IKKE klar) ───────────────────────────────
-// STRUKTUR klar (svarkategorier + scoring + skabelon), men de 7 item-tekster AFVENTER
-// Viktors officielle phqscreeners.com-verbatim (spec §7.3: byg ALDRIG med gaettede items).
-// GAD7_INSTRUMENT_KLAR=false => IKKE registreret i INSTRUMENTER => ?s=gad7 rammer det IKKE
-// (single-token gad7 forbliver batteri-noeglen). Naar Viktor leverer: indsaet de 7 verbatim
-// scoredItems + flip flaget + tilfoej til INSTRUMENTER (+ MJ-kontrakt-skabelon-blok). Ingen
-// item-tekst gaettes her.
-export const GAD7_INSTRUMENT_KLAR = false;
-export const GAD7_INSTRUMENT_SKELET = {
+// ── GAD-7 (Generaliseret Angst, 7 items) — KLAR 2026-06-27 ───────────────────
+// Verbatim modtaget fra officiel dansk phqscreeners-PDF (GAD7_Danish for Denmark.pdf);
+// spec/kilde: Projekt_Praksis/noter/kat-instrument-gad7-hentning-wsas-beslutning-2026-06-27.md §1.
+// Fri licens (Pfizer education grant, ingen tilladelse kraevet). INGEN funktionslinje (denne
+// officielle danske version har INTET funktions-item, modsat PHQ-9 item 10) + INGEN safety-panel
+// (GAD-7 har ingen suicidalitets-item, modsat PHQ-9 item 9). gad7_sum = sum af alle 7 (0-21);
+// svaerhedsbaand er KLINIKER-side (ikke patient-vist). Ingen tal-badge (0-3, hoejere = vaerre).
+// Marker-klausulen "et kryds" gengives som ORD, ikke "✔"-glyf: ikon/emoji-direktivet er
+// UPAAVIRKET af verbatim-undtagelsen (instrumenter maa ikke baere emoji), Viktor-valg 27/6
+// (konsistent med WHO-5's "et kryds i det felt"). Em-dash-reglen rorer ikke verbatim (sentinel).
+export const GAD7_INSTRUMENT_KLAR = true;
+// emdash-guard:instrument-start (GAD-7 public domain Spitzer/Williams/Kroenke et al.: verbatim
+// gengivelse fra officiel dansk phqscreeners-PDF; em-dash-reglen gaelder IKKE inden for dette region)
+export const GAD7_INSTRUMENT = {
   id: 'gad7', kind: 'instrument', skabelon: 'gad7',
   uiTitle: 'Bekymring og uro', kort: 'GAD-7',
-  stem: '',                                   // AFVENTER officiel verbatim-stamme
-  attribution: 'GAD-7 (Spitzer, Kroenke, Williams, Löwe). Public domain. Gengivet med kildeangivelse.',
-  options: [                                  // svarkategorier verificeret (spec §7.3)
+  // Verbatim instruktion (glyf "✔" -> ord "et kryds" pr. ikon/emoji-direktiv, Viktor-valg 27/6).
+  instruktion: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer? (Marker dit svar med et kryds)',
+  // Stamme echoes pr. item i ét-spørgsmål-ad-gangen-flowet (samme mønster som PHQ-9); marker-
+  // klausulen gentages ikke (engangs-vejledning lever i instruktionen ovenfor).
+  stem: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer?',
+  attribution: 'Spitzer, Williams, Kroenke et al., med uddannelseslegat fra Pfizer Inc.',
+  options: [                                  // svarkategorier 0-3 VERBATIM (matcher PHQ-9 Danish)
     { value: 0, label: 'Slet ikke' },
-    { value: 1, label: 'Flere dage' },        // verificér "Flere dage" vs "Flere enkelte dage" mod officiel PDF
+    { value: 1, label: 'Flere dage' },
     { value: 2, label: 'Mere end halvdelen af dagene' },
     { value: 3, label: 'Næsten hver dag' },
   ],
-  scoredItems: [],                            // <- 7 verbatim items indsaettes af Viktor (gad7_item_1..7)
+  scoredItems: [                              // 7 items VERBATIM (officiel dansk PDF)
+    { key: 'gad7_item_1', text: 'Følt dig nervøs, ængstelig eller anspændt' },
+    { key: 'gad7_item_2', text: 'Ikke kunnet holde op med at bekymre dig eller ikke kunnet styre din bekymring' },
+    { key: 'gad7_item_3', text: 'Bekymret dig for meget om alt muligt' },
+    { key: 'gad7_item_4', text: 'Haft svært ved at slappe af' },
+    { key: 'gad7_item_5', text: 'Været så rastløs, at du har haft svært ved at sidde stille' },
+    { key: 'gad7_item_6', text: 'Haft let ved at blive sur eller irritabel' },
+    { key: 'gad7_item_7', text: 'Været bange, som om noget frygteligt kunne ske' },
+  ],
+  // INGEN funktion, INGEN safetyKey (begge bevidst udeladt for GAD-7).
 };
+// emdash-guard:instrument-end
+
+// Registrér GAD-7 i INSTRUMENTER (efter definitionen -> ingen TDZ). single-token ?s=gad7 -> instrument.
+if (GAD7_INSTRUMENT_KLAR) INSTRUMENTER.gad7 = GAD7_INSTRUMENT;
 
 // ════════════════════════════════════════════════════════════════════════
 //  SCORING (intern - bruges til opaque payload; klienten ser ALDRIG resultatet)
