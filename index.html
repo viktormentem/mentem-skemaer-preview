@@ -154,6 +154,12 @@
     .cas1-scale.s8 { grid-template-columns:repeat(5, 1fr); }
     .cas1-scale.s100 { grid-template-columns:repeat(6, 1fr); }
   }
+  /* iPhone SE / små+ældre Android: hold ≥44px touch-mål ned til 320px. Kerne-
+     populationen (insomni) er ældre-tung + svagtseende-overrepræsenteret. s100
+     (11 belief-knapper) falder til ~40px ved 6 kolonner under ~342px → 5 kolonner. */
+  @media (max-width:360px) {
+    .cas1-scale.s100 { grid-template-columns:repeat(5, 1fr); }
+  }
   /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
   .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
   .ess-ramme p { margin:0 0 14px; }
@@ -211,7 +217,8 @@
   .a11y-stepnav { display:flex; gap:12px; margin-top:22px; }
   .a11y-stepnav button { flex:1; margin-top:0; }
   /* I tilstanden erstatter den læste "Spørgsmål X af Y" den visuelle bjælke. */
-  html[data-a11y="1"] #screen-diary-form .form-progress { display:none; }
+  html[data-a11y="1"] #screen-diary-form .form-progress,
+  html[data-a11y="1"] #screen-cas1 .form-progress { display:none; }
 </style>
 <script>
   /* A11Y: gendan tekststørrelse FØR render (ingen flash). Non-PII UI-præference. */
@@ -1588,23 +1595,35 @@ function updateDiaryProgress() {
   btn.textContent = filled < req.length ? `Mangler ${req.length - filled} svar` : 'Gem';
 }
 
-// ── Oplæsnings-venlig stepper (synshandicap / skærmlæser) ──────────────────
-// Hvert top-niveau-felt i #diary-fields er ÉT trin. Trinene skjules/vises ét ad
-// gangen; data-bindingen (diaryDraft) er uændret, så svar bevares på tværs af
-// Næste/Forrige. "Spørgsmål X af Y" læses FØRST (fokuseres + aria-live), fokus
-// flyttes til trinnets overskrift, aktivt trin bærer aria-current="step".
-function teardownDiaryStepper() {
+// ── Oplæsnings-venlig stepper (synshandicap / skærmlæser) — DELT ───────────
+// Generisk: ét trin (= ét spørgsmål) ad gangen over en konfigureret container.
+// Trinene skjules/vises ét ad gangen; data-bindingen er uændret, så svar bevares
+// på tværs af Næste/Forrige. "Spørgsmål X af Y" læses FØRST (fokuseres + aria-live),
+// fokus flyttes til trin-overskriften, aktivt trin bærer aria-current="step".
+// Parametriseret over skema-key: søvndagbogen (#diary-fields) og CAS-1 (#cas1-fields)
+// deler samme komponent via en cfg (spec-ux-a11y-cas1 §4: arv, genopfind ikke).
+//   cfg = { rootId, steps(): Element[], lastBtnId?, lastBtnShow?,
+//           onShowStep?(i, steps), beforeShow?(), onTeardown?() }
+let stepperCfg = null;       // aktiv konfiguration (eller null når ingen stepper)
+// diaryStepIndex (decl. ovenfor) genbruges som det delte aktive trin-index —
+// kun ét flow er aktivt ad gangen, så det er sikkert at dele.
+
+function teardownStepper() {
   document.querySelectorAll('.a11y-step-head, .a11y-stepnav').forEach(el => el.remove());
-  document.querySelectorAll('#diary-fields > *').forEach(el => { el.hidden = false; el.removeAttribute('aria-current'); });
-  // Gendan intro + "Samme som i går" (stepperen skjuler dem på trin 2-N).
-  const instr = document.getElementById('diary-form-instruction'); if (instr) instr.hidden = false;
-  const sameBtn = document.getElementById('diary-sameasyesterday-btn'); if (sameBtn) sameBtn.hidden = false;
-  const save = document.getElementById('diary-save-btn'); if (save) save.style.display = '';
+  if (stepperCfg) {
+    const root = document.getElementById(stepperCfg.rootId);
+    if (root) Array.from(root.children).forEach(el => { el.hidden = false; el.removeAttribute('aria-current'); });
+    if (stepperCfg.onTeardown) stepperCfg.onTeardown();
+  }
+  stepperCfg = null;
 }
 
-function applyDiaryStepper() {
-  const root = document.getElementById('diary-fields');
-  if (!root || !root.children.length) return;
+function applyStepper(cfg) {
+  const root = document.getElementById(cfg.rootId);
+  if (!root) return;
+  const steps = cfg.steps();
+  if (!steps.length) return;
+  stepperCfg = cfg;
   const head = document.createElement('h2');
   head.id = 'a11y-step-head'; head.className = 'a11y-step-head';
   head.tabIndex = -1;
@@ -1617,50 +1636,103 @@ function applyDiaryStepper() {
   nav.className = 'a11y-stepnav';
   const prev = document.createElement('button');
   prev.type = 'button'; prev.className = 'btn-secondary'; prev.id = 'a11y-prev'; prev.textContent = 'Forrige';
-  prev.addEventListener('click', () => showDiaryStep(diaryStepIndex - 1));
+  prev.addEventListener('click', () => showStep(diaryStepIndex - 1));
   const next = document.createElement('button');
   next.type = 'button'; next.className = 'btn-primary'; next.id = 'a11y-next'; next.textContent = 'Næste';
-  next.addEventListener('click', () => showDiaryStep(diaryStepIndex + 1));
+  next.addEventListener('click', () => showStep(diaryStepIndex + 1));
   nav.appendChild(prev); nav.appendChild(next);
   root.parentNode.insertBefore(nav, root.nextSibling);
 
-  showDiaryStep(Math.min(diaryStepIndex, root.children.length - 1), false);
+  showStep(Math.min(diaryStepIndex, steps.length - 1), false);
 }
 
-function showDiaryStep(i, moveFocus = true) {
-  const root = document.getElementById('diary-fields');
-  if (!root) return;
-  const steps = Array.from(root.children);
+function showStep(i, moveFocus = true) {
+  if (!stepperCfg) return;
+  const cfg = stepperCfg;
+  const steps = cfg.steps();
   if (!steps.length) return;
   i = Math.max(0, Math.min(i, steps.length - 1));
   diaryStepIndex = i;
+  if (cfg.beforeShow) cfg.beforeShow();
   steps.forEach((s, idx) => {
     const on = idx === i;
     s.hidden = !on;
     if (on) s.setAttribute('aria-current', 'step'); else s.removeAttribute('aria-current');
   });
-  // Intro-boksen + den globale "Samme som i går"-genvej hører KUN til trin 1.
-  // Ellers læser skærmlæseren intro'en op igen ved HVERT trin-skift (FEJL 1,
-  // VoiceOver-feedback 15/6). "Samme som i går" genudfylder ALLE felter (global,
-  // ikke per-spørgsmål) → samme regel.
-  const instr = document.getElementById('diary-form-instruction');
-  const sameBtn = document.getElementById('diary-sameasyesterday-btn');
-  if (instr) instr.hidden = i !== 0;
-  if (sameBtn) sameBtn.hidden = i !== 0;
+  if (cfg.onShowStep) cfg.onShowStep(i, steps);
   const last = i === steps.length - 1;
   const head = document.getElementById('a11y-step-head');
   if (head) head.textContent = `Spørgsmål ${i + 1} af ${steps.length}`;
   const prev = document.getElementById('a11y-prev');
   const next = document.getElementById('a11y-next');
-  const save = document.getElementById('diary-save-btn');
   if (prev) prev.disabled = i === 0;
   if (next) next.style.display = last ? 'none' : '';
-  if (save) save.style.display = last ? '' : 'none';
+  if (cfg.lastBtnId) {
+    const lb = document.getElementById(cfg.lastBtnId);
+    if (lb) lb.style.display = last ? (cfg.lastBtnShow || '') : 'none';
+  }
   window.scrollTo(0, 0);
   // Fokus til "Spørgsmål X af Y" → skærmlæser læser fremskridtet FØRST, derefter
   // navigerer brugeren til selve spørgsmålet. rAF: efter layout/visibility-skift.
   if (moveFocus && head) requestAnimationFrame(() => { try { head.focus(); } catch (e) {} });
 }
+
+// Søvndagbog-konfiguration (bevarer den oprindelige adfærd 1:1).
+//   - Hvert top-niveau-felt i #diary-fields er ét trin.
+//   - Intro + "Samme som i går" hører KUN til trin 1 (ellers genoplæses de hvert
+//     trin — FEJL 1, VoiceOver-feedback 15/6). "Samme som i går" genudfylder ALLE
+//     felter (global, ikke per-spørgsmål) → samme regel.
+function diaryStepperCfg() {
+  return {
+    rootId: 'diary-fields',
+    steps: () => Array.from((document.getElementById('diary-fields') || {}).children || []),
+    lastBtnId: 'diary-save-btn', lastBtnShow: '',
+    onShowStep: (i) => {
+      const instr = document.getElementById('diary-form-instruction');
+      const sameBtn = document.getElementById('diary-sameasyesterday-btn');
+      if (instr) instr.hidden = i !== 0;
+      if (sameBtn) sameBtn.hidden = i !== 0;
+    },
+    onTeardown: () => {
+      const instr = document.getElementById('diary-form-instruction'); if (instr) instr.hidden = false;
+      const sameBtn = document.getElementById('diary-sameasyesterday-btn'); if (sameBtn) sameBtn.hidden = false;
+      const save = document.getElementById('diary-save-btn'); if (save) save.style.display = '';
+    }
+  };
+}
+function applyDiaryStepper() { applyStepper(diaryStepperCfg()); }
+function teardownDiaryStepper() { teardownStepper(); }
+
+// CAS-1-konfiguration. #cas1-fields blander sektion-prompt-<p>'er ind mellem de 16
+// spørgsmåls-fieldsets → KUN .cas1-field er trin (ellers ville "X af 16" tælle prompts).
+// Hvert spørgsmål bærer dataset.sektionPromptId; den aktive sektion-prompt vises over
+// det aktive spørgsmål (skjulte søskende kollapser, så prompt + spørgsmål står samlet).
+// cas1-intro hører KUN til trin 1 (analog til søvndagbogens intro).
+function cas1StepperCfg() {
+  return {
+    rootId: 'cas1-fields',
+    steps: () => Array.from(document.querySelectorAll('#cas1-fields > .cas1-field')),
+    lastBtnId: 'cas1-submit', lastBtnShow: '',
+    beforeShow: () => {
+      document.querySelectorAll('#cas1-fields > .cas1-sektion-prompt').forEach(p => { p.hidden = true; });
+    },
+    onShowStep: (i, steps) => {
+      const active = steps[i];
+      if (active && active.dataset.sektionPromptId) {
+        const p = document.getElementById(active.dataset.sektionPromptId);
+        if (p) p.hidden = false;
+      }
+      const intro = document.getElementById('cas1-intro'); if (intro) intro.hidden = i !== 0;
+      const note = document.getElementById('cas1-note'); if (note) note.hidden = i !== (steps.length - 1);
+    },
+    onTeardown: () => {
+      const intro = document.getElementById('cas1-intro'); if (intro) intro.hidden = false;
+      const note = document.getElementById('cas1-note'); if (note) note.hidden = false;
+      const submit = document.getElementById('cas1-submit'); if (submit) submit.style.display = '';
+    }
+  };
+}
+function applyCas1Stepper() { applyStepper(cas1StepperCfg()); }
 
 // Q10 substans har indhold KUN hvis "Intet" aktivt er valgt eller mindst én chip er
 // udfyldt. Et urørt substans-felt (start-tilstand {}) er ubesvaret → persistér det
@@ -2154,11 +2226,16 @@ function renderCas1(id) {
   const wrap = document.getElementById('cas1-fields');
   wrap.innerHTML = '';
   let qnum = 0;
+  let sekIdx = 0;
 
   skema.sektioner.forEach((sek) => {
+    let sektionPromptId = '';
     if (sek.delt_prompt) {
+      sekIdx++;
+      sektionPromptId = 'cas1-sekprompt-' + sekIdx;
       const ph = document.createElement('p');
       ph.className = 'cas1-sektion-prompt';
+      ph.id = sektionPromptId;
       ph.textContent = sek.delt_prompt;
       wrap.appendChild(ph);
     }
@@ -2169,6 +2246,9 @@ function renderCas1(id) {
       qnum++;
       const fs = document.createElement('fieldset');
       fs.className = 'diary-field cas1-field';
+      // Oplæsnings-venlig stepper: knyt spørgsmålet til dets sektion-prompt, så
+      // prompten vises over det aktive spørgsmål (ét-ad-gangen, spec §4 Greb 1).
+      if (sektionPromptId) fs.dataset.sektionPromptId = sektionPromptId;
       const legend = document.createElement('legend');
       legend.className = 'diary-q';
       legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + cas1Esc(item.text);
@@ -2227,6 +2307,9 @@ function renderCas1(id) {
 
   showScreen('screen-cas1');
   window.scrollTo(0, 0);
+  // Oplæsnings-venlig tilstand: ét spørgsmål ad gangen (delt stepper, jf. §4).
+  diaryStepIndex = 0;
+  if (a11yOn()) applyCas1Stepper();
 }
 
 // CAS-1 kvittering: vis [MYCEL v1]-blokken + kopiér/del. Klienten sender selv blokken
@@ -2398,11 +2481,16 @@ function onA11yToggle() {
   setA11y(on);
   document.documentElement.setAttribute('data-a11y', on ? '1' : '0');
   updateA11yToggleBtn();
-  // Re-layout den aktive dagbogs-formular hvis den er åben (ellers virker det v. næste trin-skift).
+  // Re-layout den aktive flade hvis den er åben (ellers virker det v. næste trin-skift).
   const diaryForm = document.getElementById('screen-diary-form');
   if (diaryForm && diaryForm.classList.contains('active')) {
-    teardownDiaryStepper();
+    teardownStepper();
     if (on) { diaryStepIndex = 0; applyDiaryStepper(); }
+  }
+  const cas1Screen = document.getElementById('screen-cas1');
+  if (cas1Screen && cas1Screen.classList.contains('active')) {
+    teardownStepper();
+    if (on) { diaryStepIndex = 0; applyCas1Stepper(); }
   }
 }
 function initA11yMode() {
@@ -2419,6 +2507,14 @@ function initA11yMode() {
 initTextsize();
 initAloud();
 initA11yMode();
+// CAS-1 renderes under routing FØR a11y-tilstanden er resolved (a11yOn() rammer TDZ
+// på A11Y_KEY-const og fanges som false) → apply stepperen her, hvor data-a11y/
+// localStorage er sat. Søvndagbogen rammer ikke dette (dens felter renderes først
+// efter brugernavigation, dvs. efter init).
+if (cas1Id && a11yOn()) {
+  const cas1Screen = document.getElementById('screen-cas1');
+  if (cas1Screen && cas1Screen.classList.contains('active')) { diaryStepIndex = 0; applyCas1Stepper(); }
+}
 tjekKryptoVedIndlaesning();
 </script>
 <p class="a11y-hint">Vil du have siden læst op? På iPhone: slå "Læs skærm op" til i Indstillinger → Tilgængelighed → Talt indhold, og stryg ned med to fingre. På Android: tryk på "Få læst op" øverst på siden. Vil du bruge telefonens egen oplæsning, kan du i Chrome trykke på menuen (tre prikker) og vælge "Læs højt", eller slå "Vælg og oplæs" til i Indstillinger, Tilgængelighed.</p>
