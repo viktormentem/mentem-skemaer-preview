@@ -2693,9 +2693,13 @@ function onA11yToggle() {
 function initA11yMode() {
   let stored = null;
   try { stored = localStorage.getItem(A11Y_KEY); } catch (e) {}
-  // G2-A: &a11y=1 slår til ved FØRSTE load — kun hvis klienten ikke selv har valgt
-  // endnu (stored === null). Derefter respekteres patientens egen toggle (stored '0'/'1').
-  if (params.get('a11y') === '1' && stored === null) { stored = '1'; setA11y(true); }
+  // G2-A (revideret 27/6, Viktor-GO): et eksplicit &a11y=1|true-link er skærmlæser-
+  // klientens entry-link og SKAL vinde på HVER load — også når browseren bærer en
+  // tidligere mentem_a11y_mode (fx fra et test-toggle el. et tidligere ikke-a11y-besøg).
+  // Tidligere 'stored === null'-vagt gjorde linket dødt for enhver gen-besøgende/forurenet
+  // tilstand. Patientens egen toggle gælder fortsat for ikke-param-besøg + inden for sessionen.
+  const a11yParam = params.get('a11y');
+  if (a11yParam === '1' || a11yParam === 'true') { stored = '1'; setA11y(true); }
   document.documentElement.setAttribute('data-a11y', stored === '1' ? '1' : '0');
   const btn = document.getElementById('a11y-mode-btn');
   if (btn) btn.addEventListener('click', onA11yToggle);
