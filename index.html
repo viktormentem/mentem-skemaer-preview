@@ -150,16 +150,42 @@
   .cas1-scale.s100 { grid-template-columns:repeat(11, 1fr); }
   .cas1-ankre-3 span:nth-child(2) { text-align:center; }
   .cas1-copyright { font-size:12px; color:var(--muted); margin-top:22px; }
+  /* iPhone SE / små+ældre Android: ≥44px touch-mål er HÅRD ned til 320px. Kerne-
+     populationen (insomni) er ældre-tung + svagtseende-overrepræsenteret. Ved ~320px
+     er .cas1-field-indholdsbredden kun ~226px → faste 5-6 kolonner falder UNDER 44px
+     (målt: s8 40.4px, s100 32.7px). auto-fit minmax(46px,1fr) udregner i stedet det
+     maksimale antal kolonner der holder ≥44px og wrapper resten — for både 0-8 og
+     beliefs. Målt efter: 4 kol/52px @320, 5 kol/54px @390. */
   @media (max-width:430px) {
-    .cas1-scale.s8 { grid-template-columns:repeat(5, 1fr); }
-    .cas1-scale.s100 { grid-template-columns:repeat(6, 1fr); }
+    .cas1-scale.s8   { grid-template-columns:repeat(auto-fit, minmax(46px, 1fr)); }
+    .cas1-scale.s100 { grid-template-columns:repeat(auto-fit, minmax(46px, 1fr)); }
   }
-  /* iPhone SE / små+ældre Android: hold ≥44px touch-mål ned til 320px. Kerne-
-     populationen (insomni) er ældre-tung + svagtseende-overrepræsenteret. s100
-     (11 belief-knapper) falder til ~40px ved 6 kolonner under ~342px → 5 kolonner. */
-  @media (max-width:360px) {
-    .cas1-scale.s100 { grid-template-columns:repeat(5, 1fr); }
+  /* ── Greb 3 — belief dual-input: snappet slider (seende) ↔ ≥44px-knapper (oplæsnings-venlig) ──
+     Tilstandsskift = ren CSS-synlighed; INGEN re-render → klientens svar bevares (cas1Answers
+     er closure-lokal). Begge input gemmer IDENTISK diskret værdi (0/10/.../100). */
+  html[data-a11y="1"] .cas1-belief-slider { display:none; }
+  html:not([data-a11y="1"]) .cas1-belief-buttons-wrap { display:none; }
+  /* Oplæsnings-venlig på desktop/tablet (>430px): belief-knapper i 2 rækker (6+5),
+     rigeligt ≥44px. På mobil (≤430) styrer auto-fit-reglen ovenfor kolonne-antallet. */
+  @media (min-width:431px) {
+    html[data-a11y="1"] .cas1-scale.s100 { grid-template-columns:repeat(6, 1fr); }
   }
+  .cas1-belief-slider { margin-top:6px; }
+  /* Valgt værdi SYNLIG (spec §C: en self-report-overbevisning skal klienten kunne se hun committer). */
+  .cas1-slider-val { display:block; font-family:'DM Serif Display',serif; font-size:24px; color:var(--accent); min-height:30px; margin-bottom:6px; }
+  .cas1-slider-val.placeholder { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:400; font-style:italic; color:var(--muted); }
+  .cas1-slider { -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:999px; background:var(--border); outline:none; margin:14px 0 4px; }
+  .cas1-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:32px; height:32px; border-radius:50%; background:var(--accent); border:3px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:pointer; }
+  .cas1-slider::-moz-range-thumb { width:32px; height:32px; border:3px solid white; border-radius:50%; background:var(--accent); cursor:pointer; }
+  .cas1-slider:focus-visible { outline:3px solid var(--accent); outline-offset:6px; }
+  /* INGEN committet default (spec §C, HÅRD): thumb skjult indtil klienten aktivt vælger. */
+  .cas1-slider.unset::-webkit-slider-thumb { opacity:0; }
+  .cas1-slider.unset::-moz-range-thumb { opacity:0; }
+  /* Greb 1 (seende) — slide-up settle-emphasis: rolig "lås på plads"-pynt når besvaret.
+     KUN seende; additiv (svar+fremdrift bærer semantikken). Slået fra v. reduced-motion. */
+  @keyframes cas1Settle { 0% { transform:translateY(7px); opacity:0.65; } 100% { transform:translateY(0); opacity:1; } }
+  html:not([data-a11y="1"]) .cas1-field.cas1-settle { animation:cas1Settle 0.4s ease both; }
+  @media (prefers-reduced-motion:reduce) { .cas1-field.cas1-settle { animation:none; } }
   /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
   .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
   .ess-ramme p { margin:0 0 14px; }
@@ -2254,9 +2280,41 @@ function renderCas1(id) {
       legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + cas1Esc(item.text);
       fs.appendChild(legend);
 
+      const isBelief = (sek.skala === '0_100');
+      let sliderEl = null, outEl = null;
+      const optByVal = {};
+
+      // aria-valuetext for slideren spejler radio-knappens aria-label: endepunkts-
+      // ankre læses med, mellem-trin som rent tal. 0_100 har KUN 2 ankre i instrumentet
+      // (at:0 / at:100) — vi opfinder ALDRIG et 50-anker (instrument-fidelity).
+      function sliderValueText(v) {
+        const a = anchors.find((x) => x.at === v);
+        return a ? (v + ', ' + a.label) : String(v);
+      }
+      // commitVal = ÉN sandhedsvej: sætter svaret + synker BEGGE input (slider↔knapper)
+      // til IDENTISK diskret værdi + opdaterer fremdrift. Kaldes fra både radio og slider.
+      function commitVal(v) {
+        cas1Answers[item.key] = v;
+        fs.classList.add('answered');
+        group.querySelectorAll('.nrs-option').forEach((o) => o.classList.remove('checked'));
+        if (optByVal[v]) {
+          optByVal[v].classList.add('checked');
+          const ri = optByVal[v].querySelector('input');
+          if (ri && !ri.checked) ri.checked = true;
+        }
+        if (sliderEl) {
+          sliderEl.classList.remove('unset');
+          if (Number(sliderEl.value) !== v) sliderEl.value = String(v);
+          sliderEl.setAttribute('aria-valuetext', sliderValueText(v));
+          if (outEl) { outEl.textContent = String(v); outEl.classList.remove('placeholder'); }
+        }
+        opdaterCas1Fremdrift();
+        seeingAdvance(fs);   // Greb 1: seende slide-up (additiv; no-op i a11y/reduced-motion)
+      }
+
+      // ── Diskret radio-knap-grid (oplæsnings-venlig for belief; eneste input for 0-8) ──
       const group = document.createElement('div');
       group.className = 'cas1-scale ' + scaleCls + ' nrs-scale';
-      group.style.gridTemplateColumns = (sek.skala === '0_100') ? 'repeat(11, 1fr)' : 'repeat(9, 1fr)';
       group.setAttribute('role', 'radiogroup');
       group.setAttribute('aria-label', item.text);
       for (let v = r.min; v <= r.max; v += r.step) {
@@ -2267,24 +2325,83 @@ function renderCas1(id) {
         opt.className = 'nrs-option';
         opt.setAttribute('for', rid);
         opt.innerHTML = `<input type="radio" id="${rid}" name="${cas1EscAttr(item.key)}" value="${v}" aria-label="${cas1EscAttr(aria)}"><span aria-hidden="true">${v}</span>`;
-        opt.querySelector('input').addEventListener('change', () => {
-          cas1Answers[item.key] = v;
-          fs.classList.add('answered');
-          group.querySelectorAll('.nrs-option').forEach((o) => o.classList.remove('checked'));
-          opt.classList.add('checked');
-          opdaterCas1Fremdrift();
-        });
+        optByVal[v] = opt;
+        opt.querySelector('input').addEventListener('change', () => commitVal(v));
         group.appendChild(opt);
       }
-      fs.appendChild(group);
 
       const ankreEl = document.createElement('div');
       ankreEl.className = 'nrs-ankre' + (anchors.length === 3 ? ' cas1-ankre-3' : '');
       anchors.forEach((a) => { const sp = document.createElement('span'); sp.textContent = a.label; ankreEl.appendChild(sp); });
-      fs.appendChild(ankreEl);
+
+      if (isBelief) {
+        // ── Snappet slider (seende): native step=10 → 11 diskrete trin 0/10/.../100. ──
+        // Ændrer KUN input-affordancen, ikke instrumentets svar-format (samme diskrete værdi).
+        const sliderWrap = document.createElement('div');
+        sliderWrap.className = 'cas1-belief-slider';
+        const out = document.createElement('output');
+        out.className = 'cas1-slider-val placeholder';
+        out.setAttribute('for', 'slider-' + item.key);
+        out.textContent = 'Træk eller tap for at vælge';
+        outEl = out;
+        const slider = document.createElement('input');
+        slider.type = 'range'; slider.min = '0'; slider.max = '100'; slider.step = '10';
+        slider.value = '0';
+        slider.className = 'cas1-slider unset';   // unset: ingen committet default (spec §C)
+        slider.id = 'slider-' + item.key;
+        slider.setAttribute('aria-label', item.text);
+        slider.setAttribute('aria-valuetext', 'Ikke valgt endnu');
+        const sliderAnkre = document.createElement('div');
+        sliderAnkre.className = 'nrs-ankre' + (anchors.length === 3 ? ' cas1-ankre-3' : '');
+        sliderAnkre.id = 'ankre-' + item.key;
+        anchors.forEach((a) => { const sp = document.createElement('span'); sp.textContent = a.label; sliderAnkre.appendChild(sp); });
+        // Ankre læses som del af spørgsmålet (spec Greb 3 sidste bullet).
+        slider.setAttribute('aria-describedby', 'ankre-' + item.key);
+        sliderEl = slider;
+        slider.addEventListener('input', () => commitVal(Number(slider.value)));
+        sliderWrap.appendChild(out);
+        sliderWrap.appendChild(slider);
+        sliderWrap.appendChild(sliderAnkre);
+        fs.appendChild(sliderWrap);
+
+        // ── Diskrete ≥44px-knapper (oplæsnings-venlig); samme svar, byttes via CSS. ──
+        const btnWrap = document.createElement('div');
+        btnWrap.className = 'cas1-belief-buttons-wrap';
+        btnWrap.appendChild(group);
+        btnWrap.appendChild(ankreEl);
+        fs.appendChild(btnWrap);
+      } else {
+        fs.appendChild(group);
+        fs.appendChild(ankreEl);
+      }
       wrap.appendChild(fs);
     });
   });
+
+  // Greb 1 (seende) — slide-up: når et spørgsmål besvares glider det op (via scroll)
+  // og det næste UBESVAREDE kommer i centrum. ADDITIV pynt: semantikken bæres af
+  // svaret/fremdriften, ALDRIG af animationen. No-op i oplæsnings-venlig tilstand
+  // (den hårde stepper chunker selv) og under prefers-reduced-motion. Skjuler aldrig
+  // indhold permanent. Auto-frem KUN når man besvarer fronten (alle FØR er besvaret),
+  // så et rettet tidligere svar ikke giver et overraskende scroll-hop.
+  function seeingAdvance(currentFs) {
+    if (a11yOn()) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    const fields = Array.from(wrap.querySelectorAll('.cas1-field'));
+    const idx = fields.indexOf(currentFs);
+    if (idx < 0) return;
+    currentFs.classList.remove('cas1-settle');
+    void currentFs.offsetWidth;            // reflow → genstart settle-emphasis
+    currentFs.classList.add('cas1-settle');
+    const frontier = fields.slice(0, idx).every((f) => f.classList.contains('answered'));
+    if (!frontier) return;
+    let next = null;
+    for (let i = idx + 1; i < fields.length; i++) {
+      if (!fields[i].classList.contains('answered')) { next = fields[i]; break; }
+    }
+    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 
   const TOTAL = CAS1_FELT_ORDEN.length;   // 16
   const submitBtn = document.getElementById('cas1-submit');
