@@ -82,12 +82,6 @@
   .radio-option:hover { border-color:var(--accent); background:#f0faf5; }
   .radio-option input[type=radio] { width:18px; height:18px; accent-color:var(--accent); flex-shrink:0; }
   .radio-option.checked { border-color:var(--accent); background:var(--accent-light); font-weight:500; }
-  /* Tal-badge paa svarknap (kun instrumenter m. showValueBadge, fx WHO-5): aria-hidden,
-     tallet baeres ogsaa i radioens tilgaengelige navn. font-variant tabular -> ens bredde.
-     Skalerer med A+/A++ via .screen zoom (px arver zoom). */
-  .radio-option .instr-val-badge { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; padding:0 7px; border-radius:6px; background:var(--border); color:var(--ink); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
-  .radio-option.checked .instr-val-badge { background:var(--accent); color:white; }
-  .instr-review-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 6px; border-radius:5px; background:var(--accent-light); color:var(--accent); font-size:13px; font-weight:600; margin-right:8px; vertical-align:-2px; font-variant-numeric:tabular-nums; }
 
   /* VAS — ingen tal-readout (proces-neutral, nul-score) */
   .vas-row { margin-top:8px; }
@@ -138,108 +132,6 @@
   .diary-field.answered { border-color:var(--accent); }
   .diary-q { font-size:15px; font-weight:500; margin-bottom:14px; line-height:1.4; }
   .diary-q .question-num { font-size:12px; color:var(--muted); font-weight:400; margin-right:8px; }
-  /* F1 søvnigheds-NRS (0-10): titel + 0..10-segmenter + ord-ankre i enderne. */
-  .nrs-titel { display:block; font-size:16px; font-weight:600; color:var(--accent); margin-bottom:4px; }
-  .nrs-titel-ikon { display:inline-flex; width:18px; height:18px; color:var(--accent); vertical-align:-3px; margin-right:7px; }
-  .nrs-scale { display:grid; grid-template-columns:repeat(11, 1fr); gap:6px; margin-top:4px; }
-  .nrs-option { display:flex; align-items:center; justify-content:center; min-height:44px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; background:white; font-size:15px; font-weight:500; transition:all 0.12s; }
-  .nrs-option:hover { border-color:var(--accent); background:#f0faf5; }
-  .nrs-option.checked { border-color:var(--accent); background:var(--accent); color:white; }
-  .nrs-option input[type=radio] { position:absolute; opacity:0; width:1px; height:1px; }
-  .nrs-ankre { display:flex; justify-content:space-between; gap:14px; margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.4; }
-  .nrs-ankre span:last-child { text-align:right; }
-  @media (max-width:430px) { .nrs-scale { grid-template-columns:repeat(6, 1fr); } }
-  /* ── CAS-1 (kind:'cas1') diskrete skalaer: 0-8 (9 felter) + 0-100 i tiere (11 felter) ── */
-  .cas1-sektion-prompt { font-size:15px; font-weight:600; margin:30px 0 8px; line-height:1.45; color:var(--ink); }
-  .cas1-scale { display:grid; gap:6px; margin-top:4px; }
-  .cas1-scale.s8 { grid-template-columns:repeat(9, 1fr); }
-  .cas1-scale.s100 { grid-template-columns:repeat(11, 1fr); }
-  .cas1-ankre-3 span:nth-child(2) { text-align:center; }
-  .cas1-copyright { font-size:12px; color:var(--muted); margin-top:22px; }
-  /* iPhone SE / små+ældre Android: ≥44px touch-mål er HÅRD ned til 320px. Kerne-
-     populationen (insomni) er ældre-tung + svagtseende-overrepræsenteret. Ved ~320px
-     er .cas1-field-indholdsbredden kun ~226px → faste 5-6 kolonner falder UNDER 44px
-     (målt: s8 40.4px, s100 32.7px). auto-fit minmax(46px,1fr) udregner i stedet det
-     maksimale antal kolonner der holder ≥44px og wrapper resten — for både 0-8 og
-     beliefs. Målt efter: 4 kol/52px @320, 5 kol/54px @390. */
-  @media (max-width:430px) {
-    .cas1-scale.s8   { grid-template-columns:repeat(auto-fit, minmax(46px, 1fr)); }
-    .cas1-scale.s100 { grid-template-columns:repeat(auto-fit, minmax(46px, 1fr)); }
-  }
-  /* ── Greb 3 — belief dual-input: snappet slider (seende) ↔ ≥44px-knapper (oplæsnings-venlig) ──
-     Tilstandsskift = ren CSS-synlighed; INGEN re-render → klientens svar bevares (cas1Answers
-     er closure-lokal). Begge input gemmer IDENTISK diskret værdi (0/10/.../100). */
-  html[data-a11y="1"] .cas1-belief-slider { display:none; }
-  html:not([data-a11y="1"]) .cas1-belief-buttons-wrap { display:none; }
-  /* Oplæsnings-venlig på desktop/tablet (>430px): belief-knapper i 2 rækker (6+5),
-     rigeligt ≥44px. På mobil (≤430) styrer auto-fit-reglen ovenfor kolonne-antallet. */
-  @media (min-width:431px) {
-    html[data-a11y="1"] .cas1-scale.s100 { grid-template-columns:repeat(6, 1fr); }
-  }
-  .cas1-belief-slider { margin-top:6px; }
-  /* Valgt værdi SYNLIG (spec §C: en self-report-overbevisning skal klienten kunne se hun committer). */
-  .cas1-slider-val { display:block; font-family:'DM Serif Display',serif; font-size:24px; color:var(--accent); min-height:30px; margin-bottom:6px; }
-  .cas1-slider-val.placeholder { font-family:'DM Sans',sans-serif; font-size:14px; font-weight:400; font-style:italic; color:var(--muted); }
-  .cas1-slider { -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:999px; background:var(--border); outline:none; margin:14px 0 4px; }
-  .cas1-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:32px; height:32px; border-radius:50%; background:var(--accent); border:3px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:pointer; }
-  .cas1-slider::-moz-range-thumb { width:32px; height:32px; border:3px solid white; border-radius:50%; background:var(--accent); cursor:pointer; }
-  .cas1-slider:focus-visible { outline:3px solid var(--accent); outline-offset:6px; }
-  /* INGEN committet default (spec §C, HÅRD): thumb skjult indtil klienten aktivt vælger. */
-  .cas1-slider.unset::-webkit-slider-thumb { opacity:0; }
-  .cas1-slider.unset::-moz-range-thumb { opacity:0; }
-  /* Greb 1 (seende) — slide-up settle-emphasis: rolig "lås på plads"-pynt når besvaret.
-     KUN seende; additiv (svar+fremdrift bærer semantikken). Slået fra v. reduced-motion. */
-  @keyframes cas1Settle { 0% { transform:translateY(7px); opacity:0.65; } 100% { transform:translateY(0); opacity:1; } }
-  html:not([data-a11y="1"]) .cas1-field.cas1-settle { animation:cas1Settle 0.4s ease both; }
-  @media (prefers-reduced-motion:reduce) { .cas1-field.cas1-settle { animation:none; } }
-  /* Review-skærm: oversigt over alle 16 svar med Ret-knap pr. item (overblik før send). */
-  .cas1-review-row { display:flex; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); }
-  .cas1-review-row:last-of-type { border-bottom:none; }
-  .cas1-review-main { flex:1; min-width:0; }
-  .cas1-review-q { font-size:15px; line-height:1.5; color:var(--text); margin:0 0 6px; }
-  .cas1-review-q .question-num { color:var(--muted); margin-right:6px; }
-  .cas1-review-a { font-family:'DM Serif Display',serif; font-size:18px; color:var(--accent); line-height:1.35; }
-  .cas1-review-a.tom { font-family:'DM Sans',sans-serif; font-size:14px; font-style:italic; color:var(--muted); }
-  .cas1-review-ret { flex:0 0 auto; min-height:44px; min-width:64px; padding:8px 16px; border:1.5px solid var(--accent); background:white; color:var(--accent); border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; }
-  .cas1-review-ret:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
-  /* ── Instrument-skemaer (WHO-5/PHQ-9, kind:'instrument') ── */
-  .instrument-stem { font-size:15px; font-weight:600; margin:30px 0 8px; line-height:1.45; color:var(--ink); }
-  .instrument-field .diary-q { margin-bottom:4px; }
-  /* Item 9-safety: prominent, men ikke-alarmerende kald-til-hjaelp-panel (PHQ-9 selvmordstanker>0). */
-  .instrument-safety { margin-top:12px; padding:14px 16px; background:var(--card); border:1px solid var(--border); border-left:3px solid #c0392b; border-radius:8px; font-size:14px; color:var(--ink); line-height:1.55; }
-  .instrument-safety-head { display:flex; align-items:center; gap:7px; font-weight:600; color:#c0392b; margin-bottom:6px; }
-  .instrument-safety ul { margin:6px 0 0; padding-left:18px; }
-  .instrument-safety li { margin:3px 0; }
-  .instrument-safety a { color:var(--accent); font-weight:600; }
-  /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
-  .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
-  .ess-ramme p { margin:0 0 14px; }
-  .ess-ramme strong { display:block; font-size:18px; font-weight:600; color:var(--accent); margin-bottom:4px; }
-  .ess-ramme p:not(:first-child) strong { display:inline; font-size:inherit; color:inherit; }
-  .ess-stub { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; background:var(--accent-light); border:1px dashed var(--accent); border-radius:12px; padding:24px 22px; }
-  .ess-stub-icon { width:32px; height:32px; color:var(--accent); }
-  .ess-stub-text { font-size:14px; color:var(--muted); line-height:1.5; margin:0; }
-  /* SRT uge-1 søvnvindue: roligt, ét budskab; klokkeslæt-vinduet visuelt dominant. */
-  .srt-uge1-badge { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--accent); background:var(--accent-light); border-radius:999px; padding:6px 14px; margin:0 0 18px; }
-  .srt-uge1-ikon { display:inline-flex; width:16px; height:16px; color:var(--accent); }
-  .srt-vindue-ur { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin:6px 0 28px; }
-  .srt-vindue-ur-ikon { display:inline-flex; width:30px; height:30px; color:var(--accent); }
-  .srt-vindue-ur-tider { display:inline-flex; align-items:center; gap:16px; font-family:'DM Serif Display',serif; font-size:40px; line-height:1; color:var(--text); }
-  .srt-vindue-ur-tider strong { font-weight:400; letter-spacing:0.5px; }
-  .srt-vindue-ur-pil { font-size:26px; color:var(--muted); }
-  .srt-blok { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
-  .srt-blok h2 { font-family:'DM Serif Display',serif; font-size:20px; font-weight:400; color:var(--accent); margin:0 0 10px; }
-  .srt-blok p { margin:0 0 12px; }
-  .srt-blok ul { margin:0; padding-left:20px; }
-  .srt-blok li { margin:0 0 9px; line-height:1.55; }
-  .srt-advarsel { background:var(--accent-light); border:1px solid var(--accent); border-radius:12px; padding:20px 22px; margin-bottom:22px; }
-  .srt-advarsel .srt-advarsel-head { display:flex; align-items:center; gap:9px; }
-  .srt-advarsel .srt-advarsel-ikon { display:inline-flex; width:22px; height:22px; color:var(--accent); flex:0 0 auto; }
-  .srt-advarsel h2 { font-family:'DM Serif Display',serif; font-size:19px; font-weight:400; color:var(--accent); margin:0; }
-  .srt-advarsel p { margin:12px 0 0; font-size:15px; line-height:1.6; color:var(--text); }
-  @media (max-width:430px) { .srt-vindue-ur-tider { font-size:32px; gap:12px; } }
-  @keyframes srtRo { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-  #screen-soevnvindue.active .wrap > * { animation:srtRo 0.45s ease both; }
   .diary-optional { font-size:12px; color:var(--muted); font-weight:400; font-style:italic; margin-left:6px; }
   .diary-hint { font-size:13px; color:var(--muted); font-weight:400; line-height:1.45; margin:-6px 0 14px; }
   .diary-input-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -249,6 +141,29 @@
   .diary-field input[type=text] { width:100%; }
   .diary-field input:focus { border-color:var(--accent); }
   .diary-unit { font-size:14px; color:var(--muted); }
+  /* ── Instrument-skemaer (WHO-5/PHQ-9/GAD-7, kind:'instrument') — porteret ren motor ── */
+  .radio-option .instr-val-badge { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; padding:0 7px; border-radius:6px; background:var(--border); color:var(--ink); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .radio-option.checked .instr-val-badge { background:var(--accent); color:white; }
+  .instr-review-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 6px; border-radius:5px; background:var(--accent-light); color:var(--accent); font-size:13px; font-weight:600; margin-right:8px; vertical-align:-2px; font-variant-numeric:tabular-nums; }
+  /* ── Instrument-skemaer (WHO-5/PHQ-9, kind:'instrument') ── */
+  .instrument-stem { font-size:15px; font-weight:600; margin:30px 0 8px; line-height:1.45; color:var(--ink); }
+  .instrument-field .diary-q { margin-bottom:4px; }
+  /* Item 9-safety: prominent, men ikke-alarmerende kald-til-hjaelp-panel (PHQ-9 selvmordstanker>0). */
+  .instrument-safety { margin-top:12px; padding:14px 16px; background:var(--card); border:1px solid var(--border); border-left:3px solid #c0392b; border-radius:8px; font-size:14px; color:var(--ink); line-height:1.55; }
+  .instrument-safety-head { display:flex; align-items:center; gap:7px; font-weight:600; color:#c0392b; margin-bottom:6px; }
+  .instrument-safety ul { margin:6px 0 0; padding-left:18px; }
+  .instrument-safety li { margin:3px 0; }
+  .instrument-safety a { color:var(--accent); font-weight:600; }
+  .instrument-review-row { display:flex; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .instrument-review-row:last-of-type { border-bottom:none; }
+  .instrument-review-main { flex:1; min-width:0; }
+  .instrument-review-q { font-size:15px; line-height:1.5; color:var(--text); margin:0 0 6px; }
+  .instrument-review-q .question-num { color:var(--muted); margin-right:6px; }
+  .instrument-review-a { font-family:'DM Serif Display',serif; font-size:18px; color:var(--accent); line-height:1.35; }
+  .instrument-review-a.tom { font-family:'DM Sans',sans-serif; font-size:14px; font-style:italic; color:var(--muted); }
+  .instrument-review-ret { flex:0 0 auto; min-height:44px; min-width:64px; padding:8px 16px; border:1.5px solid var(--accent); background:white; color:var(--accent); border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; }
+  .instrument-review-ret:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+  .instrument-copyright { font-size:12px; color:var(--muted); margin-top:22px; }
 
   /* WCAG 2.1 AA: synligt tastatur-fokus (B7) + touch-mål ≥44px. */
   :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
@@ -268,9 +183,7 @@
   .a11y-stepnav { display:flex; gap:12px; margin-top:22px; }
   .a11y-stepnav button { flex:1; margin-top:0; }
   /* I tilstanden erstatter den læste "Spørgsmål X af Y" den visuelle bjælke. */
-  html[data-a11y="1"] #screen-diary-form .form-progress,
-  html[data-a11y="1"] #screen-cas1 .form-progress { display:none; }
-  html[data-a11y="1"] #screen-instrument .form-progress { display:none; }
+  html[data-a11y="1"] #screen-diary-form .form-progress { display:none; }
 </style>
 <script>
   /* A11Y: gendan tekststørrelse FØR render (ingen flash). Non-PII UI-præference. */
@@ -410,80 +323,7 @@
   </div>
 </div>
 
-<!-- E1: ESS MILEPÆLS-TJEK: kun vores låste intro-ramme; ESS-items licens-gated (stub) -->
-<div id="screen-ess" class="screen">
-  <div class="wrap">
-    <h1>Et kort tjek af din <em>søvnighed</em></h1>
-    <div class="ess-ramme" id="ess-ramme"></div>
-    <div class="ess-stub" id="ess-stub"></div>
-    <p class="footer-credit" id="ess-key-fp"></p>
-  </div>
-</div>
 
-<!-- SRT uge-1 søvnvindue: blokerende safety-entry FØR dagbog (vindue + SC-regler
-     + kørsels-advarsel hvis adv=1). Verbatim låst copy; klokkeslæt afledt af tib/wake. -->
-<div id="screen-soevnvindue" class="screen">
-  <div class="wrap">
-    <p class="srt-uge1-badge" id="srt-uge1-badge" hidden><span class="srt-uge1-ikon" aria-hidden="true"></span><span id="srt-uge1-tekst">Den første uge</span></p>
-    <div class="srt-vindue-ur" id="srt-vindue-ur" hidden>
-      <span class="srt-vindue-ur-ikon" aria-hidden="true"></span>
-      <span class="srt-vindue-ur-tider"><strong id="srt-vindue-fra">--:--</strong><span class="srt-vindue-ur-pil" aria-hidden="true">→</span><strong id="srt-vindue-til">--:--</strong></span>
-    </div>
-    <div class="srt-blok" id="srt-vindue-blok"></div>
-    <div class="srt-blok" id="srt-sc-blok"></div>
-    <div class="srt-advarsel" role="note" id="srt-advarsel-blok" hidden></div>
-  </div>
-</div>
-
-<!-- CAS-1: standalone token-linket skema (?s=cas1). 16 items i 3 sektioner; web-
-     submit emitterer en [MYCEL v1]-konvolut (kontrakt §2). Egen UI-copy em-dash-fri;
-     item-tekst verbatim instrument. Ingen navn/PII indsamles (ref/dato fra linket). -->
-<div id="screen-cas1" class="screen">
-  <div class="wrap">
-    <h1>Tanker og <em>bekymring</em></h1>
-    <p class="intro" id="cas1-intro"></p>
-    <div class="form-progress">
-      <span class="progress-label" id="cas1-progress-current">0 af 16</span>
-      <div class="progress-bar-track"><div class="progress-bar-fill" id="cas1-progress-fill"></div></div>
-    </div>
-    <div id="cas1-fields"></div>
-    <button class="btn-primary" id="cas1-submit" style="margin-top:8px" disabled>Gennemse dine svar</button>
-    <p class="start-note" id="cas1-note"></p>
-    <p class="cas1-copyright" id="cas1-copyright"></p>
-  </div>
-</div>
-
-<!-- CAS-1 review: afsluttende oversigt. Viser alle 16 svar (klienten kan se alt +
-     rette FØR afsendelse). Bevarer scroll-layoutets overblik uden scroll-layoutet.
-     Item-tekst verbatim instrument; vores egen UI-copy er em-dash-fri + æøå-korrekt. -->
-<div id="screen-cas1-review" class="screen">
-  <div class="wrap">
-    <h1>Gennemse dine <em>svar</em></h1>
-    <p class="intro" id="cas1-review-intro"></p>
-    <div id="cas1-review-list"></div>
-    <button class="btn-primary" id="cas1-review-submit" style="margin-top:8px">Send til din psykolog</button>
-    <button class="btn-secondary" id="cas1-review-back" style="margin-top:12px">Tilbage til spørgsmålene</button>
-    <p class="cas1-copyright" id="cas1-review-copyright"></p>
-  </div>
-</div>
-
-<!-- CAS-1 kvittering: viser [MYCEL v1]-blokken + kopiér/del-mekanisme -->
-<div id="screen-cas1-done" class="screen">
-  <div class="wrap">
-    <div class="done-wrap">
-      <div class="done-mark" aria-hidden="true"><span style="display:inline-flex;width:56px;height:56px;color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9"/></svg></span></div>
-      <h2>Tak. Du er færdig</h2>
-      <p>Dine svar er samlet nedenfor. Send dem til din psykolog i den samme SMS-tråd, hvor du fik linket.</p>
-      <div class="done-status" id="cas1-done-status"></div>
-      <div class="disclaimer" style="text-align:left;margin-top:28px">Du får ikke en score eller en vurdering her. Det gennemgår I sammen til samtalen. <strong>Har du det akut svært, skal du ikke vente til samtalen</strong>. Se Akut hjælp nederst (eller ring 112 / Livslinien 70 201 201).</div>
-    </div>
-  </div>
-</div>
-
-<!-- Instrument-skema (?s=who5 / ?s=phq9): standalone token-linket effektmaal paa det DELTE
-     stepper-render-lag (samme et-spoergsmaal-ad-gangen + review som CAS-1). Web-submit
-     emitterer en [MYCEL v1]-konvolut (spec §3-felter). Egen UI-copy aeoeaa + em-dash-fri;
-     item-/svar-tekst verbatim instrument. Ingen navn/PII (ref/dato fra linket). -->
 <div id="screen-instrument" class="screen">
   <div class="wrap">
     <h1 id="instrument-title">Skema</h1>
@@ -507,7 +347,7 @@
     <div id="instrument-review-list"></div>
     <button class="btn-primary" id="instrument-review-submit" style="margin-top:8px">Send til din psykolog</button>
     <button class="btn-secondary" id="instrument-review-back" style="margin-top:12px">Tilbage til spørgsmålene</button>
-    <p class="cas1-copyright" id="instrument-review-attribution"></p>
+    <p class="instrument-copyright" id="instrument-review-attribution"></p>
   </div>
 </div>
 
@@ -528,7 +368,6 @@
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
          CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD, kryptoStoettet,
          PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey,
-         CAS1_SKEMA, CAS1_FELT_ORDEN, buildCas1Mycel,
          INSTRUMENTER, instrumentFeltOrden, buildInstrumentMycel } from './mentem-skema-core.js';
 
 // ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
@@ -628,21 +467,10 @@ const rawSelected = (sParam ? sParam.split(',').map(x => x.trim().toLowerCase())
 const diaryId = rawSelected.find(id => SKEMAER[id].kind === 'diary') || null;
 // Søvn-baseline (kind:'baseline') = engangs intake-skema, eget flow (runBaseline).
 const baselineId = rawSelected.find(id => SKEMAER[id].kind === 'baseline') || null;
-// ESS milepæls-tjek (kind:'essMilepael') = standalone milepæls-visning, eget flow
-// (renderEss). Kun vores låste intro-ramme nu; ESS-items licens-gated → stub.
-const essId = rawSelected.find(id => SKEMAER[id].kind === 'essMilepael') || null;
-// SRT uge-1 søvnvindue (kind:'srtVindue') = standalone blokerende safety-entry,
-// eget flow (renderSoevnvindue). Vindue/SC/advarsel = verbatim låst copy; klokkeslæt
-// afledt af tib/wake. Ingen data-indsamling i denne visning (ren render).
-const vindueId = rawSelected.find(id => SKEMAER[id].kind === 'srtVindue') || null;
-// CAS-1 (kind:'cas1') = standalone token-linket skema, eget flow (renderCas1).
-// Web-submit emitterer en [MYCEL v1]-konvolut (kontrakt §2). Aldrig en del af
-// spørgeskema-batteriet/SKEMA_ORDER. ref/dato fra linket; intet navn indsamles.
-const cas1Id = rawSelected.find(id => SKEMAER[id].kind === 'cas1') || null;
-// Instrument-skemaer (kind:'instrument', WHO-5/PHQ-9) = standalone token-linkede effektmaal,
-// eget flow (renderInstrument) -> [MYCEL v1]-konvolut. Lever i SEPARAT register (INSTRUMENTER),
-// saa batteri-noeglerne SKEMAER.who5/phq9 (kind:'radio') er uroert. Rammes KUN af et SINGLE-token
-// ?s=who5 / ?s=phq9 (saa et multi-token batteri ?s=cas,...,who5,... gaar uaendret til batteriet).
+// Standalone instrument-skema (kind:'instrument', WHO-5/PHQ-9/GAD-7) = eget flow (renderInstrument)
+// -> [MYCEL v1]-konvolut. Lever i SEPARAT register (INSTRUMENTER), ikke SKEMAER-batteriet. Rammes
+// KUN af et SINGLE-token ?s=who5 (routing-prioritet); et multi-token batteri gaar uaendret til batteri-
+// flowet. KLAR:false-instrumenter er IKKE i INSTRUMENTER (licens-gate i core.js) -> ueksponerbare.
 const sTokens = sParam ? sParam.split(',').map(x => x.trim().toLowerCase()) : [];
 const instrumentId = (sTokens.length === 1 && INSTRUMENTER[sTokens[0]]) ? sTokens[0] : null;
 let selected = SKEMA_ORDER.filter(id => rawSelected.includes(id));   // kanonisk rækkefølge (kun spørgeskemaer)
@@ -739,17 +567,8 @@ const ICONS = {
   laas:        SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   hoejttaler:  SVG('<path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9.7a3.2 3.2 0 0 1 0 4.6"/><path d="M18 7.6a6 6 0 0 1 0 8.8"/>'),
   maane:       SVG('<path d="M19 14.2A7 7 0 1 1 9.8 5a5.6 5.6 0 0 0 9.2 9.2z"/>'),
-  // Søvnighed (F1/ESS): eget house-style line-ikon: et halvlukket/døsigt øje
-  // (nedadbuet øjenlåg + tre korte nedadgående streger). Egen vektor, ikke emoji,
-  // bevidst distinkt fra `maane` (nat) — dette er dagtræthed/dozing-konstruktet.
-  soevnighed:  SVG('<path d="M3.5 11.5c2.4 3 5.4 4.5 8.5 4.5s6.1-1.5 8.5-4.5"/><line x1="7.5" y1="15.2" x2="6.5" y2="17.4"/><line x1="12" y1="16.4" x2="12" y2="18.8"/><line x1="16.5" y1="15.2" x2="17.5" y2="17.4"/>'),
   lup:         SVG('<circle cx="11" cy="11" r="6"/><line x1="15.5" y1="15.5" x2="20" y2="20"/>'),
   check:       SVG('<path d="M5 12.5l4.5 4.5L19 7"/>'),
-  // SRT uge-1-vindue (egne house-style line-ikoner, ikke emoji/lånte glyffer):
-  // seng = søvnvindue · ur = klokkeslæt-vinduet · skjold = sikkerheds-advarsel.
-  seng:        SVG('<path d="M3 18v-5"/><path d="M21 18v-3a3 3 0 0 0-3-3H3"/><line x1="3" y1="15" x2="21" y2="15"/><path d="M7 12V9.5A1.5 1.5 0 0 1 8.5 8h2.5A1.5 1.5 0 0 1 12.5 9.5V12"/>'),
-  ur:          SVG('<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>'),
-  skjold:      SVG('<path d="M12 3l7 3v5c0 4.2-2.8 7.2-7 8.5-4.2-1.3-7-4.3-7-8.5V6z"/><path d="M9 12l2 2 4-4"/>'),
   // Substans-ikoner (Q10) — egne house-style line-ikoner, ikke emoji/lånte glyffer.
   medicin:   SVG('<rect x="3" y="8.5" width="18" height="7" rx="3.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/>'),
   alkohol:   SVG('<path d="M7.5 4h9l-1.2 6a3.3 3.3 0 0 1-6.6 0z"/><line x1="12" y1="13" x2="12" y2="19.5"/><line x1="8.5" y1="19.5" x2="15.5" y2="19.5"/>'),
@@ -1091,6 +910,7 @@ let diarySkema = null;
 let recoveredBlob = null;   // opaque server-kladde efter ITP-wipe (kan IKKE dekrypteres klient-side)
 let diaryFillDate = null;   // hvilken kalenderdag formularen udfylder (i dag / i går-backfill)
 let diaryStepIndex = 0;     // oplæsnings-venlig tilstand: aktivt trin (ét spørgsmål ad gangen)
+let stepperCfg = null;      // aktiv generisk-stepper-konfiguration (instrument-flow); null = ingen
 
 function diaryPlannedDays() {
   if (dParam && dParam > 0 && dParam <= 60) return dParam;   // ?d= ved første åbning
@@ -1363,26 +1183,6 @@ function markDiaryField(block, f) {
   if (!f.optional) block.classList.toggle('answered', diaryFieldFilled(f));
 }
 
-// ── Felt-kadence: F1-søvnigheds-item dagligt i uge 1, derefter ugentligt ─────
-// Signal = hele kalenderdage mellem forløbets `startedAt` og den dag formularen
-// udfylder (`diaryFillDate`). Robust mod manglende/sprungne dage (kalender-, ikke
-// entry-tælling). Safety-spec §2/SM1: uge 1 = front-loadet harm → dagligt; derefter
-// ugentligt anker (dag 7,14,21,…). tn-param-hook (titrerings-nr=0) kommer med
-// ordinations-vinduet (M1.6 render-struktur §2.1), ikke wired her.
-function diaryDayIndex() {
-  const startISO = (diaryState && diaryState.startedAt) || todayISO();
-  const fillISO  = diaryFillDate || todayISO();
-  const a = new Date(startISO + 'T00:00:00');
-  const b = new Date(fillISO  + 'T00:00:00');
-  if (isNaN(a) || isNaN(b)) return 0;
-  return Math.max(0, Math.round((b - a) / 86400000));
-}
-function diaryFieldVisible(f) {
-  if (!f.weekOneDaily) return true;        // alm. felter: altid synlige
-  const di = diaryDayIndex();
-  return di < 7 || (di % 7 === 0);         // uge 1 (dag 0-6) dagligt; derefter ugentligt
-}
-
 // ── Q10 substans-komponent (tap-først) — delt af daglig dagbog + baseline ──
 // Datamodel (§4): { intet } ELLER { intet:false, soevnmedicin:[{navn,atc,maengde,tidspunkt}],
 // alkohol:[{antalGenstande,tidspunkt}], koffein:[{antalEnheder,tidspunkt}], natFlag }.
@@ -1568,7 +1368,6 @@ function renderDiaryFields() {
   const root = document.getElementById('diary-fields');
   root.innerHTML = '';
   diarySkema.fields.forEach((f, i) => {
-    if (!diaryFieldVisible(f)) return;   // F1 skjult uden for sin kadence (uge 1 dagligt → ugentligt)
     const inputId = `dfield-${f.key}`;
     const optTag = f.optional ? '<span class="diary-optional">valgfrit</span>' : '';
     // Nummeret er KUN en visuel ordinal — skjult for skærmlæser (aria-hidden) så
@@ -1576,46 +1375,6 @@ function renderDiaryFields() {
     // (oplæsnings-venlig tilstand), så et oplæst "8." foran ville være redundant.
     const qHtml = `<span class="question-num" aria-hidden="true">${i + 1}.</span>${f.text}${optTag}`;
     const val = diaryDraft[f.key];
-
-    // NRS 0-10 (F1 søvnigheds-item, M1.6): titel + prompt + 0..10-segmenter m.
-    // ord-ankre KUN i enderne. INGEN tal-/score-/SE-feedback efter valg (ingen
-    // "du valgte X", ingen tolkning) — segmenterne er ren input-affordance; tallet
-    // er nødvendigt for at vælge punkt 1-9, men der gives aldrig en score tilbage.
-    if (f.kind === 'nrs') {
-      const fs = document.createElement('fieldset');
-      fs.className = 'diary-field nrs-field';
-      const legend = document.createElement('legend');
-      legend.className = 'diary-q';
-      // F1-titlen bærer sit eget house-style søvnigheds-ikon (drowsy-eye, F1/ESS-
-      // ikonet; egen SVG, 0 emoji/lånt glyf; aria-hidden så oplæsning kun læser titlen).
-      legend.innerHTML = `<span class="question-num" aria-hidden="true">${i + 1}.</span>`
-        + (f.titel ? `<span class="nrs-titel"><span class="nrs-titel-ikon" aria-hidden="true">${iconSVG('soevnighed')}</span>${f.titel}</span>` : '') + f.text;
-      fs.appendChild(legend);
-      const group = document.createElement('div'); group.className = 'nrs-scale'; group.setAttribute('role', 'radiogroup');
-      for (let v = f.min; v <= f.max; v++) {
-        const rid = `${inputId}-${v}`;
-        const opt = document.createElement('label');
-        opt.className = 'nrs-option' + (val === v ? ' checked' : '');
-        opt.setAttribute('for', rid);
-        const aria = v === f.min ? `${v}, ${f.anker0}` : v === f.max ? `${v}, ${f.anker10}` : `${v}`;
-        opt.innerHTML = `<input type="radio" id="${rid}" name="${f.key}" value="${v}" aria-label="${aria}" ${val === v ? 'checked' : ''}><span aria-hidden="true">${v}</span>`;
-        opt.querySelector('input').addEventListener('change', () => {
-          diaryDraft[f.key] = v;
-          group.querySelectorAll('.nrs-option').forEach(o => o.classList.remove('checked'));
-          opt.classList.add('checked'); markDiaryField(fs, f); updateDiaryProgress();
-        });
-        group.appendChild(opt);
-      }
-      fs.appendChild(group);
-      const ankre = document.createElement('div'); ankre.className = 'nrs-ankre';
-      const a0 = document.createElement('span'); a0.textContent = f.anker0;
-      const a10 = document.createElement('span'); a10.textContent = f.anker10;
-      ankre.appendChild(a0); ankre.appendChild(a10);
-      fs.appendChild(ankre);
-      markDiaryField(fs, f);
-      root.appendChild(fs);
-      return;
-    }
 
     // Scale → <fieldset>/<legend> om radioknapperne (semantisk gruppe, A11Y).
     if (f.kind === 'scale') {
@@ -1702,7 +1461,7 @@ function renderDiaryFields() {
 }
 
 function updateDiaryProgress() {
-  const req = diarySkema.fields.filter(f => !f.optional && diaryFieldVisible(f));   // skjult F1 tæller ikke
+  const req = diarySkema.fields.filter(f => !f.optional);
   const filled = req.filter(f => { const v = diaryDraft[f.key]; return v != null && v !== ''; }).length;
   const pct = req.length ? Math.round(filled / req.length * 100) : 100;
   document.getElementById('diary-form-fill').style.width = pct + '%';
@@ -1712,29 +1471,86 @@ function updateDiaryProgress() {
   btn.textContent = filled < req.length ? `Mangler ${req.length - filled} svar` : 'Gem';
 }
 
-// ── Oplæsnings-venlig stepper (synshandicap / skærmlæser) — DELT ───────────
-// Generisk: ét trin (= ét spørgsmål) ad gangen over en konfigureret container.
-// Trinene skjules/vises ét ad gangen; data-bindingen er uændret, så svar bevares
-// på tværs af Næste/Forrige. "Spørgsmål X af Y" læses FØRST (fokuseres + aria-live),
-// fokus flyttes til trin-overskriften, aktivt trin bærer aria-current="step".
-// Parametriseret over skema-key: søvndagbogen (#diary-fields) og CAS-1 (#cas1-fields)
-// deler samme komponent via en cfg (spec-ux-a11y-cas1 §4: arv, genopfind ikke).
-//   cfg = { rootId, steps(): Element[], lastBtnId?, lastBtnShow?,
-//           onShowStep?(i, steps), beforeShow?(), onTeardown?() }
-let stepperCfg = null;       // aktiv konfiguration (eller null når ingen stepper)
-// diaryStepIndex (decl. ovenfor) genbruges som det delte aktive trin-index —
-// kun ét flow er aktivt ad gangen, så det er sikkert at dele.
-
-function teardownStepper() {
+// ── Oplæsnings-venlig stepper (synshandicap / skærmlæser) ──────────────────
+// Hvert top-niveau-felt i #diary-fields er ÉT trin. Trinene skjules/vises ét ad
+// gangen; data-bindingen (diaryDraft) er uændret, så svar bevares på tværs af
+// Næste/Forrige. "Spørgsmål X af Y" læses FØRST (fokuseres + aria-live), fokus
+// flyttes til trinnets overskrift, aktivt trin bærer aria-current="step".
+function teardownDiaryStepper() {
   document.querySelectorAll('.a11y-step-head, .a11y-stepnav').forEach(el => el.remove());
-  if (stepperCfg) {
-    const root = document.getElementById(stepperCfg.rootId);
-    if (root) Array.from(root.children).forEach(el => { el.hidden = false; el.removeAttribute('aria-current'); });
-    if (stepperCfg.onTeardown) stepperCfg.onTeardown();
-  }
-  stepperCfg = null;
+  document.querySelectorAll('#diary-fields > *').forEach(el => { el.hidden = false; el.removeAttribute('aria-current'); });
+  // Gendan intro + "Samme som i går" (stepperen skjuler dem på trin 2-N).
+  const instr = document.getElementById('diary-form-instruction'); if (instr) instr.hidden = false;
+  const sameBtn = document.getElementById('diary-sameasyesterday-btn'); if (sameBtn) sameBtn.hidden = false;
+  const save = document.getElementById('diary-save-btn'); if (save) save.style.display = '';
 }
 
+function applyDiaryStepper() {
+  const root = document.getElementById('diary-fields');
+  if (!root || !root.children.length) return;
+  const head = document.createElement('h2');
+  head.id = 'a11y-step-head'; head.className = 'a11y-step-head';
+  head.tabIndex = -1;
+  head.setAttribute('role', 'status');
+  head.setAttribute('aria-live', 'polite');
+  head.setAttribute('aria-atomic', 'true');
+  root.parentNode.insertBefore(head, root);
+
+  const nav = document.createElement('div');
+  nav.className = 'a11y-stepnav';
+  const prev = document.createElement('button');
+  prev.type = 'button'; prev.className = 'btn-secondary'; prev.id = 'a11y-prev'; prev.textContent = 'Forrige';
+  prev.addEventListener('click', () => showDiaryStep(diaryStepIndex - 1));
+  const next = document.createElement('button');
+  next.type = 'button'; next.className = 'btn-primary'; next.id = 'a11y-next'; next.textContent = 'Næste';
+  next.addEventListener('click', () => showDiaryStep(diaryStepIndex + 1));
+  nav.appendChild(prev); nav.appendChild(next);
+  root.parentNode.insertBefore(nav, root.nextSibling);
+
+  showDiaryStep(Math.min(diaryStepIndex, root.children.length - 1), false);
+}
+
+function showDiaryStep(i, moveFocus = true) {
+  const root = document.getElementById('diary-fields');
+  if (!root) return;
+  const steps = Array.from(root.children);
+  if (!steps.length) return;
+  i = Math.max(0, Math.min(i, steps.length - 1));
+  diaryStepIndex = i;
+  steps.forEach((s, idx) => {
+    const on = idx === i;
+    s.hidden = !on;
+    if (on) s.setAttribute('aria-current', 'step'); else s.removeAttribute('aria-current');
+  });
+  // Intro-boksen + den globale "Samme som i går"-genvej hører KUN til trin 1.
+  // Ellers læser skærmlæseren intro'en op igen ved HVERT trin-skift (FEJL 1,
+  // VoiceOver-feedback 15/6). "Samme som i går" genudfylder ALLE felter (global,
+  // ikke per-spørgsmål) → samme regel.
+  const instr = document.getElementById('diary-form-instruction');
+  const sameBtn = document.getElementById('diary-sameasyesterday-btn');
+  if (instr) instr.hidden = i !== 0;
+  if (sameBtn) sameBtn.hidden = i !== 0;
+  const last = i === steps.length - 1;
+  const head = document.getElementById('a11y-step-head');
+  if (head) head.textContent = `Spørgsmål ${i + 1} af ${steps.length}`;
+  const prev = document.getElementById('a11y-prev');
+  const next = document.getElementById('a11y-next');
+  const save = document.getElementById('diary-save-btn');
+  if (prev) prev.disabled = i === 0;
+  if (next) next.style.display = last ? 'none' : '';
+  if (save) save.style.display = last ? '' : 'none';
+  window.scrollTo(0, 0);
+  // Fokus til "Spørgsmål X af Y" → skærmlæser læser fremskridtet FØRST, derefter
+  // navigerer brugeren til selve spørgsmålet. rAF: efter layout/visibility-skift.
+  if (moveFocus && head) requestAnimationFrame(() => { try { head.focus(); } catch (e) {} });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  GENERISK STEPPER-MOTOR (ét-spørgsmål-ad-gangen) + INSTRUMENT-RENDER (WHO-5/
+//  PHQ-9/GAD-7). Porteret ren motor (spec-instrument-kerne-genbygning 27/6): den
+//  generiske applyStepper/showStep deler intet med søvndagbogens egen stepper
+//  (lever side om side); INSTRUMENTER-routing + buildInstrumentMycel i core.js.
+// ════════════════════════════════════════════════════════════════════════
 function applyStepper(cfg) {
   const root = document.getElementById(cfg.rootId);
   if (!root) return;
@@ -1794,67 +1610,6 @@ function showStep(i, moveFocus = true) {
   if (moveFocus && head) requestAnimationFrame(() => { try { head.focus(); } catch (e) {} });
 }
 
-// Søvndagbog-konfiguration (bevarer den oprindelige adfærd 1:1).
-//   - Hvert top-niveau-felt i #diary-fields er ét trin.
-//   - Intro + "Samme som i går" hører KUN til trin 1 (ellers genoplæses de hvert
-//     trin — FEJL 1, VoiceOver-feedback 15/6). "Samme som i går" genudfylder ALLE
-//     felter (global, ikke per-spørgsmål) → samme regel.
-function diaryStepperCfg() {
-  return {
-    rootId: 'diary-fields',
-    steps: () => Array.from((document.getElementById('diary-fields') || {}).children || []),
-    lastBtnId: 'diary-save-btn', lastBtnShow: '',
-    onShowStep: (i) => {
-      const instr = document.getElementById('diary-form-instruction');
-      const sameBtn = document.getElementById('diary-sameasyesterday-btn');
-      if (instr) instr.hidden = i !== 0;
-      if (sameBtn) sameBtn.hidden = i !== 0;
-    },
-    onTeardown: () => {
-      const instr = document.getElementById('diary-form-instruction'); if (instr) instr.hidden = false;
-      const sameBtn = document.getElementById('diary-sameasyesterday-btn'); if (sameBtn) sameBtn.hidden = false;
-      const save = document.getElementById('diary-save-btn'); if (save) save.style.display = '';
-    }
-  };
-}
-function applyDiaryStepper() { applyStepper(diaryStepperCfg()); }
-function teardownDiaryStepper() { teardownStepper(); }
-
-// CAS-1-konfiguration. #cas1-fields blander sektion-prompt-<p>'er ind mellem de 16
-// spørgsmåls-fieldsets → KUN .cas1-field er trin (ellers ville "X af 16" tælle prompts).
-// Hvert spørgsmål bærer dataset.sektionPromptId; den aktive sektion-prompt vises over
-// det aktive spørgsmål (skjulte søskende kollapser, så prompt + spørgsmål står samlet).
-// cas1-intro hører KUN til trin 1 (analog til søvndagbogens intro).
-function cas1StepperCfg() {
-  return {
-    rootId: 'cas1-fields',
-    steps: () => Array.from(document.querySelectorAll('#cas1-fields > .cas1-field')),
-    lastBtnId: 'cas1-submit', lastBtnShow: '',
-    beforeShow: () => {
-      document.querySelectorAll('#cas1-fields > .cas1-sektion-prompt').forEach(p => { p.hidden = true; });
-    },
-    onShowStep: (i, steps) => {
-      const active = steps[i];
-      if (active && active.dataset.sektionPromptId) {
-        const p = document.getElementById(active.dataset.sektionPromptId);
-        if (p) p.hidden = false;
-      }
-      const intro = document.getElementById('cas1-intro'); if (intro) intro.hidden = i !== 0;
-      const note = document.getElementById('cas1-note'); if (note) note.hidden = i !== (steps.length - 1);
-    },
-    onTeardown: () => {
-      const intro = document.getElementById('cas1-intro'); if (intro) intro.hidden = false;
-      const note = document.getElementById('cas1-note'); if (note) note.hidden = false;
-      const submit = document.getElementById('cas1-submit'); if (submit) submit.style.display = '';
-    }
-  };
-}
-function applyCas1Stepper() { applyStepper(cas1StepperCfg()); }
-
-// Instrument-konfiguration (WHO-5/PHQ-9). #instrument-fields blander stem-prompt-<p>'er ind
-// mellem spoergsmaals-fieldsets -> KUN .instrument-field er trin. Hvert spoergsmaal baerer
-// dataset.stemId; den aktive stem vises over det aktive spoergsmaal (analog til CAS-1).
-// intro+attribution hoerer KUN til trin 1; note (mangler-X-svar) KUN til sidste trin.
 function instrumentStepperCfg() {
   return {
     rootId: 'instrument-fields',
@@ -1883,6 +1638,233 @@ function instrumentStepperCfg() {
 }
 function applyInstrumentStepper() { applyStepper(instrumentStepperCfg()); }
 
+function instrEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function instrEscAttr(s) { return instrEsc(s).replace(/"/g, '&quot;'); }
+function instrumentStemAria(stem, text) {
+  return (stem ? stem.replace(/\s*\.\.\.\s*$/, '') + ' ' : '') + text;
+}
+function renderInstrument(id) {
+  const skema = INSTRUMENTER[id];
+  const ref  = params.get('ref')  || '';
+  const dato = params.get('dato') || '';
+  const instrAnswers = {};   // { [feltkey]: heltal }: KUN faktiske klik, ingen default
+
+  // Alle scorede items + (valgfrit) funktionsspoergsmaal = trin i stepperen.
+  const trinItems = skema.scoredItems.map((it) => ({ ...it, stem: skema.stem, options: skema.options, required: true }));
+  if (skema.funktion) trinItems.push({ ...skema.funktion, stem: '', options: skema.funktion.options, required: false });
+  const REQ_KEYS = skema.scoredItems.map((it) => it.key);
+  const TOTAL = REQ_KEYS.length;
+
+  document.getElementById('instrument-title').textContent = skema.uiTitle;
+  document.getElementById('instrument-intro').textContent = skema.instruktion ||
+    'Vælg det svar, der passer bedst for dig. Der er ingen rigtige eller forkerte svar.';
+  document.getElementById('instrument-attribution').textContent = skema.attribution || '';
+
+  const wrap = document.getElementById('instrument-fields');
+  wrap.innerHTML = '';
+  let qnum = 0, stemIdx = 0;
+
+  trinItems.forEach((item) => {
+    qnum++;
+    // Delt stem (verbatim) vises over det aktive spoergsmaal (ét-ad-gangen, analog til CAS-1).
+    let stemId = '';
+    if (item.stem) {
+      stemIdx++;
+      stemId = 'instrument-stem-' + stemIdx;
+      const ph = document.createElement('p');
+      ph.className = 'instrument-stem'; ph.id = stemId;
+      ph.textContent = item.stem;
+      wrap.appendChild(ph);
+    }
+    const fs = document.createElement('fieldset');
+    fs.className = 'diary-field instrument-field';
+    if (stemId) fs.dataset.stemId = stemId;
+    const legend = document.createElement('legend');
+    legend.className = 'diary-q';
+    legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + instrEsc(item.text);
+    fs.appendChild(legend);
+
+    const group = document.createElement('div');
+    group.className = 'radio-group';
+    group.setAttribute('role', 'radiogroup');
+    group.setAttribute('aria-label', instrumentStemAria(item.stem, item.text));
+    const optByVal = {};
+    item.options.forEach((opt) => {
+      const rid = `${item.key}-${opt.value}`;
+      const lbl = document.createElement('label');
+      lbl.className = 'radio-option';
+      // Inputtet wrappes af labelen (ingen `for` -> ingen dobbelt-association); labelens
+      // <span>-tekst = radioens tilgaengelige navn (samme moenster som batteriets radioBlock).
+      // showValueBadge (kun WHO-5): synligt tal-badge (aria-hidden) FORAN ordlyd-labelen, og
+      // tallet flyttes ind i radioens tilgaengelige navn via aria-label ("5, Hele tiden") saa
+      // instruktionens "et hoejere tal" ogsaa giver mening for skaermlaeser. Begge synlige
+      // spans aria-hidden -> navnet styres alene af aria-label -> ingen dobbelt-oplaesning.
+      if (skema.showValueBadge) {
+        const aria = instrEscAttr(opt.value + ', ' + opt.label);
+        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}" aria-label="${aria}"><span class="instr-val-badge" aria-hidden="true">${opt.value}</span><span aria-hidden="true">${instrEsc(opt.label)}</span>`;
+      } else {
+        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}"><span>${instrEsc(opt.label)}</span>`;
+      }
+      optByVal[opt.value] = lbl;
+      lbl.querySelector('input').addEventListener('change', () => commitInstr(item, fs, group, optByVal, opt.value));
+      group.appendChild(lbl);
+    });
+    fs.appendChild(group);
+    wrap.appendChild(fs);
+  });
+
+  function commitInstr(item, fs, group, optByVal, v) {
+    instrAnswers[item.key] = v;
+    fs.classList.add('answered');
+    group.querySelectorAll('.radio-option').forEach((o) => o.classList.remove('checked'));
+    if (optByVal[v]) {
+      optByVal[v].classList.add('checked');
+      const ri = optByVal[v].querySelector('input');
+      if (ri && !ri.checked) ri.checked = true;
+    }
+    // Safety: PHQ-9 item 9 (selvmordstanker) > 0 -> prominent safety-panel under spoergsmaalet.
+    if (skema.safetyKey && item.key === skema.safetyKey) toggleInstrumentSafety(fs, Number(v) > 0);
+    opdaterInstrFremdrift();
+    seeingAdvanceInstr(fs);
+  }
+
+  // Prominent (men ikke-alarmerende) safety-panel: 112 + Livslinien 70 201 201 + kontakt
+  // psykolog (samme ressourcer som Akut hjælp-boksen, der altid staar nederst). Idempotent.
+  function toggleInstrumentSafety(fs, show) {
+    let n = fs.nextElementSibling;
+    const erPanel = n && n.classList && n.classList.contains('instrument-safety');
+    if (show && !erPanel) {
+      const panel = document.createElement('div');
+      panel.className = 'instrument-safety';
+      panel.setAttribute('role', 'note');
+      panel.innerHTML =
+        '<div class="instrument-safety-head"><span aria-hidden="true" style="display:inline-flex">' + AKUT_TELEFON_SVG + '</span>Tak, fordi du svarer ærligt</div>'
+        + '<p style="margin:0">Hvis det er svært lige nu, behøver du ikke vente til samtalen. Der er hjælp at få med det samme:</p>'
+        + '<ul>'
+        + '<li>Akut fare lige nu: ring <a href="tel:112">112</a></li>'
+        + '<li>Livslinien: <a href="tel:70201201">70 201 201</a> (hver dag kl. 11-05, anonym og gratis)</li>'
+        + '<li>Kontakt din psykolog, Viktor Nielsen, direkte</li>'
+        + '</ul>';
+      fs.insertAdjacentElement('afterend', panel);
+    } else if (!show && erPanel) {
+      n.remove();
+    }
+  }
+
+  // Greb 1 (seende): auto-frem til naeste trin naar man besvarer det AKTIVE front-trin
+  // (alle FOER besvaret). a11y/reduced-motion: ingen auto-frem (bruger styrer via Naeste/Forrige).
+  function seeingAdvanceInstr(currentFs) {
+    if (a11yOn()) return;
+    const fields = Array.from(wrap.querySelectorAll('.instrument-field'));
+    const idx = fields.indexOf(currentFs);
+    if (idx < 0 || idx !== diaryStepIndex) return;
+    if (idx >= fields.length - 1) return;
+    const frontier = fields.slice(0, idx).every((f) => f.classList.contains('answered'));
+    if (!frontier) return;
+    setTimeout(() => { if (diaryStepIndex === idx && !a11yOn()) showStep(idx + 1); }, 320);
+  }
+
+  const submitBtn = document.getElementById('instrument-submit');
+  const note = document.getElementById('instrument-note');
+  function opdaterInstrFremdrift() {
+    const n = REQ_KEYS.filter((k) => instrAnswers[k] != null).length;
+    document.getElementById('instrument-progress-current').textContent = n + ' af ' + TOTAL;
+    document.getElementById('instrument-progress-fill').style.width = Math.round(n / TOTAL * 100) + '%';
+    submitBtn.disabled = (n < TOTAL);
+    note.textContent = (n < TOTAL) ? ('Besvar alle ' + TOTAL + ' spørgsmål for at sende.') : '';
+  }
+  opdaterInstrFremdrift();
+
+  submitBtn.addEventListener('click', () => {
+    if (REQ_KEYS.some((k) => instrAnswers[k] == null)) return;
+    visInstrumentReview();
+  });
+
+  // Afsluttende review-skaerm: alle svar i raekkefoelge, "Ret" pr. item -> tilbage til trinnet.
+  function visInstrumentReview() {
+    const list = document.getElementById('instrument-review-list');
+    list.innerHTML = '';
+    trinItems.forEach((item, stepIndex) => {
+      const v = instrAnswers[item.key];
+      const opt = (v == null) ? null : item.options.find((o) => o.value === v);
+      const row = document.createElement('div');
+      row.className = 'instrument-review-row';
+      const main = document.createElement('div');
+      main.className = 'instrument-review-main';
+      const q = document.createElement('p');
+      q.className = 'instrument-review-q';
+      q.innerHTML = `<span class="question-num" aria-hidden="true">${stepIndex + 1}.</span>` + instrEsc(item.text);
+      const ans = document.createElement('p');
+      if (v == null) {
+        ans.className = 'instrument-review-a tom';
+        ans.textContent = item.required ? 'Ikke besvaret' : 'Ikke besvaret (valgfrit)';
+      } else if (opt && skema.showValueBadge) {
+        // Konsistens m. svar-knappens tal-badge; tallet aria-hidden (label-teksten laeses).
+        ans.className = 'instrument-review-a';
+        ans.innerHTML = `<span class="instr-review-badge" aria-hidden="true">${opt.value}</span>${instrEsc(opt.label)}`;
+      } else { ans.className = 'instrument-review-a'; ans.textContent = opt ? opt.label : String(v); }
+      main.appendChild(q); main.appendChild(ans);
+      const ret = document.createElement('button');
+      ret.type = 'button'; ret.className = 'instrument-review-ret'; ret.textContent = 'Ret';
+      ret.setAttribute('aria-label', 'Ret svar på spørgsmål ' + (stepIndex + 1));
+      ret.addEventListener('click', () => { showScreen('screen-instrument'); window.scrollTo(0, 0); showStep(stepIndex); });
+      row.appendChild(main); row.appendChild(ret);
+      list.appendChild(row);
+    });
+    document.getElementById('instrument-review-intro').textContent =
+      'Se dine svar igennem. Du kan rette et svar, før du sender det til din psykolog.';
+    document.getElementById('instrument-review-attribution').textContent = skema.attribution || '';
+    showScreen('screen-instrument-review');
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('instrument-review-submit').addEventListener('click', () => {
+    if (REQ_KEYS.some((k) => instrAnswers[k] == null)) return;
+    const mycel = buildInstrumentMycel(skema, instrAnswers, { ref, dato, kilde: 'web' });
+    visInstrumentKvittering(mycel, skema);
+  });
+  document.getElementById('instrument-review-back').addEventListener('click', () => {
+    showScreen('screen-instrument'); window.scrollTo(0, 0); showStep(trinItems.length - 1);
+  });
+
+  showScreen('screen-instrument');
+  window.scrollTo(0, 0);
+  diaryStepIndex = 0;
+}
+
+// Instrument-kvittering: vis [MYCEL v1]-blokken + kopiér/del (samme moenster som CAS-1).
+function visInstrumentKvittering(mycelTekst, skema) {
+  const status = document.getElementById('instrument-done-status');
+  status.style.color = 'var(--ink)';
+  status.innerHTML = '';
+  const intro = document.createElement('p');
+  intro.style.cssText = 'margin:0 0 12px;line-height:1.45;text-align:left';
+  intro.textContent = 'Kopiér teksten nedenfor og send den til din psykolog i SMS-tråden, hvor du fik linket.';
+  const ta = document.createElement('textarea');
+  ta.readOnly = true; ta.value = mycelTekst;
+  ta.setAttribute('aria-label', 'Dine svar i tekstform');
+  ta.style.cssText = 'width:100%;min-height:220px;margin:0 0 12px;font-size:12px;font-family:ui-monospace,Menlo,monospace;box-sizing:border-box';
+  const copy = document.createElement('button');
+  copy.type = 'button'; copy.className = 'btn-primary'; copy.textContent = 'Kopiér mine svar';
+  copy.style.cssText = 'display:block;width:100%;box-sizing:border-box';
+  copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(mycelTekst); copy.textContent = 'Svar kopieret'; }
+    catch (e) { ta.focus(); ta.select(); copy.textContent = 'Markér teksten og kopiér manuelt'; }
+  });
+  const share = document.createElement('button');
+  share.type = 'button'; share.className = 'btn-secondary'; share.textContent = 'Send svar';
+  share.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin-top:8px';
+  share.addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: mycelTekst, title: (skema.kort || 'Skema') + ' til min psykolog' }); }
+      catch (e) { ta.focus(); ta.select(); }
+    } else { ta.focus(); ta.select(); }
+  });
+  status.appendChild(intro); status.appendChild(ta); status.appendChild(copy); status.appendChild(share);
+  showScreen('screen-instrument-done');
+  window.scrollTo(0, 0);
+}
+
 // Q10 substans har indhold KUN hvis "Intet" aktivt er valgt eller mindst én chip er
 // udfyldt. Et urørt substans-felt (start-tilstand {}) er ubesvaret → persistér det
 // ikke som et tomt objekt (ellers snige et falsk "svar" forbi; spec-ux §1+§4).
@@ -1893,13 +1875,12 @@ function substansHasContent(v) {
 }
 
 function saveDiaryEntry() {
-  const req = diarySkema.fields.filter(f => !f.optional && diaryFieldVisible(f));   // skjult F1 ikke krævet
+  const req = diarySkema.fields.filter(f => !f.optional);
   if (req.some(f => { const v = diaryDraft[f.key]; return v == null || v === ''; })) return;
 
   const date = diaryFillDate || todayISO();    // i dag ELLER i går-backfill
   const entry = { date, savedAt: new Date().toISOString() };   // savedAt → newest-wins-merge
   diarySkema.fields.forEach(f => {
-    if (!diaryFieldVisible(f)) return;          // persistér aldrig et felt uden for sin kadence
     const v = diaryDraft[f.key];
     if (v == null || v === '') return;
     if (f.kind === 'substans' && !substansHasContent(v)) return;   // urørt valgfrit felt = ubesvaret
@@ -2218,682 +2199,12 @@ async function shareBaselineEncrypted() {
   if (r === 'delt') { status.style.color = 'var(--accent)'; status.textContent = 'Filen er klar til at sende. Tak!'; }
 }
 
-// ── ESS MILEPÆLS-TJEK: render KUN vores låste intro-ramme; items licens-gated (stub)
-// ESS-items (8 spørgsmål + skala + scoring) er licens-bundne (Johns 1990-1997,
-// Special Terms 140135) → un-stubbes FØRST efter Mapi/ICON LS-screenshot-godkendelse
-// (Viktor 26/6). Wrappen (ESS_MILEPAEL_RAMME) er VORES egen, Viktor-låste ramme og
-// renderes verbatim. Ingen data-indsamling i denne visning (ren forhåndsvisning).
-function renderEss(id) {
-  const skema = SKEMAER[id];
-  const rammeEl = document.getElementById('ess-ramme');
-  // Dedupe-overskrift (M1.6 Fase B, 3-linse 26/6): skærmen har allerede en serif-H1
-  // med samme titel som rammens første fede linje → den blev vist 2x. Strip KUN den
-  // dublerende heading-linje i RENDER; kilde-copy (ESS_MILEPAEL_RAMME) er uændret
-  // verbatim (Swift single-source-paritet bevaret). Resten af rammen urørt.
-  let ramme = skema.ramme || '';
-  const titel = (skema.title || '').trim();
-  if (titel) {
-    const esc = titel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    ramme = ramme.replace(new RegExp('^\\*\\*' + esc + '\\*\\*\\n?'), '');
-  }
-  rammeEl.innerHTML = ramme.split('\n\n').map(block => {
-    const html = block
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')   // **fed** → <strong> (låst kilde, ikke bruger-input)
-      .replace(/\n/g, '<br>');
-    return `<p>${html}</p>`;
-  }).join('');
-  const stub = document.getElementById('ess-stub');
-  stub.innerHTML = `<div class="ess-stub-icon" aria-hidden="true">${iconSVG('soevnighed')}</div>`
-    + `<p class="ess-stub-text">Selve spørgsmålene tilføjes her, så snart de er klar. Du skal ikke gøre noget nu.</p>`;
-  showScreen('screen-ess');
-  window.scrollTo(0, 0);
-}
-
-// ── SRT UGE-1 SØVNVINDUE: blokerende safety-entry FØR dagbog ────────────────
-// Viser FØRST det ordinerede vindue (klokkeslæt afledt af tib/wake; ALDRIG SE-tal),
-// derefter SC-reglerne, og kørsels-advarslen KUN når adv=1 (spec §2.2 / safety §41).
-// tn=0 → uge-1-fremhævning. Verbatim Viktor-låst copy (em-dash-fri) fra core.js.
-// Ren render: ingen data-indsamling, NOT-TOUCH krypto/keyId.
-function srtHhmmToMin(s) {
-  var p = String(s).split(':');
-  if (p.length !== 2) return null;
-  var h = parseInt(p[0], 10), m = parseInt(p[1], 10);
-  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
-  return h * 60 + m;
-}
-function srtMinToHhmm(min) {
-  min = ((min % 1440) + 1440) % 1440;
-  var h = Math.floor(min / 60), m = min % 60;
-  return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
-}
-function srtEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function srtInlineBold(s) { return srtEsc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
-// Minimal markdown (heading = fuldt fed førstelinje · "- " punktliste · **fed**) →
-// sikker HTML. .srt-aloud på hvert tekst-element så "Få læst op" rammer ALT verbatim
-// i visuel rækkefølge (safety-advarslen SKAL læses op). headIcon = ikon foran heading.
-function srtBlokHtml(md, opts) {
-  opts = opts || {};
-  var lines = String(md).split('\n'), html = '', inList = false;
-  for (var i = 0; i < lines.length; i++) {
-    var ln = lines[i];
-    if (ln.indexOf('- ') === 0) {
-      if (!inList) { html += '<ul>'; inList = true; }
-      html += '<li class="srt-aloud">' + srtInlineBold(ln.slice(2)) + '</li>';
-    } else {
-      if (inList) { html += '</ul>'; inList = false; }
-      var t = ln.trim();
-      if (!t.length) continue;
-      if (/^\*\*[^*]+\*\*$/.test(t)) {
-        var head = srtEsc(t.replace(/\*\*/g, ''));
-        html += opts.headIcon
-          ? '<div class="srt-advarsel-head"><span class="srt-advarsel-ikon" aria-hidden="true">' + iconSVG(opts.headIcon) + '</span><h2 class="srt-aloud">' + head + '</h2></div>'
-          : '<h2 class="srt-aloud">' + head + '</h2>';
-      } else {
-        html += '<p class="srt-aloud">' + srtInlineBold(ln) + '</p>';
-      }
-    }
-  }
-  if (inList) html += '</ul>';
-  return html;
-}
-function renderSoevnvindue(id) {
-  var skema = SKEMAER[id] || {};
-  var tekst = skema.tekst || {};
-  // Leverance-URL-params (plaintext, L1.c; mapping = SRTOrdinationURLCodec, Code-confirmet).
-  var tibS = params.get('tib');
-  var tib = (tibS != null) ? parseInt(tibS, 10) : NaN;
-  var wake = params.get('wake');
-  var wakeMin = srtHhmmToMin(wake);
-  var advAktiv = params.get('adv') === '1';
-  var tnS = params.get('tn');
-  var ugeEt = (tnS != null) && (parseInt(tnS, 10) === 0);
-
-  // uge-1-fremhævning (tn=0)
-  if (ugeEt) {
-    var badge = document.getElementById('srt-uge1-badge');
-    badge.querySelector('.srt-uge1-ikon').innerHTML = iconSVG('seng');
-    badge.hidden = false;
-  }
-
-  // Klokkeslæt-vindue (sengetid = wake minus tib) — KUN klokkeslæt, ALDRIG SE-tal.
-  var sengetid = (!isNaN(tib) && wakeMin != null) ? srtMinToHhmm(wakeMin - tib) : null;
-  if (sengetid != null) {
-    var urEl = document.getElementById('srt-vindue-ur');
-    urEl.querySelector('.srt-vindue-ur-ikon').innerHTML = iconSVG('ur');
-    document.getElementById('srt-vindue-fra').textContent = sengetid;
-    document.getElementById('srt-vindue-til').textContent = wake;
-    urEl.hidden = false;
-  }
-
-  // Tekst 1 · vinduesTekst (klokkeslæt indsat). Defensiv fallback hvis link mangler params.
-  if (sengetid != null) {
-    var vindueMd = String(tekst.vindue || '')
-      .split('{sengetid}').join(sengetid)
-      .split('{opvågning}').join(wake);
-    document.getElementById('srt-vindue-blok').innerHTML = srtBlokHtml(vindueMd);
-  } else {
-    document.getElementById('srt-vindue-blok').innerHTML =
-      '<h2 class="srt-aloud">Dit søvnvindue</h2>'
-      + '<p class="srt-aloud">Vinduet kunne ikke vises her. Åbn linket fra din psykolog igen, eller kontakt din psykolog.</p>';
-  }
-
-  // Tekst 2 · scReglerTekst (valgfri-men-låst; medtaget verbatim, nul-risiko).
-  document.getElementById('srt-sc-blok').innerHTML = srtBlokHtml(tekst.scRegler || '');
-
-  // Tekst 3 · koerselsAdvarsel — KUN hvis adv=1.
-  if (advAktiv) {
-    var advEl = document.getElementById('srt-advarsel-blok');
-    advEl.innerHTML = srtBlokHtml(tekst.koerselsAdvarsel || '', { headIcon: 'skjold' });
-    advEl.hidden = false;
-  }
-
-  showScreen('screen-soevnvindue');
-  window.scrollTo(0, 0);
-}
-
-// ── CAS-1 (kind:'cas1'): standalone token-linket skema -> [MYCEL v1]-konvolut ──
-// 16 items i 3 sektioner (2 tids 0-8 · 6 coping 0-8 · 8 beliefs 0-100). Diskrete
-// knapper UDEN forhåndsvalg (ingen phantom-default; tal kommer KUN fra et faktisk
-// klik). Submit er disabled indtil alle 16 er besvaret. Web-submit bygger en
-// [MYCEL v1]-tekstblok (buildCas1Mycel) som MJ's parser læser. ref/dato fra linket
-// (?ref= & ?dato=); intet navn/PII indsamles. Item-tekst = verbatim instrument.
-function cas1Esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function cas1EscAttr(s) { return cas1Esc(s).replace(/"/g, '&quot;'); }
-function renderCas1(id) {
-  const skema = SKEMAER[id];
-  const ref  = params.get('ref')  || '';
-  const dato = params.get('dato') || '';
-  const cas1Answers = {};   // { [feltkey]: heltal }: KUN faktiske klik, ingen default
-
-  document.getElementById('cas1-intro').textContent =
-    'Nedenfor er nogle spørgsmål om dine tanker og din bekymring i den seneste uge. Der er ingen rigtige eller forkerte svar. Vælg det tal, der passer bedst for dig.';
-  document.getElementById('cas1-copyright').textContent = skema.copyright || '';
-
-  const rangeFor   = (skala) => (skala === '0_100') ? { min: 0, max: 100, step: 10 } : { min: 0, max: 8, step: 1 };
-  const anchorsFor = (skala) => (skala === '0_100') ? skema.anchors_0_100 : skema.anchors_0_8;
-  const wrap = document.getElementById('cas1-fields');
-  wrap.innerHTML = '';
-  let qnum = 0;
-  let sekIdx = 0;
-
-  skema.sektioner.forEach((sek) => {
-    let sektionPromptId = '';
-    if (sek.delt_prompt) {
-      sekIdx++;
-      sektionPromptId = 'cas1-sekprompt-' + sekIdx;
-      const ph = document.createElement('p');
-      ph.className = 'cas1-sektion-prompt';
-      ph.id = sektionPromptId;
-      ph.textContent = sek.delt_prompt;
-      wrap.appendChild(ph);
-    }
-    const r = rangeFor(sek.skala);
-    const anchors = anchorsFor(sek.skala);
-    const scaleCls = (sek.skala === '0_100') ? 's100' : 's8';
-    sek.items.forEach((item) => {
-      qnum++;
-      const fs = document.createElement('fieldset');
-      fs.className = 'diary-field cas1-field';
-      // Oplæsnings-venlig stepper: knyt spørgsmålet til dets sektion-prompt, så
-      // prompten vises over det aktive spørgsmål (ét-ad-gangen, spec §4 Greb 1).
-      if (sektionPromptId) fs.dataset.sektionPromptId = sektionPromptId;
-      const legend = document.createElement('legend');
-      legend.className = 'diary-q';
-      legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + cas1Esc(item.text);
-      fs.appendChild(legend);
-
-      const isBelief = (sek.skala === '0_100');
-      let sliderEl = null, outEl = null;
-      const optByVal = {};
-
-      // aria-valuetext for slideren spejler radio-knappens aria-label: endepunkts-
-      // ankre læses med, mellem-trin som rent tal. 0_100 har KUN 2 ankre i instrumentet
-      // (at:0 / at:100) — vi opfinder ALDRIG et 50-anker (instrument-fidelity).
-      function sliderValueText(v) {
-        const a = anchors.find((x) => x.at === v);
-        return a ? (v + ', ' + a.label) : String(v);
-      }
-      // commitVal = ÉN sandhedsvej: sætter svaret + synker BEGGE input (slider↔knapper)
-      // til IDENTISK diskret værdi + opdaterer fremdrift. Kaldes fra både radio og slider.
-      function commitVal(v) {
-        cas1Answers[item.key] = v;
-        fs.classList.add('answered');
-        group.querySelectorAll('.nrs-option').forEach((o) => o.classList.remove('checked'));
-        if (optByVal[v]) {
-          optByVal[v].classList.add('checked');
-          const ri = optByVal[v].querySelector('input');
-          if (ri && !ri.checked) ri.checked = true;
-        }
-        if (sliderEl) {
-          sliderEl.classList.remove('unset');
-          if (Number(sliderEl.value) !== v) sliderEl.value = String(v);
-          sliderEl.setAttribute('aria-valuetext', sliderValueText(v));
-          if (outEl) { outEl.textContent = String(v); outEl.classList.remove('placeholder'); }
-        }
-        opdaterCas1Fremdrift();
-        seeingAdvance(fs);   // Greb 1: seende slide-up (additiv; no-op i a11y/reduced-motion)
-      }
-
-      // ── Diskret radio-knap-grid (oplæsnings-venlig for belief; eneste input for 0-8) ──
-      const group = document.createElement('div');
-      group.className = 'cas1-scale ' + scaleCls + ' nrs-scale';
-      group.setAttribute('role', 'radiogroup');
-      group.setAttribute('aria-label', item.text);
-      for (let v = r.min; v <= r.max; v += r.step) {
-        const rid = `${item.key}-${v}`;
-        const anchor = anchors.find((a) => a.at === v);
-        const aria = anchor ? `${v}, ${anchor.label}` : `${v}`;
-        const opt = document.createElement('label');
-        opt.className = 'nrs-option';
-        opt.setAttribute('for', rid);
-        opt.innerHTML = `<input type="radio" id="${rid}" name="${cas1EscAttr(item.key)}" value="${v}" aria-label="${cas1EscAttr(aria)}"><span aria-hidden="true">${v}</span>`;
-        optByVal[v] = opt;
-        opt.querySelector('input').addEventListener('change', () => commitVal(v));
-        group.appendChild(opt);
-      }
-
-      const ankreEl = document.createElement('div');
-      ankreEl.className = 'nrs-ankre' + (anchors.length === 3 ? ' cas1-ankre-3' : '');
-      anchors.forEach((a) => { const sp = document.createElement('span'); sp.textContent = a.label; ankreEl.appendChild(sp); });
-
-      if (isBelief) {
-        // ── Snappet slider (seende): native step=10 → 11 diskrete trin 0/10/.../100. ──
-        // Ændrer KUN input-affordancen, ikke instrumentets svar-format (samme diskrete værdi).
-        const sliderWrap = document.createElement('div');
-        sliderWrap.className = 'cas1-belief-slider';
-        const out = document.createElement('output');
-        out.className = 'cas1-slider-val placeholder';
-        out.setAttribute('for', 'slider-' + item.key);
-        out.textContent = 'Træk eller tap for at vælge';
-        outEl = out;
-        const slider = document.createElement('input');
-        slider.type = 'range'; slider.min = '0'; slider.max = '100'; slider.step = '10';
-        slider.value = '0';
-        slider.className = 'cas1-slider unset';   // unset: ingen committet default (spec §C)
-        slider.id = 'slider-' + item.key;
-        slider.setAttribute('aria-label', item.text);
-        slider.setAttribute('aria-valuetext', 'Ikke valgt endnu');
-        const sliderAnkre = document.createElement('div');
-        sliderAnkre.className = 'nrs-ankre' + (anchors.length === 3 ? ' cas1-ankre-3' : '');
-        sliderAnkre.id = 'ankre-' + item.key;
-        anchors.forEach((a) => { const sp = document.createElement('span'); sp.textContent = a.label; sliderAnkre.appendChild(sp); });
-        // Ankre læses som del af spørgsmålet (spec Greb 3 sidste bullet).
-        slider.setAttribute('aria-describedby', 'ankre-' + item.key);
-        sliderEl = slider;
-        slider.addEventListener('input', () => commitVal(Number(slider.value)));
-        sliderWrap.appendChild(out);
-        sliderWrap.appendChild(slider);
-        sliderWrap.appendChild(sliderAnkre);
-        fs.appendChild(sliderWrap);
-
-        // ── Diskrete ≥44px-knapper (oplæsnings-venlig); samme svar, byttes via CSS. ──
-        const btnWrap = document.createElement('div');
-        btnWrap.className = 'cas1-belief-buttons-wrap';
-        btnWrap.appendChild(group);
-        btnWrap.appendChild(ankreEl);
-        fs.appendChild(btnWrap);
-      } else {
-        fs.appendChild(group);
-        fs.appendChild(ankreEl);
-      }
-      wrap.appendChild(fs);
-    });
-  });
-
-  // Greb 1 (seende), slide-up PÅ stepperen: besvaret spørgsmål "glider op" (settle-
-  // pynt) og det næste kommer i centrum (auto-frem til næste trin). Med ét-ad-gangen
-  // som universel standard sker "næste i centrum" = trin-skift, ikke scroll. ADDITIV:
-  // semantikken bæres af selve trin-skiftet, settle-pynten er kun visuel (no-op v.
-  // reduced-motion via CSS). I oplæsnings-venlig tilstand styrer brugeren selv via
-  // Næste/Forrige (INGEN auto-frem → skærmlæser-/motorik-kontrol). Auto-frem KUN når
-  // man besvarer det AKTIVE trin på fronten (alle FØR besvaret) → et rettet tidligere
-  // svar (via Forrige/Ret) giver intet overraskende hop.
-  function seeingAdvance(currentFs) {
-    currentFs.classList.remove('cas1-settle');
-    void currentFs.offsetWidth;            // reflow → genstart settle-emphasis
-    currentFs.classList.add('cas1-settle');
-    if (a11yOn()) return;
-    const fields = Array.from(wrap.querySelectorAll('.cas1-field'));
-    const idx = fields.indexOf(currentFs);
-    if (idx < 0 || idx !== diaryStepIndex) return;        // kun det aktive trin
-    if (idx >= fields.length - 1) return;                 // sidste trin → bliv (Gennemse-knap vises)
-    const frontier = fields.slice(0, idx).every((f) => f.classList.contains('answered'));
-    if (!frontier) return;
-    // Lad settle-animationen spille færdig, gå derefter til næste trin.
-    setTimeout(() => { if (diaryStepIndex === idx && !a11yOn()) showStep(idx + 1); }, 360);
-  }
-
-  const TOTAL = CAS1_FELT_ORDEN.length;   // 16
-  const submitBtn = document.getElementById('cas1-submit');
-  const note = document.getElementById('cas1-note');
-  function opdaterCas1Fremdrift() {
-    const n = CAS1_FELT_ORDEN.filter((k) => cas1Answers[k] != null).length;
-    document.getElementById('cas1-progress-current').textContent = n + ' af ' + TOTAL;
-    document.getElementById('cas1-progress-fill').style.width = Math.round(n / TOTAL * 100) + '%';
-    submitBtn.disabled = (n < TOTAL);
-    note.textContent = (n < TOTAL) ? ('Besvar alle ' + TOTAL + ' spørgsmål for at sende.') : '';
-  }
-  opdaterCas1Fremdrift();
-
-  // Sidste-trins-knap "Gennemse dine svar": aktiv KUN når alle 16 er besvaret →
-  // åbner review-skærmen (overblik + ret før afsendelse). Selve afsendelsen sker på
-  // review-skærmen (gaten uændret: fuld web-konvolut, kilde: web).
-  submitBtn.addEventListener('click', () => {
-    if (CAS1_FELT_ORDEN.some((k) => cas1Answers[k] == null)) return;
-    visCas1Review();
-  });
-
-  // ── Afsluttende review-skærm (NY, spec Greb 1) ──────────────────────────────────
-  // Viser alle 16 svar i instrument-rækkefølge (samme orden som trinnene). "Ret" pr.
-  // item → tilbage til dét trin i stepperen. "Send til din psykolog" = den uændrede
-  // gate (build + kvittering). Bevarer scroll-layoutets overblik uden scroll-layoutet.
-  function visCas1Review() {
-    const list = document.getElementById('cas1-review-list');
-    list.innerHTML = '';
-    let i = 0;
-    skema.sektioner.forEach((sek) => {
-      const anchors = anchorsFor(sek.skala);
-      sek.items.forEach((item) => {
-        const stepIndex = i;   // trin-index = felt-rækkefølge (1:1 med .cas1-field-trin)
-        i++;
-        const v = cas1Answers[item.key];
-        const anchor = (v == null) ? null : anchors.find((x) => x.at === v);
-        const row = document.createElement('div');
-        row.className = 'cas1-review-row';
-        const main = document.createElement('div');
-        main.className = 'cas1-review-main';
-        const q = document.createElement('p');
-        q.className = 'cas1-review-q';
-        q.innerHTML = `<span class="question-num" aria-hidden="true">${stepIndex + 1}.</span>` + cas1Esc(item.text);
-        const ans = document.createElement('p');
-        if (v == null) { ans.className = 'cas1-review-a tom'; ans.textContent = 'Ikke besvaret'; }
-        else { ans.className = 'cas1-review-a'; ans.textContent = anchor ? (v + ', ' + anchor.label) : String(v); }
-        main.appendChild(q); main.appendChild(ans);
-        const ret = document.createElement('button');
-        ret.type = 'button'; ret.className = 'cas1-review-ret';
-        ret.textContent = 'Ret';
-        ret.setAttribute('aria-label', 'Ret svar på spørgsmål ' + (stepIndex + 1));
-        ret.addEventListener('click', () => {
-          showScreen('screen-cas1');
-          window.scrollTo(0, 0);
-          showStep(stepIndex);
-        });
-        row.appendChild(main); row.appendChild(ret);
-        list.appendChild(row);
-      });
-    });
-    document.getElementById('cas1-review-intro').textContent =
-      'Se dine svar igennem. Du kan rette et svar, før du sender det til din psykolog.';
-    document.getElementById('cas1-review-copyright').textContent = skema.copyright || '';
-    showScreen('screen-cas1-review');
-    window.scrollTo(0, 0);
-  }
-
-  document.getElementById('cas1-review-submit').addEventListener('click', () => {
-    if (CAS1_FELT_ORDEN.some((k) => cas1Answers[k] == null)) return;
-    const mycel = buildCas1Mycel(cas1Answers, { ref, dato, kilde: 'web' });
-    visCas1Kvittering(mycel);
-  });
-  document.getElementById('cas1-review-back').addEventListener('click', () => {
-    showScreen('screen-cas1');
-    window.scrollTo(0, 0);
-    showStep(CAS1_FELT_ORDEN.length - 1);   // tilbage til sidste spørgsmål
-  });
-
-  showScreen('screen-cas1');
-  window.scrollTo(0, 0);
-  // Ét spørgsmål ad gangen = universel standard (spec Greb 1, Viktor 27/6). Stepperen
-  // anvendes for ALLE i post-init-blokken nederst (efter A11Y_KEY/data-a11y/localStorage
-  // er resolved; under routing rammer a11yOn() TDZ → kunne ikke anvendes her).
-  diaryStepIndex = 0;
-}
-
-// CAS-1 kvittering: vis [MYCEL v1]-blokken + kopiér/del. Klienten sender selv blokken
-// i SMS-tråden til psykologen (kontrakt §1: ren tekst der pastes ind i Mycel Journal).
-function visCas1Kvittering(mycelTekst) {
-  const status = document.getElementById('cas1-done-status');
-  status.style.color = 'var(--ink)';
-  status.innerHTML = '';
-  const intro = document.createElement('p');
-  intro.style.cssText = 'margin:0 0 12px;line-height:1.45;text-align:left';
-  intro.textContent = 'Kopiér teksten nedenfor og send den til din psykolog i SMS-tråden, hvor du fik linket.';
-  const ta = document.createElement('textarea');
-  ta.readOnly = true; ta.value = mycelTekst;
-  ta.setAttribute('aria-label', 'Dine svar i tekstform');
-  ta.style.cssText = 'width:100%;min-height:220px;margin:0 0 12px;font-size:12px;font-family:ui-monospace,Menlo,monospace;box-sizing:border-box';
-  const copy = document.createElement('button');
-  copy.type = 'button'; copy.className = 'btn-primary';
-  copy.textContent = 'Kopiér mine svar';
-  copy.style.cssText = 'display:block;width:100%;box-sizing:border-box';
-  copy.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(mycelTekst); copy.textContent = 'Svar kopieret'; }
-    catch (e) { ta.focus(); ta.select(); copy.textContent = 'Markér teksten og kopiér manuelt'; }
-  });
-  const share = document.createElement('button');
-  share.type = 'button'; share.className = 'btn-secondary';
-  share.textContent = 'Send svar';
-  share.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin-top:8px';
-  share.addEventListener('click', async () => {
-    if (navigator.share) {
-      try { await navigator.share({ text: mycelTekst, title: 'CAS-1 til min psykolog' }); }
-      catch (e) { ta.focus(); ta.select(); }
-    } else { ta.focus(); ta.select(); }
-  });
-  status.appendChild(intro);
-  status.appendChild(ta);
-  status.appendChild(copy);
-  status.appendChild(share);
-  showScreen('screen-cas1-done');
-  window.scrollTo(0, 0);
-}
-
-// ── INSTRUMENT-SKEMAER (kind:'instrument'): WHO-5 / PHQ-9 -> [MYCEL v1] ─────────
-// Standalone token-linket effektmaal paa det DELTE stepper-render-lag (samme et-
-// spoergsmaal-ad-gangen + review + a11y som CAS-1). Labeled svar-knapper UDEN
-// forhaandsvalg (ingen phantom-default; tal kommer KUN fra et faktisk klik). Alle
-// scorede items kraeves foer submit; PHQ-9 funktionsspoergsmaal er valgfrit (taeller
-// ikke i sum). PHQ-9 item 9 > 0 -> prominent safety-panel + phq9_item9_flag i [MYCEL].
-// Item-/svar-tekst = verbatim instrument; ref/dato fra linket; intet navn/PII.
-function instrEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function instrEscAttr(s) { return instrEsc(s).replace(/"/g, '&quot;'); }
-function instrumentStemAria(stem, text) {
-  return (stem ? stem.replace(/\s*\.\.\.\s*$/, '') + ' ' : '') + text;
-}
-function renderInstrument(id) {
-  const skema = INSTRUMENTER[id];
-  const ref  = params.get('ref')  || '';
-  const dato = params.get('dato') || '';
-  const instrAnswers = {};   // { [feltkey]: heltal }: KUN faktiske klik, ingen default
-
-  // Alle scorede items + (valgfrit) funktionsspoergsmaal = trin i stepperen.
-  const trinItems = skema.scoredItems.map((it) => ({ ...it, stem: skema.stem, options: skema.options, required: true }));
-  if (skema.funktion) trinItems.push({ ...skema.funktion, stem: '', options: skema.funktion.options, required: false });
-  const REQ_KEYS = skema.scoredItems.map((it) => it.key);
-  const TOTAL = REQ_KEYS.length;
-
-  document.getElementById('instrument-title').textContent = skema.uiTitle;
-  document.getElementById('instrument-intro').textContent = skema.instruktion ||
-    'Vælg det svar, der passer bedst for dig. Der er ingen rigtige eller forkerte svar.';
-  document.getElementById('instrument-attribution').textContent = skema.attribution || '';
-
-  const wrap = document.getElementById('instrument-fields');
-  wrap.innerHTML = '';
-  let qnum = 0, stemIdx = 0;
-
-  trinItems.forEach((item) => {
-    qnum++;
-    // Delt stem (verbatim) vises over det aktive spoergsmaal (ét-ad-gangen, analog til CAS-1).
-    let stemId = '';
-    if (item.stem) {
-      stemIdx++;
-      stemId = 'instrument-stem-' + stemIdx;
-      const ph = document.createElement('p');
-      ph.className = 'instrument-stem'; ph.id = stemId;
-      ph.textContent = item.stem;
-      wrap.appendChild(ph);
-    }
-    const fs = document.createElement('fieldset');
-    fs.className = 'diary-field instrument-field';
-    if (stemId) fs.dataset.stemId = stemId;
-    const legend = document.createElement('legend');
-    legend.className = 'diary-q';
-    legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + instrEsc(item.text);
-    fs.appendChild(legend);
-
-    const group = document.createElement('div');
-    group.className = 'radio-group';
-    group.setAttribute('role', 'radiogroup');
-    group.setAttribute('aria-label', instrumentStemAria(item.stem, item.text));
-    const optByVal = {};
-    item.options.forEach((opt) => {
-      const rid = `${item.key}-${opt.value}`;
-      const lbl = document.createElement('label');
-      lbl.className = 'radio-option';
-      // Inputtet wrappes af labelen (ingen `for` -> ingen dobbelt-association); labelens
-      // <span>-tekst = radioens tilgaengelige navn (samme moenster som batteriets radioBlock).
-      // showValueBadge (kun WHO-5): synligt tal-badge (aria-hidden) FORAN ordlyd-labelen, og
-      // tallet flyttes ind i radioens tilgaengelige navn via aria-label ("5, Hele tiden") saa
-      // instruktionens "et hoejere tal" ogsaa giver mening for skaermlaeser. Begge synlige
-      // spans aria-hidden -> navnet styres alene af aria-label -> ingen dobbelt-oplaesning.
-      if (skema.showValueBadge) {
-        const aria = instrEscAttr(opt.value + ', ' + opt.label);
-        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}" aria-label="${aria}"><span class="instr-val-badge" aria-hidden="true">${opt.value}</span><span aria-hidden="true">${instrEsc(opt.label)}</span>`;
-      } else {
-        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}"><span>${instrEsc(opt.label)}</span>`;
-      }
-      optByVal[opt.value] = lbl;
-      lbl.querySelector('input').addEventListener('change', () => commitInstr(item, fs, group, optByVal, opt.value));
-      group.appendChild(lbl);
-    });
-    fs.appendChild(group);
-    wrap.appendChild(fs);
-  });
-
-  function commitInstr(item, fs, group, optByVal, v) {
-    instrAnswers[item.key] = v;
-    fs.classList.add('answered');
-    group.querySelectorAll('.radio-option').forEach((o) => o.classList.remove('checked'));
-    if (optByVal[v]) {
-      optByVal[v].classList.add('checked');
-      const ri = optByVal[v].querySelector('input');
-      if (ri && !ri.checked) ri.checked = true;
-    }
-    // Safety: PHQ-9 item 9 (selvmordstanker) > 0 -> prominent safety-panel under spoergsmaalet.
-    if (skema.safetyKey && item.key === skema.safetyKey) toggleInstrumentSafety(fs, Number(v) > 0);
-    opdaterInstrFremdrift();
-    seeingAdvanceInstr(fs);
-  }
-
-  // Prominent (men ikke-alarmerende) safety-panel: 112 + Livslinien 70 201 201 + kontakt
-  // psykolog (samme ressourcer som Akut hjælp-boksen, der altid staar nederst). Idempotent.
-  function toggleInstrumentSafety(fs, show) {
-    let n = fs.nextElementSibling;
-    const erPanel = n && n.classList && n.classList.contains('instrument-safety');
-    if (show && !erPanel) {
-      const panel = document.createElement('div');
-      panel.className = 'instrument-safety';
-      panel.setAttribute('role', 'note');
-      panel.innerHTML =
-        '<div class="instrument-safety-head"><span aria-hidden="true" style="display:inline-flex">' + AKUT_TELEFON_SVG + '</span>Tak, fordi du svarer ærligt</div>'
-        + '<p style="margin:0">Hvis det er svært lige nu, behøver du ikke vente til samtalen. Der er hjælp at få med det samme:</p>'
-        + '<ul>'
-        + '<li>Akut fare lige nu: ring <a href="tel:112">112</a></li>'
-        + '<li>Livslinien: <a href="tel:70201201">70 201 201</a> (hver dag kl. 11-05, anonym og gratis)</li>'
-        + '<li>Kontakt din psykolog, Viktor Nielsen, direkte</li>'
-        + '</ul>';
-      fs.insertAdjacentElement('afterend', panel);
-    } else if (!show && erPanel) {
-      n.remove();
-    }
-  }
-
-  // Greb 1 (seende): auto-frem til naeste trin naar man besvarer det AKTIVE front-trin
-  // (alle FOER besvaret). a11y/reduced-motion: ingen auto-frem (bruger styrer via Naeste/Forrige).
-  function seeingAdvanceInstr(currentFs) {
-    if (a11yOn()) return;
-    const fields = Array.from(wrap.querySelectorAll('.instrument-field'));
-    const idx = fields.indexOf(currentFs);
-    if (idx < 0 || idx !== diaryStepIndex) return;
-    if (idx >= fields.length - 1) return;
-    const frontier = fields.slice(0, idx).every((f) => f.classList.contains('answered'));
-    if (!frontier) return;
-    setTimeout(() => { if (diaryStepIndex === idx && !a11yOn()) showStep(idx + 1); }, 320);
-  }
-
-  const submitBtn = document.getElementById('instrument-submit');
-  const note = document.getElementById('instrument-note');
-  function opdaterInstrFremdrift() {
-    const n = REQ_KEYS.filter((k) => instrAnswers[k] != null).length;
-    document.getElementById('instrument-progress-current').textContent = n + ' af ' + TOTAL;
-    document.getElementById('instrument-progress-fill').style.width = Math.round(n / TOTAL * 100) + '%';
-    submitBtn.disabled = (n < TOTAL);
-    note.textContent = (n < TOTAL) ? ('Besvar alle ' + TOTAL + ' spørgsmål for at sende.') : '';
-  }
-  opdaterInstrFremdrift();
-
-  submitBtn.addEventListener('click', () => {
-    if (REQ_KEYS.some((k) => instrAnswers[k] == null)) return;
-    visInstrumentReview();
-  });
-
-  // Afsluttende review-skaerm: alle svar i raekkefoelge, "Ret" pr. item -> tilbage til trinnet.
-  function visInstrumentReview() {
-    const list = document.getElementById('instrument-review-list');
-    list.innerHTML = '';
-    trinItems.forEach((item, stepIndex) => {
-      const v = instrAnswers[item.key];
-      const opt = (v == null) ? null : item.options.find((o) => o.value === v);
-      const row = document.createElement('div');
-      row.className = 'cas1-review-row';
-      const main = document.createElement('div');
-      main.className = 'cas1-review-main';
-      const q = document.createElement('p');
-      q.className = 'cas1-review-q';
-      q.innerHTML = `<span class="question-num" aria-hidden="true">${stepIndex + 1}.</span>` + instrEsc(item.text);
-      const ans = document.createElement('p');
-      if (v == null) {
-        ans.className = 'cas1-review-a tom';
-        ans.textContent = item.required ? 'Ikke besvaret' : 'Ikke besvaret (valgfrit)';
-      } else if (opt && skema.showValueBadge) {
-        // Konsistens m. svar-knappens tal-badge; tallet aria-hidden (label-teksten laeses).
-        ans.className = 'cas1-review-a';
-        ans.innerHTML = `<span class="instr-review-badge" aria-hidden="true">${opt.value}</span>${instrEsc(opt.label)}`;
-      } else { ans.className = 'cas1-review-a'; ans.textContent = opt ? opt.label : String(v); }
-      main.appendChild(q); main.appendChild(ans);
-      const ret = document.createElement('button');
-      ret.type = 'button'; ret.className = 'cas1-review-ret'; ret.textContent = 'Ret';
-      ret.setAttribute('aria-label', 'Ret svar på spørgsmål ' + (stepIndex + 1));
-      ret.addEventListener('click', () => { showScreen('screen-instrument'); window.scrollTo(0, 0); showStep(stepIndex); });
-      row.appendChild(main); row.appendChild(ret);
-      list.appendChild(row);
-    });
-    document.getElementById('instrument-review-intro').textContent =
-      'Se dine svar igennem. Du kan rette et svar, før du sender det til din psykolog.';
-    document.getElementById('instrument-review-attribution').textContent = skema.attribution || '';
-    showScreen('screen-instrument-review');
-    window.scrollTo(0, 0);
-  }
-
-  document.getElementById('instrument-review-submit').addEventListener('click', () => {
-    if (REQ_KEYS.some((k) => instrAnswers[k] == null)) return;
-    const mycel = buildInstrumentMycel(skema, instrAnswers, { ref, dato, kilde: 'web' });
-    visInstrumentKvittering(mycel, skema);
-  });
-  document.getElementById('instrument-review-back').addEventListener('click', () => {
-    showScreen('screen-instrument'); window.scrollTo(0, 0); showStep(trinItems.length - 1);
-  });
-
-  showScreen('screen-instrument');
-  window.scrollTo(0, 0);
-  diaryStepIndex = 0;
-}
-
-// Instrument-kvittering: vis [MYCEL v1]-blokken + kopiér/del (samme moenster som CAS-1).
-function visInstrumentKvittering(mycelTekst, skema) {
-  const status = document.getElementById('instrument-done-status');
-  status.style.color = 'var(--ink)';
-  status.innerHTML = '';
-  const intro = document.createElement('p');
-  intro.style.cssText = 'margin:0 0 12px;line-height:1.45;text-align:left';
-  intro.textContent = 'Kopiér teksten nedenfor og send den til din psykolog i SMS-tråden, hvor du fik linket.';
-  const ta = document.createElement('textarea');
-  ta.readOnly = true; ta.value = mycelTekst;
-  ta.setAttribute('aria-label', 'Dine svar i tekstform');
-  ta.style.cssText = 'width:100%;min-height:220px;margin:0 0 12px;font-size:12px;font-family:ui-monospace,Menlo,monospace;box-sizing:border-box';
-  const copy = document.createElement('button');
-  copy.type = 'button'; copy.className = 'btn-primary'; copy.textContent = 'Kopiér mine svar';
-  copy.style.cssText = 'display:block;width:100%;box-sizing:border-box';
-  copy.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(mycelTekst); copy.textContent = 'Svar kopieret'; }
-    catch (e) { ta.focus(); ta.select(); copy.textContent = 'Markér teksten og kopiér manuelt'; }
-  });
-  const share = document.createElement('button');
-  share.type = 'button'; share.className = 'btn-secondary'; share.textContent = 'Send svar';
-  share.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin-top:8px';
-  share.addEventListener('click', async () => {
-    if (navigator.share) {
-      try { await navigator.share({ text: mycelTekst, title: (skema.kort || 'Skema') + ' til min psykolog' }); }
-      catch (e) { ta.focus(); ta.select(); }
-    } else { ta.focus(); ta.select(); }
-  });
-  status.appendChild(intro); status.appendChild(ta); status.appendChild(copy); status.appendChild(share);
-  showScreen('screen-instrument-done');
-  window.scrollTo(0, 0);
-}
-
 // ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
 injectAkutHjaelp();   // patientsikkerhed: Akut hjælp-boks i bunden af hver skærm (alle flows)
-if (vindueId) {
-  renderSoevnvindue(vindueId);
-} else if (baselineId) {
+if (baselineId) {
   runBaseline(baselineId);
 } else if (diaryId) {
   runDiary(diaryId);
-} else if (essId) {
-  renderEss(essId);
-} else if (cas1Id) {
-  renderCas1(cas1Id);
 } else if (instrumentId) {
   renderInstrument(instrumentId);
 } else {
@@ -2962,7 +2273,7 @@ function a11yVisibleText(el) {
 function visibleScreenText() {
   const scr = document.querySelector('.screen.active');
   if (!scr) return '';
-  const sel = 'h1, h2, .intro, .schema-title, .schema-instruction, .question-text, label.diary-q, legend.diary-q, .radio-option, .done-wrap p, .srt-aloud';
+  const sel = 'h1, h2, .intro, .schema-title, .schema-instruction, .question-text, label.diary-q, legend.diary-q, .radio-option, .done-wrap p';
   const parts = [];
   scr.querySelectorAll(sel).forEach(el => {
     if (el.offsetParent !== null && el.getAttribute('aria-hidden') !== 'true') {
@@ -3014,27 +2325,19 @@ function onA11yToggle() {
   setA11y(on);
   document.documentElement.setAttribute('data-a11y', on ? '1' : '0');
   updateA11yToggleBtn();
-  // Re-layout den aktive flade hvis den er åben (ellers virker det v. næste trin-skift).
+  // Re-layout den aktive dagbogs-formular hvis den er åben (ellers virker det v. næste trin-skift).
   const diaryForm = document.getElementById('screen-diary-form');
   if (diaryForm && diaryForm.classList.contains('active')) {
-    teardownStepper();
+    teardownDiaryStepper();
     if (on) { diaryStepIndex = 0; applyDiaryStepper(); }
   }
-  // CAS-1: stepperen er universel (begge tilstande) og persisterer ved toggle. a11y
-  // skifter KUN input-affordance (knapper↔slider via data-a11y/CSS, sat ovenfor) +
-  // auto-frem (evalueres live i seeingAdvance): selve flowet/trinnet er uændret, så
-  // intet teardown/re-apply nødvendigt (det aktive trin bevares).
 }
 function initA11yMode() {
   let stored = null;
   try { stored = localStorage.getItem(A11Y_KEY); } catch (e) {}
-  // G2-A (revideret 27/6, Viktor-GO): et eksplicit &a11y=1|true-link er skærmlæser-
-  // klientens entry-link og SKAL vinde på HVER load — også når browseren bærer en
-  // tidligere mentem_a11y_mode (fx fra et test-toggle el. et tidligere ikke-a11y-besøg).
-  // Tidligere 'stored === null'-vagt gjorde linket dødt for enhver gen-besøgende/forurenet
-  // tilstand. Patientens egen toggle gælder fortsat for ikke-param-besøg + inden for sessionen.
-  const a11yParam = params.get('a11y');
-  if (a11yParam === '1' || a11yParam === 'true') { stored = '1'; setA11y(true); }
+  // G2-A: &a11y=1 slår til ved FØRSTE load — kun hvis klienten ikke selv har valgt
+  // endnu (stored === null). Derefter respekteres patientens egen toggle (stored '0'/'1').
+  if (params.get('a11y') === '1' && stored === null) { stored = '1'; setA11y(true); }
   document.documentElement.setAttribute('data-a11y', stored === '1' ? '1' : '0');
   const btn = document.getElementById('a11y-mode-btn');
   if (btn) btn.addEventListener('click', onA11yToggle);
@@ -3043,21 +2346,9 @@ function initA11yMode() {
 initTextsize();
 initAloud();
 initA11yMode();
-// CAS-1 renderes under routing FØR a11y-tilstanden er resolved (a11yOn() rammer TDZ
-// på A11Y_KEY-const og fanges som false) → apply stepperen her, hvor data-a11y/
-// localStorage er sat. Søvndagbogen rammer ikke dette (dens felter renderes først
-// efter brugernavigation, dvs. efter init).
-// Ét-spørgsmål-ad-gangen = universel standard for CAS-1 (spec Greb 1, Viktor 27/6).
-// Stepperen anvendes for ALLE her, efter A11Y_KEY + data-a11y + localStorage er
-// resolved (under routing rammer a11yOn() TDZ → kunne ikke anvendes der). a11y skifter
-// kun input-affordance (knapper↔slider via data-a11y/CSS) + auto-frem, ikke selve flowet.
-if (cas1Id) {
-  const cas1Screen = document.getElementById('screen-cas1');
-  if (cas1Screen && cas1Screen.classList.contains('active')) { diaryStepIndex = 0; applyCas1Stepper(); }
-}
-// Instrument-skemaer (WHO-5/PHQ-9): samme universelle ét-spørgsmål-ad-gangen som CAS-1.
-// Anvend stepperen her, efter A11Y_KEY/data-a11y/localStorage er resolved (a11yOn() rammer
-// TDZ under routing). a11y skifter kun auto-frem, ikke selve trin-flowet.
+// Instrument-skemaer (WHO-5/PHQ-9/GAD-7): ét-spørgsmål-ad-gangen-stepperen anvendes HER, efter
+// A11Y_KEY/data-a11y/localStorage er resolved (a11yOn() rammer TDZ under routing). a11y skifter kun
+// auto-frem, ikke selve trin-flowet. Søvndagbogen rammer ikke dette (felter renderes efter navigation).
 if (instrumentId) {
   const instrScreen = document.getElementById('screen-instrument');
   if (instrScreen && instrScreen.classList.contains('active')) { diaryStepIndex = 0; applyInstrumentStepper(); }

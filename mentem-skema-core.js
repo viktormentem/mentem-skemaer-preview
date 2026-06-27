@@ -174,34 +174,6 @@ export const SKEMAER = {
 // SLEEP 35(2):287-302 - "The Consensus Sleep Diary: Standardizing prospective
 // sleep self-monitoring"). Fri klinisk brug. Gengivet uændret med kildeangivelse.
 // Felterne følger CSD-M (morgen-versionen): udfyldes om morgenen for natten der gik.
-
-// ════════════════════════════════════════════════════════════════════════
-//  M1.6 LÅSTE KLIENT-TEKSTER (F1 søvnigheds-item + ESS milepæls-ramme)
-// ════════════════════════════════════════════════════════════════════════
-// Single-source-of-truth = SoevnKlientTekstLaas.swift (PsykologInvitation,
-// `f1Soevnighed*`/`essMilepaelsRamme`, Viktor-låst verbatim @aa8e47a, 7/7
-// lås-tests grøn). Gengivet ORDRET her (web kan ikke importere Swift). 0 em-dash,
-// æøå. RØR ALDRIG ordlyden uden at opdatere Swift-single-source + lås-tests FØRST.
-// Forankring: srt-klient-tekst-laas-2026-06-02 §F1 (A4-konstrukt = søvnighed/
-// dozing, ikke fatigue) + §ESS · safety-spec §2 (uge-1-dagligt, derefter ugentligt).
-export const SOEVN_F1 = {
-  titel:   'Søvnighed i dag',
-  prompt:  'Hvor søvnig har du følt dig i løbet af dagen i dag? Tænk på, hvor tæt du har været på at døse hen eller falde i søvn, mens du var i gang med noget.',
-  anker0:  'slet ikke søvnig, klar og vågen hele dagen',
-  anker10: 'ekstremt søvnig, kæmpede for at holde mig vågen',
-};
-// ESS milepæls-INTRO-ramme = VORES egen ramme om instrumentet (Viktor-låst), IKKE
-// licens-bunden. KUN denne ramme renderes nu; selve ESS-items (8 spørgsmål + skala
-// + scoring) er licens-bundne (Johns 1990-1997, Special Terms 140135) og STUBBES
-// bag licens-gate til Mapi/ICON LS-screenshot-godkendelse er i hus (Viktor 26/6;
-// ess-licens/ESS-licens-vurdering-2026-06-26.md). Wrappen nævner bevidst ikke
-// "Epworth"/score-tal; ESS-scoren går kun til Viktor.
-export const ESS_MILEPAEL_RAMME =
-`**Et kort tjek af din søvnighed**
-Nu og da beder jeg dig svare på nogle få spørgsmål om, hvor let du falder i søvn i forskellige hverdagssituationer. Det hjælper mig med at følge, hvordan din krop har det med det nye søvnvindue, og at holde øje med, at vi ikke strammer for hårdt.
-
-Der er ingen rigtige eller forkerte svar. Svar bare ud fra, hvordan det typisk har været for dig på det seneste.`;
-
 export const CSD_SOEVNDAGBOG = {
   id: 'soevndagbog', kind: 'diary', title: 'Søvndagbog', short: 'Søvndagbog', icon: 'maane',
   badge: 'én gang om morgenen',
@@ -223,16 +195,6 @@ export const CSD_SOEVNDAGBOG = {
     // data). Tomt = ubesvaret. Det eneste der må forudfylde er "Samme som i går".
     { key: 'naps',            kind: 'text',   text: 'Tog du dig en lur eller blund i løbet af gårsdagen? (antal og samlet varighed, valgfrit)', optional: true },
     { key: 'substans',        kind: 'substans', ramme: 'igaar', text: 'Tog du søvnmedicin, alkohol eller koffein i går?', optional: true },
-    // F1 dagtræthed/søvnigheds-item (M1.6) — ADDITIVT monitorerings-item EFTER
-    // CSD-instrumentet (Carney gengives uændret/kontigvist; F1 er VORES eget
-    // A4-konstrukt = søvnighed/dozing, ikke en del af CSD). 0-10 NRS m. ord-ankre
-    // KUN i enderne. Vises DAGLIGT i uge 1, derefter UGENTLIGT (`weekOneDaily`;
-    // safety-spec §2/SM1). INGEN tal-/score-/SE-feedback til klienten (scoren går
-    // kun til motor+Viktor). Eksport-nøgle `daytimeSleepiness_0_10` = M1.3-kontrakt
-    // (additiv/bagudkompat; flyder gennem buildPayloadCSD FIELD_KEYS uændret).
-    { key: 'daytimeSleepiness_0_10', kind: 'nrs', weekOneDaily: true,
-      titel: SOEVN_F1.titel, text: SOEVN_F1.prompt,
-      anker0: SOEVN_F1.anker0, anker10: SOEVN_F1.anker10, min: 0, max: 10 },
   ],
 };
 
@@ -269,408 +231,6 @@ export const SOEVN_BASELINE = {
   ],
 };
 SKEMAER['soevn-baseline'] = SOEVN_BASELINE;
-
-// ════════════════════════════════════════════════════════════════════════
-//  ESS MILEPÆLS-TJEK (kind:'essMilepael') — kun VORES låste intro-ramme nu
-// ════════════════════════════════════════════════════════════════════════
-// Standalone milepæls-visning (baseline · M+2 uger · M+stabil · afslutning · ad
-// hoc), eget flow (renderEss). Vises via ?s=ess. Den Viktor-låste intro-ramme
-// (ESS_MILEPAEL_RAMME) renderes FØR ESS-items; selve items er licens-bundne →
-// STUB (skjult/placeholder) til Mapi-screenshot-godkendelse er i hus. Aldrig en
-// del af SKEMA_ORDER (booking-batteriet) eller den daglige dagbog.
-export const ESS_MILEPAEL = {
-  id: 'ess', kind: 'essMilepael', title: 'Et kort tjek af din søvnighed', short: 'Søvnigheds-tjek',
-  icon: 'soevnighed', badge: 'ved milepæle', ramme: ESS_MILEPAEL_RAMME,
-};
-SKEMAER.ess = ESS_MILEPAEL;
-
-// ════════════════════════════════════════════════════════════════════════
-//  SRT UGE-1 SØVNVINDUE-VISNING (kind:'srtVindue') — klinisk safety-slice
-// ════════════════════════════════════════════════════════════════════════
-// Standalone, BLOKERENDE uge-1-entry FØR dagbogen: klienten ser FØRST sit
-// ordinerede søvnvindue (hvad skal jeg gøre) + stimuluskontrol-reglerne +
-// (når aktiv) kørsels-/maskin-advarslen. Gated på leverance-URL-params:
-//   tib (min) · wake (HH:mm) → vindue = (wake minus tib) til wake (KUN klokkeslæt,
-//   ALDRIG SE-tal/score, jf. noSEInClientCopy) · adv=1 → vis koerselsAdvarsel ·
-//   tn=0 (titreringsNr) → uge-1-fremhævning. Mapping = SRTOrdinationURLCodec
-//   (Swift), Code-confirmet mod srt-ordination-render.js 2026-06-26.
-//
-// Teksterne er Viktor-låst ORD-FOR-ORD, em-dash-fri re-lås (Mycel V82, 2026-06-26;
-// srt-klient-tekst-relaas-emdash-fri-2026-06-26.md, kilde srt-klient-tekst-laas-
-// 2026-06-02.md). Forankring: Tekst 1/2 = Edinger & Carney 2014 + Perlis session-
-// guide p.12-13 (SC1 klokke-fri); Tekst 3 = Edinger p.50 verbatim (kørsels-advarsel,
-// spec-fase2-safety-monitorering §41: koerselsAdvarselAktiv ALTID synlig uge 1).
-// Single-source-of-truth = SoevnKlientTekst (Swift); gengivet ORDRET her (web kan
-// ikke importere Swift). RØR ALDRIG ordlyden uden at opdatere Swift + lås-tests FØRST.
-// 0 em-dash (em-dash-guarded), æøå. INGEN tal i copy (vindue-klokkeslæt afledes ved render).
-export const SRT_VINDUE_TEKST = {
-  // {sengetid}/{opvågning} indsættes ved render fra tib+wake; intet SE-tal vises.
-  vindue:
-`**Dit søvnvindue**
-Dit søvnvindue er den periode, du må være i sengen lige nu: fra **{sengetid}** til **{opvågning}**. Det kan føles kortere, end du er vant til. Det er meningen. Ved at samle din søvn i et fast vindue hjælper vi din krop med at sove mere sammenhængende. Stå op på det faste tidspunkt hver morgen, også i weekenden. Vi justerer vinduet undervejs ud fra din dagbog.`,
-  scRegler:
-`**Sådan bruger du sengen**
-- Gå kun i seng, når du er søvnig.
-- Brug kun sengen til søvn (og sex), ikke til at ligge vågen, se skærm eller bekymre dig.
-- **Forlad sengen, hvis du føler dig vågen eller frustreret, uden at kigge på uret.** Gå ind i et andet rum, og gå tilbage til sengen, når du føler dig søvnig nok til at falde i søvn.
-- Stå op på det samme tidspunkt hver morgen.
-- Undgå at sove eller blunde i løbet af dagen.`,
-  koerselsAdvarsel:
-`**Vigtigt om sikkerhed den første uge**
-Den første uge med dit nye søvnvindue kan gøre dig lidt mere træt om dagen, mens din krop vænner sig til det. Hvis du mærker øget træthed, så **undgå aktiviteter, hvor søvnighed kan være farlig for dig, for eksempel at køre langt eller betjene farlige maskiner.** Er du fortsat meget træt i dagtimerne efter den første uge, så sig til, så har vi sandsynligvis sat vinduet for stramt, og vi justerer det.`,
-};
-export const SRT_VINDUE = {
-  id: 'soevnvindue', kind: 'srtVindue', title: 'Dit søvnvindue', short: 'Søvnvindue',
-  icon: 'seng', tekst: SRT_VINDUE_TEKST,
-};
-SKEMAER.soevnvindue = SRT_VINDUE;
-
-// ════════════════════════════════════════════════════════════════════════
-//  CAS-1 (kind:'cas1') - Wells 2009 App. 6, [MYCEL v1]-emitter
-// ════════════════════════════════════════════════════════════════════════
-// Standalone token-linket skema (?s=cas1), eget flow (renderCas1 i index.html).
-// Klienten udfylder 16 items (2 tids 0-8 · 6 coping 0-8 · 8 beliefs 0-100); web-
-// submit emitterer en [MYCEL v1]-konvolut (kontrakt-mycel-v1-2026-06-26.md §2,
-// MJ-ejet, byg MOD den) som MJ's deterministiske parser laeser. ALDRIG en del af
-// SKEMA_ORDER (booking-batteriet) eller den daglige dagbog.
-//
-// INVARIANTER: tal KUN fra klientens faktiske besvarelse (valideret ved
-// indtastning i render, ingen phantom-default), ALDRIG AI-gaet. klient_ref +
-// dato kommer fra token-linket (?ref= & ?dato=), ALDRIG today() (deterministisk).
-// klient_ref = pseudonym, ALDRIG navn/CPR (formularen indsamler intet navn).
-//
-// FIDELITY: dansk klient-tekst VERBATIM-LAAST mod officiel CAS-1 (© Adrian Wells,
-// 2009 MCT-Institute, Projekt_Praksis/skemaer/CAS-1-dansk.pdf), ordret = kontrakt
-// §2 linje 64-81 + PDF-cross-verify 27/6. Instrument-verbatim-undtagelsen: item/
-// anker/prompt-strenge gengivet ORDRET (em-dash-guard-region nedenfor). Vores EGEN
-// UI-copy (renderCas1) forbliver em-dash-fri. PROD-GATE: MCT-Institute licens-
-// vurdering (kommerciel app-indlejring) = Viktor-beslutning FOER prod. Preview-only.
-
-// emdash-guard:instrument-start (CAS-1 © Adrian Wells 2009 MCT-Institute: verbatim
-// klient-tekst gengivet ORDRET fra officiel kilde; em-dash-reglen viger KUN for
-// instrument-gengivelsen. Vores egen UI-copy ligger i index.html og er em-dash-fri.)
-export const CAS1_SKEMA = {
-  id: 'cas1', kind: 'cas1', title: 'Tanker og bekymring', short: 'CAS-1',
-  icon: 'tanker', skabelon: 'cas1',
-  copyright: '© Adrian Wells, 2009 MCT-Institute®',
-  anchors_0_8: [
-    { at: 0, label: 'På intet tidspunkt' },
-    { at: 4, label: 'Halvdelen af tiden' },
-    { at: 8, label: 'Hele tiden' },
-  ],
-  anchors_0_100: [
-    { at: 0,   label: 'Jeg tror overhovedet ikke på det' },
-    { at: 100, label: 'Jeg er fuldstændig overbevist om, at det er sandt' },
-  ],
-  sektioner: [
-    {
-      id: 'tids', skala: '0_8', delt_prompt: null,
-      items: [
-        { key: 'cas1_worry_tid',  text: 'Hvor meget tid i løbet af den seneste uge har du bekymret dig eller grublet over dine problemer?' },
-        { key: 'cas1_threat_tid', text: 'Hvor meget tid i løbet af den seneste uge har du fokuseret din opmærksomhed på ting, du finder truende (fx symptomer, tanker, farer)?' },
-      ],
-    },
-    {
-      id: 'coping', skala: '0_8',
-      delt_prompt: 'Hvor ofte i den seneste uge har du gjort følgende for at håndtere dine negative følelser eller tanker?',
-      items: [
-        { key: 'cas1_coping_undgaaelse',       text: 'Undgået situationer' },
-        { key: 'cas1_coping_ikketaenke',       text: 'Prøvet ikke at tænke på ting (undgå tanker)' },
-        { key: 'cas1_coping_alkohol',          text: 'Benyttet alkohol/piller' },
-        { key: 'cas1_coping_reassurance',      text: 'Søgt beroligelse' },
-        { key: 'cas1_coping_kontrolfoelelser', text: 'Prøvet at kontrollere mine følelser' },
-        { key: 'cas1_coping_kontrolsymptomer', text: 'Kontrolleret mine symptomer' },
-      ],
-    },
-    {
-      id: 'beliefs', skala: '0_100',
-      delt_prompt: 'Indiker, hvor meget du tror på hvert enkelt antagelse',
-      items: [
-        { key: 'cas1_belief_skade',                text: 'Bekymring er farligt/skadeligt for mit fysiske helbred' },
-        { key: 'cas1_belief_hjaelper',             text: 'Bekymring hjælper mig til at håndtere ting' },
-        { key: 'cas1_belief_foelelser_farlige',    text: 'Stærke følelser er farlige' },
-        { key: 'cas1_belief_fokus_trussel_sikker', text: 'At fokusere på mulige trusler kan holde mig sikker' },
-        { key: 'cas1_belief_kan_ikke_kontrollere', text: 'Jeg kan ikke kontrollere mine tanker' },
-        { key: 'cas1_belief_vigtigt_kontrollere',  text: 'Det er vigtigt at kontrollere mine tanker' },
-        { key: 'cas1_belief_miste_forstand',       text: 'Nogle tanker kan gøre at jeg mister forstanden' },
-        { key: 'cas1_belief_analyse',              text: 'At analysere mine problemer vil hjælpe mig til at løse dem' },
-      ],
-    },
-  ],
-};
-// emdash-guard:instrument-end
-SKEMAER.cas1 = CAS1_SKEMA;
-
-// Kanonisk feltraekkefoelge (§2-konvolut) - bruges af emitter + validering. 16 felter.
-export const CAS1_FELT_ORDEN = CAS1_SKEMA.sektioner.flatMap((s) => s.items.map((it) => it.key));
-
-// SMS-fallback mnemonic-map (kompakt linje-format "worry: 5", bevidst lossy) ->
-// §2-feltnavn. AABEN: MJ bekraefter om fallback-parsen mapper disse mnemonics
-// eller om sms-fallback skal genbruge de fulde §2-feltnavne. Default-emitter
-// (buildCas1Mycel) bruger de fulde §2-feltnavne (parse-rent) for begge kilder.
-export const CAS1_SMS_MNEMONICS = {
-  worry: 'cas1_worry_tid', threat: 'cas1_threat_tid',
-  undgaa: 'cas1_coping_undgaaelse', ikketaenk: 'cas1_coping_ikketaenke',
-  alkohol: 'cas1_coping_alkohol', berolig: 'cas1_coping_reassurance',
-  kontrolfoel: 'cas1_coping_kontrolfoelelser', kontrolsympt: 'cas1_coping_kontrolsymptomer',
-  skade: 'cas1_belief_skade', hjaelper: 'cas1_belief_hjaelper',
-  foelfarlig: 'cas1_belief_foelelser_farlige', fokustrussel: 'cas1_belief_fokus_trussel_sikker',
-  kanikkekontrol: 'cas1_belief_kan_ikke_kontrollere', vigtigtkontrol: 'cas1_belief_vigtigt_kontrollere',
-  misteforstand: 'cas1_belief_miste_forstand', analyse: 'cas1_belief_analyse',
-};
-
-// [MYCEL v1]-emitter (kontrakt §1-konvolut + §2 cas1-felter). Ren tekst = MJ-parser-
-// maal. Heltal eller tom streng pr. felt (parser: tom = "ikke registreret"); ALDRIG
-// gaet/default. dato + ref leveres af kalderen (token-linket), ALDRIG today() her.
-// kilde: 'web' (fuld web-submit) | 'sms-fallback' (bevidst lossy, klient kan udelade).
-export function buildCas1Mycel(answers = {}, meta = {}) {
-  const ref   = (meta.ref   != null) ? String(meta.ref).trim()   : '';
-  const dato  = (meta.dato  != null) ? String(meta.dato).trim()  : '';
-  const kilde = (meta.kilde != null) ? String(meta.kilde).trim() : 'web';
-  const linjer = [
-    '[MYCEL v1]',
-    'skabelon: cas1',
-    'klient_ref: ' + ref,
-    'dato: ' + dato,
-    'kilde: ' + kilde,
-  ];
-  for (const key of CAS1_FELT_ORDEN) {
-    const raw = answers[key];
-    // Kun et faktisk heltal-svar emitteres; alt andet -> tom (ikke registreret).
-    const ud = (raw != null && raw !== '' && Number.isInteger(Number(raw))) ? String(Number(raw)) : '';
-    linjer.push(key + ': ' + ud);
-  }
-  linjer.push('[/MYCEL]');
-  return linjer.join('\n');
-}
-
-// ════════════════════════════════════════════════════════════════════════
-//  INSTRUMENT-SKEMAER (kind:'instrument') - WHO-5 + PHQ-9, [MYCEL v1]-emitter
-// ════════════════════════════════════════════════════════════════════════
-// Standalone token-linkede effektmaal-skemaer (?s=who5 / ?s=phq9) paa det DELTE
-// stepper-render-lag (samme et-spoergsmaal-ad-gangen + review + a11y som CAS-1).
-// Web-submit emitterer en [MYCEL v1]-konvolut (kontrakt-mycel-v1-2026-06-26.md,
-// MJ-ejet; vi emitter MOD den) som MJ's deterministiske, LENIENT parser laeser.
-//
-// COEKSISTENS: de GAMLE batteri-noegler SKEMAER.who5 / SKEMAER.phq9 (kind:'radio',
-// i SKEMA_ORDER, AELDRE oversaettelse) er UROERT - de er laast af selftest + buildPayload.
-// Disse standalone-instrumenter lever i et SEPARAT register (INSTRUMENTER) og rammes
-// KUN af et SINGLE-token ?s=who5 / ?s=phq9 (routing-prioritet, se index.html). Et
-// multi-token batteri (?s=cas,...,who5,...) gaar uaendret til batteri-flowet.
-//
-// FELT-KONTRAKT: feltnavne fra spec-kat-companion-byg-klar §3 (Viktor-leveret 27/6):
-//   WHO-5: who5_item_1..5 (0-5), who5_raw (0-25 AFLEDT), who5_pct (raw x4, AFLEDT)
-//   PHQ-9: phq9_item_1..9 (0-3), phq9_sum (0-27 AFLEDT), phq9_item9_flag (bool, item9>0),
-//          phq9_funktion (0-3, funktionsspoergsmaal - taeller IKKE i sum, valgfri)
-// MJ-kontrakten (§2/§3) definerer endnu IKKE who5/phq9-skabeloner -> additiv
-// skabelon-blok skal tilfoejes MJ-side (relaeet, ikke redigeret her; MJ's parser er
-// forward-kompat/lenient saa emissionen laeses uanset). Sum-felter ALTID afledt.
-//
-// FIDELITY: instrument-ordlyd VERBATIM fra spec §7 (WHO-PDF dansk / phqscreeners-dansk).
-// PHQ-9 item 6+8 baerer en-dash i den officielle ordlyd = verbatim (instrument-region
-// nedenfor undtaget em-dash-reglen). Vores EGEN UI-copy (index.html: knapper, fremskridt,
-// Naeste/Forrige, review) er aeoeaa-korrekt + em-dash-fri. Ingen committet default paa
-// items (klienten vaelger aktivt, samme princip som CAS-1 belief). PROD-GATE: klinisk
-// verbatim-verifikation = Viktor (anbefalet kryds-tjek WHO-5 mod WHO-PDF + PHQ-9 mod
-// phqscreeners.com-PDF). Preview-only.
-
-// emdash-guard:instrument-start (WHO-5 © WHO 1998 + PHQ-9 public domain Spitzer/Williams/
-// Kroenke: dansk klient-tekst gengivet VERBATIM fra officiel kilde, spec §7.1/§7.2. Em-dash-
-// reglen viger KUN for instrument-gengivelsen. Vores egen UI-copy ligger i index.html, em-dash-fri.)
-
-// WHO-5 svarkategorier VERBATIM (spec §7.1): 6 trin, hoej -> lav.
-const WHO5_INSTRUMENT_OPTS = [
-  { value: 5, label: 'Hele tiden' },
-  { value: 4, label: 'Det meste af tiden' },
-  { value: 3, label: 'Lidt mere end halvdelen af tiden' },
-  { value: 2, label: 'Lidt mindre end halvdelen af tiden' },
-  { value: 1, label: 'Lidt af tiden' },
-  { value: 0, label: 'På intet tidspunkt' },
-];
-
-export const WHO5_INSTRUMENT = {
-  id: 'who5', kind: 'instrument', skabelon: 'who5',
-  uiTitle: 'Din trivsel', kort: 'WHO-5',
-  // Instrument-instruktion VERBATIM (spec §7.1).
-  instruktion: 'Sæt venligst ved hvert af de 5 udsagn et kryds i det felt der kommer tættest på hvordan du har følt dig i de seneste to uger. Bemærk at et højere tal står for bedre trivsel.',
-  stem: 'I de sidste 2 uger ...',
-  attribution: 'WHO-5 Trivselindeks. WHO (1998). Gengivet med kildeangivelse.',
-  // Synligt tal-badge (5..0) paa hver svarknap: instruktionen siger "et hoejere tal
-  // staar for bedre trivsel", saa tallet skal vaere synligt for SEENDE klienter (og i
-  // svar-knappens tilgaengelige navn for skaermlaeser). Per-instrument-flag, default OFF.
-  // KUN WHO-5: PHQ-9 er 0-3 hvor hoejere=vaerre -> et tal ville aktivt vildlede klienten.
-  showValueBadge: true,
-  options: WHO5_INSTRUMENT_OPTS,
-  scoredItems: [
-    { key: 'who5_item_1', text: '... har jeg været glad og i godt humør' },
-    { key: 'who5_item_2', text: '... har jeg følt mig rolig og afslappet' },
-    { key: 'who5_item_3', text: '... har jeg følt mig aktiv og energisk' },
-    { key: 'who5_item_4', text: '... er jeg vågnet frisk og udhvilet' },
-    { key: 'who5_item_5', text: '... har min dagligdag været fyldt med ting der interesserer mig' },
-  ],
-};
-
-// PHQ-9 svarkategorier VERBATIM (spec §7.2): 4 trin, 0-3.
-const PHQ9_INSTRUMENT_OPTS = [
-  { value: 0, label: 'Slet ikke' },
-  { value: 1, label: 'Flere dage' },
-  { value: 2, label: 'Mere end halvdelen af dagene' },
-  { value: 3, label: 'Næsten hver dag' },
-];
-// Funktionsspoergsmaal-svar VERBATIM (spec §7.2): taeller IKKE i sumscoren.
-const PHQ9_FUNKTION_OPTS = [
-  { value: 0, label: 'Slet ikke besværligt' },
-  { value: 1, label: 'Lidt besværligt' },
-  { value: 2, label: 'Meget besværligt' },
-  { value: 3, label: 'Ekstremt besværligt' },
-];
-
-export const PHQ9_INSTRUMENT = {
-  id: 'phq9', kind: 'instrument', skabelon: 'phq9',
-  uiTitle: 'Humør og energi', kort: 'PHQ-9',
-  stem: 'Inden for de seneste 2 uger, hvor ofte har du været generet af følgende problemer?',
-  attribution: 'PHQ-9 (Spitzer, Williams, Kroenke et al.). Public domain. Gengivet med kildeangivelse.',
-  options: PHQ9_INSTRUMENT_OPTS,
-  scoredItems: [
-    { key: 'phq9_item_1', text: 'Lille interesse i eller glæde ved at gøre ting' },
-    { key: 'phq9_item_2', text: 'Følt dig nedtrykt, håbløs eller været deprimeret' },
-    { key: 'phq9_item_3', text: 'Problemer med at falde i søvn eller sove, eller med at sove for meget' },
-    { key: 'phq9_item_4', text: 'Følt dig træt eller har kun haft lidt energi' },
-    { key: 'phq9_item_5', text: 'Ringe appetit eller spist for meget' },
-    { key: 'phq9_item_6', text: 'Haft det dårligt med dig selv – eller følt, at du er en fiasko eller har skuffet dig selv eller din familie' },
-    { key: 'phq9_item_7', text: 'Problemer med at koncentrere dig om ting, såsom at læse avisen eller se TV' },
-    { key: 'phq9_item_8', text: 'Har bevæget dig eller talt så langsomt, at andre kunne have bemærket det? Eller det modsatte – været så rastløs eller hvileløs, at du har bevæget dig mere omkring end sædvanligt' },
-    { key: 'phq9_item_9', text: 'Tanker om, at det ville være bedre, hvis du var død eller om at gøre skade på dig selv på en eller anden måde' },
-  ],
-  // Item 9 (selvmordstanker) > 0 -> safety-lag prominent + phq9_item9_flag til behandler.
-  safetyKey: 'phq9_item_9',
-  funktion: {
-    key: 'phq9_funktion', optional: true,
-    text: 'Hvis du har afkrydset mindst ét af de ovenstående problemer, hvor besværligt har disse problemer gjort det for dig at arbejde, klare tingene i hjemmet eller komme overens med andre?',
-    options: PHQ9_FUNKTION_OPTS,
-  },
-};
-// emdash-guard:instrument-end
-
-// SEPARAT register (IKKE SKEMAER - undgaar kollision med batteri-noeglerne who5/phq9).
-export const INSTRUMENTER = {
-  who5: WHO5_INSTRUMENT,
-  phq9: PHQ9_INSTRUMENT,
-  // gad7 registreres efter GAD7_INSTRUMENT-definitionen nedenfor (undgaar TDZ).
-};
-
-// Kanonisk [MYCEL]-feltorden pr. skabelon (spec §3). Bruges af emitter + guard.
-export function instrumentFeltOrden(skema) {
-  const items = skema.scoredItems.map((it) => it.key);
-  if (skema.skabelon === 'who5') return [...items, 'who5_raw', 'who5_pct'];
-  if (skema.skabelon === 'phq9') return [...items, 'phq9_sum', 'phq9_item9_flag', skema.funktion.key];
-  if (skema.skabelon === 'gad7') return [...items, 'gad7_sum'];   // INGEN funktion/flag (modsat PHQ-9)
-  return items;
-}
-
-// Heltal-svar (0..max) fra answers, ellers null. ALDRIG gaet/default.
-function instrumentInt(answers, key) {
-  const raw = answers ? answers[key] : undefined;
-  if (raw == null || raw === '') return null;
-  const n = Number(raw);
-  return Number.isInteger(n) ? n : null;
-}
-
-// Afledte felter (ALTID beregnet, aldrig hardcodet). Manglende item -> afledt = null
-// (emitteres tomt = "ikke registreret"; ingen vildledende delsum).
-export function instrumentDerived(skema, answers) {
-  const ints = {};
-  for (const it of skema.scoredItems) ints[it.key] = instrumentInt(answers, it.key);
-  const allePresent = skema.scoredItems.every((it) => ints[it.key] != null);
-  const sum = allePresent ? skema.scoredItems.reduce((s, it) => s + ints[it.key], 0) : null;
-  if (skema.skabelon === 'who5') {
-    return { who5_raw: sum, who5_pct: (sum == null) ? null : sum * 4 };
-  }
-  if (skema.skabelon === 'phq9') {
-    const i9 = ints[skema.safetyKey];
-    return { phq9_sum: sum, phq9_item9_flag: (i9 == null) ? null : (i9 > 0) };
-  }
-  if (skema.skabelon === 'gad7') {
-    return { gad7_sum: sum };   // sum af alle 7 (0-21); ingen flag/funktion
-  }
-  return {};
-}
-
-// [MYCEL v1]-emitter for WHO-5 / PHQ-9 (kontrakt §1-konvolut + spec §3-felter). Ren tekst
-// = MJ-parser-maal. Heltal eller tom streng pr. felt (tom = "ikke registreret"); afledte
-// sum/pct/flag beregnes her (aldrig hardcodet). dato + ref leveres af kalderen (token-linket),
-// ALDRIG today(). kilde: 'web' (fuld web-submit) | 'sms-fallback' (bevidst lossy).
-export function buildInstrumentMycel(skema, answers = {}, meta = {}) {
-  const ref   = (meta.ref   != null) ? String(meta.ref).trim()   : '';
-  const dato  = (meta.dato  != null) ? String(meta.dato).trim()  : '';
-  const kilde = (meta.kilde != null) ? String(meta.kilde).trim() : 'web';
-  const derived = instrumentDerived(skema, answers);
-  const linjer = [
-    '[MYCEL v1]',
-    'skabelon: ' + skema.skabelon,
-    'klient_ref: ' + ref,
-    'dato: ' + dato,
-    'kilde: ' + kilde,
-  ];
-  for (const key of instrumentFeltOrden(skema)) {
-    let ud = '';
-    if (key === 'phq9_item9_flag') {
-      ud = (derived.phq9_item9_flag == null) ? '' : (derived.phq9_item9_flag ? 'true' : 'false');
-    } else if (Object.prototype.hasOwnProperty.call(derived, key)) {
-      ud = (derived[key] == null) ? '' : String(derived[key]);
-    } else {
-      const v = instrumentInt(answers, key);     // item- eller funktion-felt
-      ud = (v == null) ? '' : String(v);
-    }
-    linjer.push(key + ': ' + ud);
-  }
-  linjer.push('[/MYCEL]');
-  return linjer.join('\n');
-}
-
-// ── GAD-7 (Generaliseret Angst, 7 items) — KLAR 2026-06-27 ───────────────────
-// Verbatim modtaget fra officiel dansk phqscreeners-PDF (GAD7_Danish for Denmark.pdf);
-// spec/kilde: Projekt_Praksis/noter/kat-instrument-gad7-hentning-wsas-beslutning-2026-06-27.md §1.
-// Fri licens (Pfizer education grant, ingen tilladelse kraevet). INGEN funktionslinje (denne
-// officielle danske version har INTET funktions-item, modsat PHQ-9 item 10) + INGEN safety-panel
-// (GAD-7 har ingen suicidalitets-item, modsat PHQ-9 item 9). gad7_sum = sum af alle 7 (0-21);
-// svaerhedsbaand er KLINIKER-side (ikke patient-vist). Ingen tal-badge (0-3, hoejere = vaerre).
-// Marker-klausulen "et kryds" gengives som ORD, ikke "✔"-glyf: ikon/emoji-direktivet er
-// UPAAVIRKET af verbatim-undtagelsen (instrumenter maa ikke baere emoji), Viktor-valg 27/6
-// (konsistent med WHO-5's "et kryds i det felt"). Em-dash-reglen rorer ikke verbatim (sentinel).
-export const GAD7_INSTRUMENT_KLAR = true;
-// emdash-guard:instrument-start (GAD-7 public domain Spitzer/Williams/Kroenke et al.: verbatim
-// gengivelse fra officiel dansk phqscreeners-PDF; em-dash-reglen gaelder IKKE inden for dette region)
-export const GAD7_INSTRUMENT = {
-  id: 'gad7', kind: 'instrument', skabelon: 'gad7',
-  uiTitle: 'Bekymring og uro', kort: 'GAD-7',
-  // Verbatim instruktion (glyf "✔" -> ord "et kryds" pr. ikon/emoji-direktiv, Viktor-valg 27/6).
-  instruktion: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer? (Marker dit svar med et kryds)',
-  // Stamme echoes pr. item i ét-spørgsmål-ad-gangen-flowet (samme mønster som PHQ-9); marker-
-  // klausulen gentages ikke (engangs-vejledning lever i instruktionen ovenfor).
-  stem: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer?',
-  attribution: 'Spitzer, Williams, Kroenke et al., med uddannelseslegat fra Pfizer Inc.',
-  options: [                                  // svarkategorier 0-3 VERBATIM (matcher PHQ-9 Danish)
-    { value: 0, label: 'Slet ikke' },
-    { value: 1, label: 'Flere dage' },
-    { value: 2, label: 'Mere end halvdelen af dagene' },
-    { value: 3, label: 'Næsten hver dag' },
-  ],
-  scoredItems: [                              // 7 items VERBATIM (officiel dansk PDF)
-    { key: 'gad7_item_1', text: 'Følt dig nervøs, ængstelig eller anspændt' },
-    { key: 'gad7_item_2', text: 'Ikke kunnet holde op med at bekymre dig eller ikke kunnet styre din bekymring' },
-    { key: 'gad7_item_3', text: 'Bekymret dig for meget om alt muligt' },
-    { key: 'gad7_item_4', text: 'Haft svært ved at slappe af' },
-    { key: 'gad7_item_5', text: 'Været så rastløs, at du har haft svært ved at sidde stille' },
-    { key: 'gad7_item_6', text: 'Haft let ved at blive sur eller irritabel' },
-    { key: 'gad7_item_7', text: 'Været bange, som om noget frygteligt kunne ske' },
-  ],
-  // INGEN funktion, INGEN safetyKey (begge bevidst udeladt for GAD-7).
-};
-// emdash-guard:instrument-end
-
-// Registrér GAD-7 i INSTRUMENTER (efter definitionen -> ingen TDZ). single-token ?s=gad7 -> instrument.
-if (GAD7_INSTRUMENT_KLAR) INSTRUMENTER.gad7 = GAD7_INSTRUMENT;
 
 // ════════════════════════════════════════════════════════════════════════
 //  SCORING (intern - bruges til opaque payload; klienten ser ALDRIG resultatet)
@@ -1226,4 +786,293 @@ export async function mentemEncrypt(recipientPubB64, payloadObj, keyId = PINNED_
     salt: bytesToB64(salt),
     keyId,
   };
+}
+
+
+// ════════════════════════════════════════════════════════════════════════
+//  INSTRUMENT-SKEMAER (kind:'instrument') - WHO-5 + PHQ-9, [MYCEL v1]-emitter
+// ════════════════════════════════════════════════════════════════════════
+// Standalone token-linkede effektmaal-skemaer (?s=who5 / ?s=phq9) paa det DELTE
+// stepper-render-lag (samme et-spoergsmaal-ad-gangen + review + a11y som CAS-1).
+// Web-submit emitterer en [MYCEL v1]-konvolut (kontrakt-mycel-v1-2026-06-26.md,
+// MJ-ejet; vi emitter MOD den) som MJ's deterministiske, LENIENT parser laeser.
+//
+// COEKSISTENS: de GAMLE batteri-noegler SKEMAER.who5 / SKEMAER.phq9 (kind:'radio',
+// i SKEMA_ORDER, AELDRE oversaettelse) er UROERT - de er laast af selftest + buildPayload.
+// Disse standalone-instrumenter lever i et SEPARAT register (INSTRUMENTER) og rammes
+// KUN af et SINGLE-token ?s=who5 / ?s=phq9 (routing-prioritet, se index.html). Et
+// multi-token batteri (?s=cas,...,who5,...) gaar uaendret til batteri-flowet.
+//
+// FELT-KONTRAKT: feltnavne fra spec-kat-companion-byg-klar §3 (Viktor-leveret 27/6):
+//   WHO-5: who5_item_1..5 (0-5), who5_raw (0-25 AFLEDT), who5_pct (raw x4, AFLEDT)
+//   PHQ-9: phq9_item_1..9 (0-3), phq9_sum (0-27 AFLEDT), phq9_item9_flag (bool, item9>0),
+//          phq9_funktion (0-3, funktionsspoergsmaal - taeller IKKE i sum, valgfri)
+// MJ-kontrakten (§2/§3) definerer endnu IKKE who5/phq9-skabeloner -> additiv
+// skabelon-blok skal tilfoejes MJ-side (relaeet, ikke redigeret her; MJ's parser er
+// forward-kompat/lenient saa emissionen laeses uanset). Sum-felter ALTID afledt.
+//
+// FIDELITY: instrument-ordlyd VERBATIM fra spec §7 (WHO-PDF dansk / phqscreeners-dansk).
+// PHQ-9 item 6+8 baerer en-dash i den officielle ordlyd = verbatim (instrument-region
+// nedenfor undtaget em-dash-reglen). Vores EGEN UI-copy (index.html: knapper, fremskridt,
+// Naeste/Forrige, review) er aeoeaa-korrekt + em-dash-fri. Ingen committet default paa
+// items (klienten vaelger aktivt, samme princip som CAS-1 belief). PROD-GATE: klinisk
+// verbatim-verifikation = Viktor (anbefalet kryds-tjek WHO-5 mod WHO-PDF + PHQ-9 mod
+// phqscreeners.com-PDF). Preview-only.
+
+// emdash-guard:instrument-start (WHO-5 © WHO 1998 + PHQ-9 public domain Spitzer/Williams/
+// Kroenke: dansk klient-tekst gengivet VERBATIM fra officiel kilde, spec §7.1/§7.2. Em-dash-
+// reglen viger KUN for instrument-gengivelsen. Vores egen UI-copy ligger i index.html, em-dash-fri.)
+
+// WHO-5 svarkategorier VERBATIM (spec §7.1): 6 trin, hoej -> lav.
+const WHO5_INSTRUMENT_OPTS = [
+  { value: 5, label: 'Hele tiden' },
+  { value: 4, label: 'Det meste af tiden' },
+  { value: 3, label: 'Lidt mere end halvdelen af tiden' },
+  { value: 2, label: 'Lidt mindre end halvdelen af tiden' },
+  { value: 1, label: 'Lidt af tiden' },
+  { value: 0, label: 'På intet tidspunkt' },
+];
+
+export const WHO5_INSTRUMENT = {
+  id: 'who5', kind: 'instrument', skabelon: 'who5',
+  uiTitle: 'Din trivsel', kort: 'WHO-5',
+  // Instrument-instruktion VERBATIM (spec §7.1).
+  instruktion: 'Sæt venligst ved hvert af de 5 udsagn et kryds i det felt der kommer tættest på hvordan du har følt dig i de seneste to uger. Bemærk at et højere tal står for bedre trivsel.',
+  stem: 'I de sidste 2 uger ...',
+  attribution: 'WHO-5 Trivselindeks. WHO (1998). Gengivet med kildeangivelse.',
+  // Synligt tal-badge (5..0) paa hver svarknap: instruktionen siger "et hoejere tal
+  // staar for bedre trivsel", saa tallet skal vaere synligt for SEENDE klienter (og i
+  // svar-knappens tilgaengelige navn for skaermlaeser). Per-instrument-flag, default OFF.
+  // KUN WHO-5: PHQ-9 er 0-3 hvor hoejere=vaerre -> et tal ville aktivt vildlede klienten.
+  showValueBadge: true,
+  options: WHO5_INSTRUMENT_OPTS,
+  scoredItems: [
+    { key: 'who5_item_1', text: '... har jeg været glad og i godt humør' },
+    { key: 'who5_item_2', text: '... har jeg følt mig rolig og afslappet' },
+    { key: 'who5_item_3', text: '... har jeg følt mig aktiv og energisk' },
+    { key: 'who5_item_4', text: '... er jeg vågnet frisk og udhvilet' },
+    { key: 'who5_item_5', text: '... har min dagligdag været fyldt med ting der interesserer mig' },
+  ],
+  // Licens-/parathedsflag (spec §4): fri brug med kildeangivelse (WHO 1998), verbatim verificeret.
+  licensStatus: 'fri-m-kildeangivelse',
+  KLAR: true,
+};
+
+// PHQ-9 svarkategorier VERBATIM (spec §7.2): 4 trin, 0-3.
+const PHQ9_INSTRUMENT_OPTS = [
+  { value: 0, label: 'Slet ikke' },
+  { value: 1, label: 'Flere dage' },
+  { value: 2, label: 'Mere end halvdelen af dagene' },
+  { value: 3, label: 'Næsten hver dag' },
+];
+// Funktionsspoergsmaal-svar VERBATIM (spec §7.2): taeller IKKE i sumscoren.
+const PHQ9_FUNKTION_OPTS = [
+  { value: 0, label: 'Slet ikke besværligt' },
+  { value: 1, label: 'Lidt besværligt' },
+  { value: 2, label: 'Meget besværligt' },
+  { value: 3, label: 'Ekstremt besværligt' },
+];
+
+export const PHQ9_INSTRUMENT = {
+  id: 'phq9', kind: 'instrument', skabelon: 'phq9',
+  uiTitle: 'Humør og energi', kort: 'PHQ-9',
+  stem: 'Inden for de seneste 2 uger, hvor ofte har du været generet af følgende problemer?',
+  attribution: 'PHQ-9 (Spitzer, Williams, Kroenke et al.). Public domain. Gengivet med kildeangivelse.',
+  options: PHQ9_INSTRUMENT_OPTS,
+  scoredItems: [
+    { key: 'phq9_item_1', text: 'Lille interesse i eller glæde ved at gøre ting' },
+    { key: 'phq9_item_2', text: 'Følt dig nedtrykt, håbløs eller været deprimeret' },
+    { key: 'phq9_item_3', text: 'Problemer med at falde i søvn eller sove, eller med at sove for meget' },
+    { key: 'phq9_item_4', text: 'Følt dig træt eller har kun haft lidt energi' },
+    { key: 'phq9_item_5', text: 'Ringe appetit eller spist for meget' },
+    { key: 'phq9_item_6', text: 'Haft det dårligt med dig selv – eller følt, at du er en fiasko eller har skuffet dig selv eller din familie' },
+    { key: 'phq9_item_7', text: 'Problemer med at koncentrere dig om ting, såsom at læse avisen eller se TV' },
+    { key: 'phq9_item_8', text: 'Har bevæget dig eller talt så langsomt, at andre kunne have bemærket det? Eller det modsatte – været så rastløs eller hvileløs, at du har bevæget dig mere omkring end sædvanligt' },
+    { key: 'phq9_item_9', text: 'Tanker om, at det ville være bedre, hvis du var død eller om at gøre skade på dig selv på en eller anden måde' },
+  ],
+  // Item 9 (selvmordstanker) > 0 -> safety-lag prominent + phq9_item9_flag til behandler.
+  safetyKey: 'phq9_item_9',
+  funktion: {
+    key: 'phq9_funktion', optional: true,
+    text: 'Hvis du har afkrydset mindst ét af de ovenstående problemer, hvor besværligt har disse problemer gjort det for dig at arbejde, klare tingene i hjemmet eller komme overens med andre?',
+    options: PHQ9_FUNKTION_OPTS,
+  },
+  // Licens-/parathedsflag (spec §4): public domain (Pfizer 2010), verbatim verificeret.
+  licensStatus: 'public-domain',
+  KLAR: true,
+};
+// emdash-guard:instrument-end
+
+// Kanonisk [MYCEL]-feltorden pr. skabelon (spec §3). Bruges af emitter + guard.
+export function instrumentFeltOrden(skema) {
+  const items = skema.scoredItems.map((it) => it.key);
+  if (skema.skabelon === 'who5') return [...items, 'who5_raw', 'who5_pct'];
+  if (skema.skabelon === 'phq9') return [...items, 'phq9_sum', 'phq9_item9_flag', skema.funktion.key];
+  if (skema.skabelon === 'gad7') return [...items, 'gad7_sum'];   // INGEN funktion/flag (modsat PHQ-9)
+  return items;
+}
+
+// Heltal-svar (0..max) fra answers, ellers null. ALDRIG gaet/default.
+function instrumentInt(answers, key) {
+  const raw = answers ? answers[key] : undefined;
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isInteger(n) ? n : null;
+}
+
+// Afledte felter (ALTID beregnet, aldrig hardcodet). Manglende item -> afledt = null
+// (emitteres tomt = "ikke registreret"; ingen vildledende delsum).
+export function instrumentDerived(skema, answers) {
+  const ints = {};
+  for (const it of skema.scoredItems) ints[it.key] = instrumentInt(answers, it.key);
+  const allePresent = skema.scoredItems.every((it) => ints[it.key] != null);
+  const sum = allePresent ? skema.scoredItems.reduce((s, it) => s + ints[it.key], 0) : null;
+  if (skema.skabelon === 'who5') {
+    return { who5_raw: sum, who5_pct: (sum == null) ? null : sum * 4 };
+  }
+  if (skema.skabelon === 'phq9') {
+    const i9 = ints[skema.safetyKey];
+    return { phq9_sum: sum, phq9_item9_flag: (i9 == null) ? null : (i9 > 0) };
+  }
+  if (skema.skabelon === 'gad7') {
+    return { gad7_sum: sum };   // sum af alle 7 (0-21); ingen flag/funktion
+  }
+  return {};
+}
+
+// [MYCEL v1]-emitter for WHO-5 / PHQ-9 (kontrakt §1-konvolut + spec §3-felter). Ren tekst
+// = MJ-parser-maal. Heltal eller tom streng pr. felt (tom = "ikke registreret"); afledte
+// sum/pct/flag beregnes her (aldrig hardcodet). dato + ref leveres af kalderen (token-linket),
+// ALDRIG today(). kilde: 'web' (fuld web-submit) | 'sms-fallback' (bevidst lossy).
+export function buildInstrumentMycel(skema, answers = {}, meta = {}) {
+  const ref   = (meta.ref   != null) ? String(meta.ref).trim()   : '';
+  const dato  = (meta.dato  != null) ? String(meta.dato).trim()  : '';
+  const kilde = (meta.kilde != null) ? String(meta.kilde).trim() : 'web';
+  const derived = instrumentDerived(skema, answers);
+  const linjer = [
+    '[MYCEL v1]',
+    'skabelon: ' + skema.skabelon,
+    'klient_ref: ' + ref,
+    'dato: ' + dato,
+    'kilde: ' + kilde,
+  ];
+  for (const key of instrumentFeltOrden(skema)) {
+    let ud = '';
+    if (key === 'phq9_item9_flag') {
+      ud = (derived.phq9_item9_flag == null) ? '' : (derived.phq9_item9_flag ? 'true' : 'false');
+    } else if (Object.prototype.hasOwnProperty.call(derived, key)) {
+      ud = (derived[key] == null) ? '' : String(derived[key]);
+    } else {
+      const v = instrumentInt(answers, key);     // item- eller funktion-felt
+      ud = (v == null) ? '' : String(v);
+    }
+    linjer.push(key + ': ' + ud);
+  }
+  linjer.push('[/MYCEL]');
+  return linjer.join('\n');
+}
+
+// ── GAD-7 (Generaliseret Angst, 7 items) — KLAR 2026-06-27 ───────────────────
+// Verbatim modtaget fra officiel dansk phqscreeners-PDF (GAD7_Danish for Denmark.pdf);
+// spec/kilde: Projekt_Praksis/noter/kat-instrument-gad7-hentning-wsas-beslutning-2026-06-27.md §1.
+// Fri licens (Pfizer education grant, ingen tilladelse kraevet). INGEN funktionslinje (denne
+// officielle danske version har INTET funktions-item, modsat PHQ-9 item 10) + INGEN safety-panel
+// (GAD-7 har ingen suicidalitets-item, modsat PHQ-9 item 9). gad7_sum = sum af alle 7 (0-21);
+// svaerhedsbaand er KLINIKER-side (ikke patient-vist). Ingen tal-badge (0-3, hoejere = vaerre).
+// Marker-klausulen "et kryds" gengives som ORD, ikke "✔"-glyf: ikon/emoji-direktivet er
+// UPAAVIRKET af verbatim-undtagelsen (instrumenter maa ikke baere emoji), Viktor-valg 27/6
+// (konsistent med WHO-5's "et kryds i det felt"). Em-dash-reglen rorer ikke verbatim (sentinel).
+// emdash-guard:instrument-start (GAD-7 public domain Spitzer/Williams/Kroenke et al.: verbatim
+// gengivelse fra officiel dansk phqscreeners-PDF; em-dash-reglen gaelder IKKE inden for dette region)
+export const GAD7_INSTRUMENT = {
+  id: 'gad7', kind: 'instrument', skabelon: 'gad7',
+  uiTitle: 'Bekymring og uro', kort: 'GAD-7',
+  // Verbatim instruktion (glyf "✔" -> ord "et kryds" pr. ikon/emoji-direktiv, Viktor-valg 27/6).
+  instruktion: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer? (Marker dit svar med et kryds)',
+  // Stamme echoes pr. item i ét-spørgsmål-ad-gangen-flowet (samme mønster som PHQ-9); marker-
+  // klausulen gentages ikke (engangs-vejledning lever i instruktionen ovenfor).
+  stem: 'Hvor ofte i de sidste 14 dage har du været generet af følgende problemer?',
+  attribution: 'Spitzer, Williams, Kroenke et al., med uddannelseslegat fra Pfizer Inc.',
+  options: [                                  // svarkategorier 0-3 VERBATIM (matcher PHQ-9 Danish)
+    { value: 0, label: 'Slet ikke' },
+    { value: 1, label: 'Flere dage' },
+    { value: 2, label: 'Mere end halvdelen af dagene' },
+    { value: 3, label: 'Næsten hver dag' },
+  ],
+  scoredItems: [                              // 7 items VERBATIM (officiel dansk PDF)
+    { key: 'gad7_item_1', text: 'Følt dig nervøs, ængstelig eller anspændt' },
+    { key: 'gad7_item_2', text: 'Ikke kunnet holde op med at bekymre dig eller ikke kunnet styre din bekymring' },
+    { key: 'gad7_item_3', text: 'Bekymret dig for meget om alt muligt' },
+    { key: 'gad7_item_4', text: 'Haft svært ved at slappe af' },
+    { key: 'gad7_item_5', text: 'Været så rastløs, at du har haft svært ved at sidde stille' },
+    { key: 'gad7_item_6', text: 'Haft let ved at blive sur eller irritabel' },
+    { key: 'gad7_item_7', text: 'Været bange, som om noget frygteligt kunne ske' },
+  ],
+  // INGEN funktion, INGEN safetyKey (begge bevidst udeladt for GAD-7).
+  // Licens-/parathedsflag (spec §4): public domain (Pfizer 2010), verbatim verificeret 27/6.
+  licensStatus: 'public-domain',
+  KLAR: true,
+};
+// emdash-guard:instrument-end
+
+// ════════════════════════════════════════════════════════════════════════
+//  SCAFFOLD-SLOTS (KLAR:false) — defineret, men IKKE eksponerbare (spec §4)
+// ════════════════════════════════════════════════════════════════════════
+// Et instrument-modul kan defineres FØR dets licens + verbatim er på plads. Slottet
+// registrerer KUN mønsteret + licensStatus; item-teksten forbliver TOM (scoredItems: [])
+// indtil den verbatim kilde lander. Reglen: ALDRIG gættede/fabrikerede items i et klinisk
+// skema. KLAR:false → slottet når ALDRIG ind i INSTRUMENTER (gated loop nedenfor) → et
+// single-token ?s=<skabelon> rammer det ikke → uekssponerbar i preview og prod. Når licens
+// + verbatim lander: indsæt verbatim items (sentinel-omkranset) + flip KLAR:true. Nul
+// genbygning, nul fabrikation. Dette generaliserer Viktors "klar til at tage dem ind senere".
+
+// CAS-1 — licens-gated (MCT-Institute, kommerciel app-indlejring = Viktor-beslutning).
+// Venter på: licens-svar + Viktor 3-linse af nyt CAS-1-arbejde (eget spor, ikke denne branch).
+export const CAS1_INSTRUMENT_SLOT = {
+  id: 'cas1', kind: 'instrument', skabelon: 'cas1',
+  uiTitle: '', kort: 'CAS-1',
+  instruktion: '', stem: '', attribution: '',
+  options: [], scoredItems: [],          // 0 item-tekst — verbatim afventer licens
+  licensStatus: 'licens-gated',
+  KLAR: false,
+};
+
+// WSAS — afventer e-kommerciel licens (ePROVIDE) + dansk verbatim.
+export const WSAS_INSTRUMENT_SLOT = {
+  id: 'wsas', kind: 'instrument', skabelon: 'wsas',
+  uiTitle: '', kort: 'WSAS',
+  instruktion: '', stem: '', attribution: '',
+  options: [], scoredItems: [],          // 0 item-tekst — verbatim afventer licens
+  licensStatus: 'afventer',
+  KLAR: false,
+};
+
+// WHODAS 2.0 — afventer WHO portal-licens + dansk verbatim.
+export const WHODAS_INSTRUMENT_SLOT = {
+  id: 'whodas', kind: 'instrument', skabelon: 'whodas',
+  uiTitle: '', kort: 'WHODAS 2.0',
+  instruktion: '', stem: '', attribution: '',
+  options: [], scoredItems: [],          // 0 item-tekst — verbatim afventer licens
+  licensStatus: 'afventer',
+  KLAR: false,
+};
+
+// ════════════════════════════════════════════════════════════════════════
+//  MASKINEL LICENS-GATE (spec §4 KLAR-reglen + §5 extensibilitets-beskyttelse)
+// ════════════════════════════════════════════════════════════════════════
+// Alle instrument-moduler (aktive + scaffold-slots) i ÉN liste. Registrering i INSTRUMENTER
+// er GATED på KLAR: kun KLAR:true når ind → kun de kan rammes af et single-token ?s=<skabelon>
+// (routing slår op i INSTRUMENTER, se index.html). Et licens-pending (KLAR:false) instrument
+// kan derfor ALDRIG lække til preview/prod, uanset hvad et token siger. Dette generaliserer
+// det tidligere GAD7_INSTRUMENT_KLAR-mønster til ALLE instrumenter. Guard: test/instrument-
+// klar-gate.mjs asserterer at intet KLAR:false-modul er i INSTRUMENTER eller routing.
+export const INSTRUMENT_MODULER = [
+  WHO5_INSTRUMENT, PHQ9_INSTRUMENT, GAD7_INSTRUMENT,                  // KLAR:true  (aktiv)
+  CAS1_INSTRUMENT_SLOT, WSAS_INSTRUMENT_SLOT, WHODAS_INSTRUMENT_SLOT, // KLAR:false (scaffold)
+];
+
+// SEPARAT register (IKKE SKEMAER - undgaar kollision med batteri-noeglerne who5/phq9).
+export const INSTRUMENTER = {};
+for (const modul of INSTRUMENT_MODULER) {
+  if (modul.KLAR) INSTRUMENTER[modul.skabelon] = modul;   // maskinel licens-gate
 }
