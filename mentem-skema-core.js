@@ -326,6 +326,125 @@ export const SRT_VINDUE = {
 SKEMAER.soevnvindue = SRT_VINDUE;
 
 // ════════════════════════════════════════════════════════════════════════
+//  CAS-1 (kind:'cas1') - Wells 2009 App. 6, [MYCEL v1]-emitter
+// ════════════════════════════════════════════════════════════════════════
+// Standalone token-linket skema (?s=cas1), eget flow (renderCas1 i index.html).
+// Klienten udfylder 16 items (2 tids 0-8 · 6 coping 0-8 · 8 beliefs 0-100); web-
+// submit emitterer en [MYCEL v1]-konvolut (kontrakt-mycel-v1-2026-06-26.md §2,
+// MJ-ejet, byg MOD den) som MJ's deterministiske parser laeser. ALDRIG en del af
+// SKEMA_ORDER (booking-batteriet) eller den daglige dagbog.
+//
+// INVARIANTER: tal KUN fra klientens faktiske besvarelse (valideret ved
+// indtastning i render, ingen phantom-default), ALDRIG AI-gaet. klient_ref +
+// dato kommer fra token-linket (?ref= & ?dato=), ALDRIG today() (deterministisk).
+// klient_ref = pseudonym, ALDRIG navn/CPR (formularen indsamler intet navn).
+//
+// FIDELITY: dansk klient-tekst VERBATIM-LAAST mod officiel CAS-1 (© Adrian Wells,
+// 2009 MCT-Institute, Projekt_Praksis/skemaer/CAS-1-dansk.pdf), ordret = kontrakt
+// §2 linje 64-81 + PDF-cross-verify 27/6. Instrument-verbatim-undtagelsen: item/
+// anker/prompt-strenge gengivet ORDRET (em-dash-guard-region nedenfor). Vores EGEN
+// UI-copy (renderCas1) forbliver em-dash-fri. PROD-GATE: MCT-Institute licens-
+// vurdering (kommerciel app-indlejring) = Viktor-beslutning FOER prod. Preview-only.
+
+// emdash-guard:instrument-start (CAS-1 © Adrian Wells 2009 MCT-Institute: verbatim
+// klient-tekst gengivet ORDRET fra officiel kilde; em-dash-reglen viger KUN for
+// instrument-gengivelsen. Vores egen UI-copy ligger i index.html og er em-dash-fri.)
+export const CAS1_SKEMA = {
+  id: 'cas1', kind: 'cas1', title: 'Tanker og bekymring', short: 'CAS-1',
+  icon: 'tanker', skabelon: 'cas1',
+  copyright: '© Adrian Wells, 2009 MCT-Institute®',
+  anchors_0_8: [
+    { at: 0, label: 'På intet tidspunkt' },
+    { at: 4, label: 'Halvdelen af tiden' },
+    { at: 8, label: 'Hele tiden' },
+  ],
+  anchors_0_100: [
+    { at: 0,   label: 'Jeg tror overhovedet ikke på det' },
+    { at: 100, label: 'Jeg er fuldstændig overbevist om, at det er sandt' },
+  ],
+  sektioner: [
+    {
+      id: 'tids', skala: '0_8', delt_prompt: null,
+      items: [
+        { key: 'cas1_worry_tid',  text: 'Hvor meget tid i løbet af den seneste uge har du bekymret dig eller grublet over dine problemer?' },
+        { key: 'cas1_threat_tid', text: 'Hvor meget tid i løbet af den seneste uge har du fokuseret din opmærksomhed på ting, du finder truende (fx symptomer, tanker, farer)?' },
+      ],
+    },
+    {
+      id: 'coping', skala: '0_8',
+      delt_prompt: 'Hvor ofte i den seneste uge har du gjort følgende for at håndtere dine negative følelser eller tanker?',
+      items: [
+        { key: 'cas1_coping_undgaaelse',       text: 'Undgået situationer' },
+        { key: 'cas1_coping_ikketaenke',       text: 'Prøvet ikke at tænke på ting (undgå tanker)' },
+        { key: 'cas1_coping_alkohol',          text: 'Benyttet alkohol/piller' },
+        { key: 'cas1_coping_reassurance',      text: 'Søgt beroligelse' },
+        { key: 'cas1_coping_kontrolfoelelser', text: 'Prøvet at kontrollere mine følelser' },
+        { key: 'cas1_coping_kontrolsymptomer', text: 'Kontrolleret mine symptomer' },
+      ],
+    },
+    {
+      id: 'beliefs', skala: '0_100',
+      delt_prompt: 'Indiker, hvor meget du tror på hvert enkelt antagelse',
+      items: [
+        { key: 'cas1_belief_skade',                text: 'Bekymring er farligt/skadeligt for mit fysiske helbred' },
+        { key: 'cas1_belief_hjaelper',             text: 'Bekymring hjælper mig til at håndtere ting' },
+        { key: 'cas1_belief_foelelser_farlige',    text: 'Stærke følelser er farlige' },
+        { key: 'cas1_belief_fokus_trussel_sikker', text: 'At fokusere på mulige trusler kan holde mig sikker' },
+        { key: 'cas1_belief_kan_ikke_kontrollere', text: 'Jeg kan ikke kontrollere mine tanker' },
+        { key: 'cas1_belief_vigtigt_kontrollere',  text: 'Det er vigtigt at kontrollere mine tanker' },
+        { key: 'cas1_belief_miste_forstand',       text: 'Nogle tanker kan gøre at jeg mister forstanden' },
+        { key: 'cas1_belief_analyse',              text: 'At analysere mine problemer vil hjælpe mig til at løse dem' },
+      ],
+    },
+  ],
+};
+// emdash-guard:instrument-end
+SKEMAER.cas1 = CAS1_SKEMA;
+
+// Kanonisk feltraekkefoelge (§2-konvolut) - bruges af emitter + validering. 16 felter.
+export const CAS1_FELT_ORDEN = CAS1_SKEMA.sektioner.flatMap((s) => s.items.map((it) => it.key));
+
+// SMS-fallback mnemonic-map (kompakt linje-format "worry: 5", bevidst lossy) ->
+// §2-feltnavn. AABEN: MJ bekraefter om fallback-parsen mapper disse mnemonics
+// eller om sms-fallback skal genbruge de fulde §2-feltnavne. Default-emitter
+// (buildCas1Mycel) bruger de fulde §2-feltnavne (parse-rent) for begge kilder.
+export const CAS1_SMS_MNEMONICS = {
+  worry: 'cas1_worry_tid', threat: 'cas1_threat_tid',
+  undgaa: 'cas1_coping_undgaaelse', ikketaenk: 'cas1_coping_ikketaenke',
+  alkohol: 'cas1_coping_alkohol', berolig: 'cas1_coping_reassurance',
+  kontrolfoel: 'cas1_coping_kontrolfoelelser', kontrolsympt: 'cas1_coping_kontrolsymptomer',
+  skade: 'cas1_belief_skade', hjaelper: 'cas1_belief_hjaelper',
+  foelfarlig: 'cas1_belief_foelelser_farlige', fokustrussel: 'cas1_belief_fokus_trussel_sikker',
+  kanikkekontrol: 'cas1_belief_kan_ikke_kontrollere', vigtigtkontrol: 'cas1_belief_vigtigt_kontrollere',
+  misteforstand: 'cas1_belief_miste_forstand', analyse: 'cas1_belief_analyse',
+};
+
+// [MYCEL v1]-emitter (kontrakt §1-konvolut + §2 cas1-felter). Ren tekst = MJ-parser-
+// maal. Heltal eller tom streng pr. felt (parser: tom = "ikke registreret"); ALDRIG
+// gaet/default. dato + ref leveres af kalderen (token-linket), ALDRIG today() her.
+// kilde: 'web' (fuld web-submit) | 'sms-fallback' (bevidst lossy, klient kan udelade).
+export function buildCas1Mycel(answers = {}, meta = {}) {
+  const ref   = (meta.ref   != null) ? String(meta.ref).trim()   : '';
+  const dato  = (meta.dato  != null) ? String(meta.dato).trim()  : '';
+  const kilde = (meta.kilde != null) ? String(meta.kilde).trim() : 'web';
+  const linjer = [
+    '[MYCEL v1]',
+    'skabelon: cas1',
+    'klient_ref: ' + ref,
+    'dato: ' + dato,
+    'kilde: ' + kilde,
+  ];
+  for (const key of CAS1_FELT_ORDEN) {
+    const raw = answers[key];
+    // Kun et faktisk heltal-svar emitteres; alt andet -> tom (ikke registreret).
+    const ud = (raw != null && raw !== '' && Number.isInteger(Number(raw))) ? String(Number(raw)) : '';
+    linjer.push(key + ': ' + ud);
+  }
+  linjer.push('[/MYCEL]');
+  return linjer.join('\n');
+}
+
+// ════════════════════════════════════════════════════════════════════════
 //  SCORING (intern - bruges til opaque payload; klienten ser ALDRIG resultatet)
 // ════════════════════════════════════════════════════════════════════════
 function val(a) { return (a && typeof a === 'object') ? a.value : a; }

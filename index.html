@@ -143,6 +143,17 @@
   .nrs-ankre { display:flex; justify-content:space-between; gap:14px; margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.4; }
   .nrs-ankre span:last-child { text-align:right; }
   @media (max-width:430px) { .nrs-scale { grid-template-columns:repeat(6, 1fr); } }
+  /* ── CAS-1 (kind:'cas1') diskrete skalaer: 0-8 (9 felter) + 0-100 i tiere (11 felter) ── */
+  .cas1-sektion-prompt { font-size:15px; font-weight:600; margin:30px 0 8px; line-height:1.45; color:var(--ink); }
+  .cas1-scale { display:grid; gap:6px; margin-top:4px; }
+  .cas1-scale.s8 { grid-template-columns:repeat(9, 1fr); }
+  .cas1-scale.s100 { grid-template-columns:repeat(11, 1fr); }
+  .cas1-ankre-3 span:nth-child(2) { text-align:center; }
+  .cas1-copyright { font-size:12px; color:var(--muted); margin-top:22px; }
+  @media (max-width:430px) {
+    .cas1-scale.s8 { grid-template-columns:repeat(5, 1fr); }
+    .cas1-scale.s100 { grid-template-columns:repeat(6, 1fr); }
+  }
   /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
   .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
   .ess-ramme p { margin:0 0 14px; }
@@ -365,10 +376,42 @@
   </div>
 </div>
 
+<!-- CAS-1: standalone token-linket skema (?s=cas1). 16 items i 3 sektioner; web-
+     submit emitterer en [MYCEL v1]-konvolut (kontrakt §2). Egen UI-copy em-dash-fri;
+     item-tekst verbatim instrument. Ingen navn/PII indsamles (ref/dato fra linket). -->
+<div id="screen-cas1" class="screen">
+  <div class="wrap">
+    <h1>Tanker og <em>bekymring</em></h1>
+    <p class="intro" id="cas1-intro"></p>
+    <div class="form-progress">
+      <span class="progress-label" id="cas1-progress-current">0 af 16</span>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="cas1-progress-fill"></div></div>
+    </div>
+    <div id="cas1-fields"></div>
+    <button class="btn-primary" id="cas1-submit" style="margin-top:8px" disabled>Send til din psykolog</button>
+    <p class="start-note" id="cas1-note"></p>
+    <p class="cas1-copyright" id="cas1-copyright"></p>
+  </div>
+</div>
+
+<!-- CAS-1 kvittering: viser [MYCEL v1]-blokken + kopiér/del-mekanisme -->
+<div id="screen-cas1-done" class="screen">
+  <div class="wrap">
+    <div class="done-wrap">
+      <div class="done-mark" aria-hidden="true"><span style="display:inline-flex;width:56px;height:56px;color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9"/></svg></span></div>
+      <h2>Tak. Du er færdig</h2>
+      <p>Dine svar er samlet nedenfor. Send dem til din psykolog i den samme SMS-tråd, hvor du fik linket.</p>
+      <div class="done-status" id="cas1-done-status"></div>
+      <div class="disclaimer" style="text-align:left;margin-top:28px">Du får ikke en score eller en vurdering her. Det gennemgår I sammen til samtalen. <strong>Har du det akut svært, skal du ikke vente til samtalen</strong>. Se Akut hjælp nederst (eller ring 112 / Livslinien 70 201 201).</div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { SKEMAER, SKEMA_ORDER, buildPayload, buildPayloadCSD, buildPayloadBaseline, mentemEncrypt,
          CSD_SOEVNDAGBOG, SOEVN_BASELINE, CONTENT_VERSION, SITE_BUILD, kryptoStoettet,
-         PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey } from './mentem-skema-core.js';
+         PINNED_PUBKEY, PINNED_KEY_ID, resolveRecipientKey,
+         CAS1_SKEMA, CAS1_FELT_ORDEN, buildCas1Mycel } from './mentem-skema-core.js';
 
 // ── URL-parametre (?s=batteri  ?n=sessionsnummer  ?pk=cross-check) ────────
 const params   = new URLSearchParams(location.search);
@@ -474,6 +517,10 @@ const essId = rawSelected.find(id => SKEMAER[id].kind === 'essMilepael') || null
 // eget flow (renderSoevnvindue). Vindue/SC/advarsel = verbatim låst copy; klokkeslæt
 // afledt af tib/wake. Ingen data-indsamling i denne visning (ren render).
 const vindueId = rawSelected.find(id => SKEMAER[id].kind === 'srtVindue') || null;
+// CAS-1 (kind:'cas1') = standalone token-linket skema, eget flow (renderCas1).
+// Web-submit emitterer en [MYCEL v1]-konvolut (kontrakt §2). Aldrig en del af
+// spørgeskema-batteriet/SKEMA_ORDER. ref/dato fra linket; intet navn indsamles.
+const cas1Id = rawSelected.find(id => SKEMAER[id].kind === 'cas1') || null;
 let selected = SKEMA_ORDER.filter(id => rawSelected.includes(id));   // kanonisk rækkefølge (kun spørgeskemaer)
 const fixedFromLink = selected.length > 0;                    // ?s= → låst batteri
 
@@ -2084,6 +2131,143 @@ function renderSoevnvindue(id) {
   window.scrollTo(0, 0);
 }
 
+// ── CAS-1 (kind:'cas1'): standalone token-linket skema -> [MYCEL v1]-konvolut ──
+// 16 items i 3 sektioner (2 tids 0-8 · 6 coping 0-8 · 8 beliefs 0-100). Diskrete
+// knapper UDEN forhåndsvalg (ingen phantom-default; tal kommer KUN fra et faktisk
+// klik). Submit er disabled indtil alle 16 er besvaret. Web-submit bygger en
+// [MYCEL v1]-tekstblok (buildCas1Mycel) som MJ's parser læser. ref/dato fra linket
+// (?ref= & ?dato=); intet navn/PII indsamles. Item-tekst = verbatim instrument.
+function cas1Esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function cas1EscAttr(s) { return cas1Esc(s).replace(/"/g, '&quot;'); }
+function renderCas1(id) {
+  const skema = SKEMAER[id];
+  const ref  = params.get('ref')  || '';
+  const dato = params.get('dato') || '';
+  const cas1Answers = {};   // { [feltkey]: heltal }: KUN faktiske klik, ingen default
+
+  document.getElementById('cas1-intro').textContent =
+    'Nedenfor er nogle spørgsmål om dine tanker og din bekymring i den seneste uge. Der er ingen rigtige eller forkerte svar. Vælg det tal, der passer bedst for dig.';
+  document.getElementById('cas1-copyright').textContent = skema.copyright || '';
+
+  const rangeFor   = (skala) => (skala === '0_100') ? { min: 0, max: 100, step: 10 } : { min: 0, max: 8, step: 1 };
+  const anchorsFor = (skala) => (skala === '0_100') ? skema.anchors_0_100 : skema.anchors_0_8;
+  const wrap = document.getElementById('cas1-fields');
+  wrap.innerHTML = '';
+  let qnum = 0;
+
+  skema.sektioner.forEach((sek) => {
+    if (sek.delt_prompt) {
+      const ph = document.createElement('p');
+      ph.className = 'cas1-sektion-prompt';
+      ph.textContent = sek.delt_prompt;
+      wrap.appendChild(ph);
+    }
+    const r = rangeFor(sek.skala);
+    const anchors = anchorsFor(sek.skala);
+    const scaleCls = (sek.skala === '0_100') ? 's100' : 's8';
+    sek.items.forEach((item) => {
+      qnum++;
+      const fs = document.createElement('fieldset');
+      fs.className = 'diary-field cas1-field';
+      const legend = document.createElement('legend');
+      legend.className = 'diary-q';
+      legend.innerHTML = `<span class="question-num" aria-hidden="true">${qnum}.</span>` + cas1Esc(item.text);
+      fs.appendChild(legend);
+
+      const group = document.createElement('div');
+      group.className = 'cas1-scale ' + scaleCls + ' nrs-scale';
+      group.style.gridTemplateColumns = (sek.skala === '0_100') ? 'repeat(11, 1fr)' : 'repeat(9, 1fr)';
+      group.setAttribute('role', 'radiogroup');
+      group.setAttribute('aria-label', item.text);
+      for (let v = r.min; v <= r.max; v += r.step) {
+        const rid = `${item.key}-${v}`;
+        const anchor = anchors.find((a) => a.at === v);
+        const aria = anchor ? `${v}, ${anchor.label}` : `${v}`;
+        const opt = document.createElement('label');
+        opt.className = 'nrs-option';
+        opt.setAttribute('for', rid);
+        opt.innerHTML = `<input type="radio" id="${rid}" name="${cas1EscAttr(item.key)}" value="${v}" aria-label="${cas1EscAttr(aria)}"><span aria-hidden="true">${v}</span>`;
+        opt.querySelector('input').addEventListener('change', () => {
+          cas1Answers[item.key] = v;
+          fs.classList.add('answered');
+          group.querySelectorAll('.nrs-option').forEach((o) => o.classList.remove('checked'));
+          opt.classList.add('checked');
+          opdaterCas1Fremdrift();
+        });
+        group.appendChild(opt);
+      }
+      fs.appendChild(group);
+
+      const ankreEl = document.createElement('div');
+      ankreEl.className = 'nrs-ankre' + (anchors.length === 3 ? ' cas1-ankre-3' : '');
+      anchors.forEach((a) => { const sp = document.createElement('span'); sp.textContent = a.label; ankreEl.appendChild(sp); });
+      fs.appendChild(ankreEl);
+      wrap.appendChild(fs);
+    });
+  });
+
+  const TOTAL = CAS1_FELT_ORDEN.length;   // 16
+  const submitBtn = document.getElementById('cas1-submit');
+  const note = document.getElementById('cas1-note');
+  function opdaterCas1Fremdrift() {
+    const n = CAS1_FELT_ORDEN.filter((k) => cas1Answers[k] != null).length;
+    document.getElementById('cas1-progress-current').textContent = n + ' af ' + TOTAL;
+    document.getElementById('cas1-progress-fill').style.width = Math.round(n / TOTAL * 100) + '%';
+    submitBtn.disabled = (n < TOTAL);
+    note.textContent = (n < TOTAL) ? ('Besvar alle ' + TOTAL + ' spørgsmål for at sende.') : '';
+  }
+  opdaterCas1Fremdrift();
+
+  submitBtn.addEventListener('click', () => {
+    // Knappen er kun aktiv når alle 16 er besvaret -> fuld web-konvolut, kilde: web.
+    if (CAS1_FELT_ORDEN.some((k) => cas1Answers[k] == null)) return;
+    const mycel = buildCas1Mycel(cas1Answers, { ref, dato, kilde: 'web' });
+    visCas1Kvittering(mycel);
+  });
+
+  showScreen('screen-cas1');
+  window.scrollTo(0, 0);
+}
+
+// CAS-1 kvittering: vis [MYCEL v1]-blokken + kopiér/del. Klienten sender selv blokken
+// i SMS-tråden til psykologen (kontrakt §1: ren tekst der pastes ind i Mycel Journal).
+function visCas1Kvittering(mycelTekst) {
+  const status = document.getElementById('cas1-done-status');
+  status.style.color = 'var(--ink)';
+  status.innerHTML = '';
+  const intro = document.createElement('p');
+  intro.style.cssText = 'margin:0 0 12px;line-height:1.45;text-align:left';
+  intro.textContent = 'Kopiér teksten nedenfor og send den til din psykolog i SMS-tråden, hvor du fik linket.';
+  const ta = document.createElement('textarea');
+  ta.readOnly = true; ta.value = mycelTekst;
+  ta.setAttribute('aria-label', 'Dine svar i tekstform');
+  ta.style.cssText = 'width:100%;min-height:220px;margin:0 0 12px;font-size:12px;font-family:ui-monospace,Menlo,monospace;box-sizing:border-box';
+  const copy = document.createElement('button');
+  copy.type = 'button'; copy.className = 'btn-primary';
+  copy.textContent = 'Kopiér mine svar';
+  copy.style.cssText = 'display:block;width:100%;box-sizing:border-box';
+  copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(mycelTekst); copy.textContent = 'Svar kopieret'; }
+    catch (e) { ta.focus(); ta.select(); copy.textContent = 'Markér teksten og kopiér manuelt'; }
+  });
+  const share = document.createElement('button');
+  share.type = 'button'; share.className = 'btn-secondary';
+  share.textContent = 'Send svar';
+  share.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin-top:8px';
+  share.addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: mycelTekst, title: 'CAS-1 til min psykolog' }); }
+      catch (e) { ta.focus(); ta.select(); }
+    } else { ta.focus(); ta.select(); }
+  });
+  status.appendChild(intro);
+  status.appendChild(ta);
+  status.appendChild(copy);
+  status.appendChild(share);
+  showScreen('screen-cas1-done');
+  window.scrollTo(0, 0);
+}
+
 // ── BOOTSTRAP: baseline-flow ELLER dagbog-flow ELLER spørgeskema-flow ──────
 injectAkutHjaelp();   // patientsikkerhed: Akut hjælp-boks i bunden af hver skærm (alle flows)
 if (vindueId) {
@@ -2094,6 +2278,8 @@ if (vindueId) {
   runDiary(diaryId);
 } else if (essId) {
   renderEss(essId);
+} else if (cas1Id) {
+  renderCas1(cas1Id);
 } else {
   document.getElementById('finish-btn').addEventListener('click', goDone);
   document.getElementById('share-btn').addEventListener('click', shareEncrypted);
