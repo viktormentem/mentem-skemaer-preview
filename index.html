@@ -186,6 +186,16 @@
   @keyframes cas1Settle { 0% { transform:translateY(7px); opacity:0.65; } 100% { transform:translateY(0); opacity:1; } }
   html:not([data-a11y="1"]) .cas1-field.cas1-settle { animation:cas1Settle 0.4s ease both; }
   @media (prefers-reduced-motion:reduce) { .cas1-field.cas1-settle { animation:none; } }
+  /* Review-skærm: oversigt over alle 16 svar med Ret-knap pr. item (overblik før send). */
+  .cas1-review-row { display:flex; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .cas1-review-row:last-of-type { border-bottom:none; }
+  .cas1-review-main { flex:1; min-width:0; }
+  .cas1-review-q { font-size:15px; line-height:1.5; color:var(--text); margin:0 0 6px; }
+  .cas1-review-q .question-num { color:var(--muted); margin-right:6px; }
+  .cas1-review-a { font-family:'DM Serif Display',serif; font-size:18px; color:var(--accent); line-height:1.35; }
+  .cas1-review-a.tom { font-family:'DM Sans',sans-serif; font-size:14px; font-style:italic; color:var(--muted); }
+  .cas1-review-ret { flex:0 0 auto; min-height:44px; min-width:64px; padding:8px 16px; border:1.5px solid var(--accent); background:white; color:var(--accent); border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; }
+  .cas1-review-ret:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
   /* ESS milepæls-tjek: vores låste intro-ramme + stub for licens-gated items. */
   .ess-ramme { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:22px; }
   .ess-ramme p { margin:0 0 14px; }
@@ -421,9 +431,23 @@
       <div class="progress-bar-track"><div class="progress-bar-fill" id="cas1-progress-fill"></div></div>
     </div>
     <div id="cas1-fields"></div>
-    <button class="btn-primary" id="cas1-submit" style="margin-top:8px" disabled>Send til din psykolog</button>
+    <button class="btn-primary" id="cas1-submit" style="margin-top:8px" disabled>Gennemse dine svar</button>
     <p class="start-note" id="cas1-note"></p>
     <p class="cas1-copyright" id="cas1-copyright"></p>
+  </div>
+</div>
+
+<!-- CAS-1 review: afsluttende oversigt. Viser alle 16 svar (klienten kan se alt +
+     rette FØR afsendelse). Bevarer scroll-layoutets overblik uden scroll-layoutet.
+     Item-tekst verbatim instrument; vores egen UI-copy er em-dash-fri + æøå-korrekt. -->
+<div id="screen-cas1-review" class="screen">
+  <div class="wrap">
+    <h1>Gennemse dine <em>svar</em></h1>
+    <p class="intro" id="cas1-review-intro"></p>
+    <div id="cas1-review-list"></div>
+    <button class="btn-primary" id="cas1-review-submit" style="margin-top:8px">Send til din psykolog</button>
+    <button class="btn-secondary" id="cas1-review-back" style="margin-top:12px">Tilbage til spørgsmålene</button>
+    <p class="cas1-copyright" id="cas1-review-copyright"></p>
   </div>
 </div>
 
@@ -2378,29 +2402,27 @@ function renderCas1(id) {
     });
   });
 
-  // Greb 1 (seende) — slide-up: når et spørgsmål besvares glider det op (via scroll)
-  // og det næste UBESVAREDE kommer i centrum. ADDITIV pynt: semantikken bæres af
-  // svaret/fremdriften, ALDRIG af animationen. No-op i oplæsnings-venlig tilstand
-  // (den hårde stepper chunker selv) og under prefers-reduced-motion. Skjuler aldrig
-  // indhold permanent. Auto-frem KUN når man besvarer fronten (alle FØR er besvaret),
-  // så et rettet tidligere svar ikke giver et overraskende scroll-hop.
+  // Greb 1 (seende), slide-up PÅ stepperen: besvaret spørgsmål "glider op" (settle-
+  // pynt) og det næste kommer i centrum (auto-frem til næste trin). Med ét-ad-gangen
+  // som universel standard sker "næste i centrum" = trin-skift, ikke scroll. ADDITIV:
+  // semantikken bæres af selve trin-skiftet, settle-pynten er kun visuel (no-op v.
+  // reduced-motion via CSS). I oplæsnings-venlig tilstand styrer brugeren selv via
+  // Næste/Forrige (INGEN auto-frem → skærmlæser-/motorik-kontrol). Auto-frem KUN når
+  // man besvarer det AKTIVE trin på fronten (alle FØR besvaret) → et rettet tidligere
+  // svar (via Forrige/Ret) giver intet overraskende hop.
   function seeingAdvance(currentFs) {
-    if (a11yOn()) return;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return;
-    const fields = Array.from(wrap.querySelectorAll('.cas1-field'));
-    const idx = fields.indexOf(currentFs);
-    if (idx < 0) return;
     currentFs.classList.remove('cas1-settle');
     void currentFs.offsetWidth;            // reflow → genstart settle-emphasis
     currentFs.classList.add('cas1-settle');
+    if (a11yOn()) return;
+    const fields = Array.from(wrap.querySelectorAll('.cas1-field'));
+    const idx = fields.indexOf(currentFs);
+    if (idx < 0 || idx !== diaryStepIndex) return;        // kun det aktive trin
+    if (idx >= fields.length - 1) return;                 // sidste trin → bliv (Gennemse-knap vises)
     const frontier = fields.slice(0, idx).every((f) => f.classList.contains('answered'));
     if (!frontier) return;
-    let next = null;
-    for (let i = idx + 1; i < fields.length; i++) {
-      if (!fields[i].classList.contains('answered')) { next = fields[i]; break; }
-    }
-    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Lad settle-animationen spille færdig, gå derefter til næste trin.
+    setTimeout(() => { if (diaryStepIndex === idx && !a11yOn()) showStep(idx + 1); }, 360);
   }
 
   const TOTAL = CAS1_FELT_ORDEN.length;   // 16
@@ -2415,18 +2437,77 @@ function renderCas1(id) {
   }
   opdaterCas1Fremdrift();
 
+  // Sidste-trins-knap "Gennemse dine svar": aktiv KUN når alle 16 er besvaret →
+  // åbner review-skærmen (overblik + ret før afsendelse). Selve afsendelsen sker på
+  // review-skærmen (gaten uændret: fuld web-konvolut, kilde: web).
   submitBtn.addEventListener('click', () => {
-    // Knappen er kun aktiv når alle 16 er besvaret -> fuld web-konvolut, kilde: web.
+    if (CAS1_FELT_ORDEN.some((k) => cas1Answers[k] == null)) return;
+    visCas1Review();
+  });
+
+  // ── Afsluttende review-skærm (NY, spec Greb 1) ──────────────────────────────────
+  // Viser alle 16 svar i instrument-rækkefølge (samme orden som trinnene). "Ret" pr.
+  // item → tilbage til dét trin i stepperen. "Send til din psykolog" = den uændrede
+  // gate (build + kvittering). Bevarer scroll-layoutets overblik uden scroll-layoutet.
+  function visCas1Review() {
+    const list = document.getElementById('cas1-review-list');
+    list.innerHTML = '';
+    let i = 0;
+    skema.sektioner.forEach((sek) => {
+      const anchors = anchorsFor(sek.skala);
+      sek.items.forEach((item) => {
+        const stepIndex = i;   // trin-index = felt-rækkefølge (1:1 med .cas1-field-trin)
+        i++;
+        const v = cas1Answers[item.key];
+        const anchor = (v == null) ? null : anchors.find((x) => x.at === v);
+        const row = document.createElement('div');
+        row.className = 'cas1-review-row';
+        const main = document.createElement('div');
+        main.className = 'cas1-review-main';
+        const q = document.createElement('p');
+        q.className = 'cas1-review-q';
+        q.innerHTML = `<span class="question-num" aria-hidden="true">${stepIndex + 1}.</span>` + cas1Esc(item.text);
+        const ans = document.createElement('p');
+        if (v == null) { ans.className = 'cas1-review-a tom'; ans.textContent = 'Ikke besvaret'; }
+        else { ans.className = 'cas1-review-a'; ans.textContent = anchor ? (v + ', ' + anchor.label) : String(v); }
+        main.appendChild(q); main.appendChild(ans);
+        const ret = document.createElement('button');
+        ret.type = 'button'; ret.className = 'cas1-review-ret';
+        ret.textContent = 'Ret';
+        ret.setAttribute('aria-label', 'Ret svar på spørgsmål ' + (stepIndex + 1));
+        ret.addEventListener('click', () => {
+          showScreen('screen-cas1');
+          window.scrollTo(0, 0);
+          showStep(stepIndex);
+        });
+        row.appendChild(main); row.appendChild(ret);
+        list.appendChild(row);
+      });
+    });
+    document.getElementById('cas1-review-intro').textContent =
+      'Se dine svar igennem. Du kan rette et svar, før du sender det til din psykolog.';
+    document.getElementById('cas1-review-copyright').textContent = skema.copyright || '';
+    showScreen('screen-cas1-review');
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('cas1-review-submit').addEventListener('click', () => {
     if (CAS1_FELT_ORDEN.some((k) => cas1Answers[k] == null)) return;
     const mycel = buildCas1Mycel(cas1Answers, { ref, dato, kilde: 'web' });
     visCas1Kvittering(mycel);
   });
+  document.getElementById('cas1-review-back').addEventListener('click', () => {
+    showScreen('screen-cas1');
+    window.scrollTo(0, 0);
+    showStep(CAS1_FELT_ORDEN.length - 1);   // tilbage til sidste spørgsmål
+  });
 
   showScreen('screen-cas1');
   window.scrollTo(0, 0);
-  // Oplæsnings-venlig tilstand: ét spørgsmål ad gangen (delt stepper, jf. §4).
+  // Ét spørgsmål ad gangen = universel standard (spec Greb 1, Viktor 27/6). Stepperen
+  // anvendes for ALLE i post-init-blokken nederst (efter A11Y_KEY/data-a11y/localStorage
+  // er resolved; under routing rammer a11yOn() TDZ → kunne ikke anvendes her).
   diaryStepIndex = 0;
-  if (a11yOn()) applyCas1Stepper();
 }
 
 // CAS-1 kvittering: vis [MYCEL v1]-blokken + kopiér/del. Klienten sender selv blokken
@@ -2604,11 +2685,10 @@ function onA11yToggle() {
     teardownStepper();
     if (on) { diaryStepIndex = 0; applyDiaryStepper(); }
   }
-  const cas1Screen = document.getElementById('screen-cas1');
-  if (cas1Screen && cas1Screen.classList.contains('active')) {
-    teardownStepper();
-    if (on) { diaryStepIndex = 0; applyCas1Stepper(); }
-  }
+  // CAS-1: stepperen er universel (begge tilstande) og persisterer ved toggle. a11y
+  // skifter KUN input-affordance (knapper↔slider via data-a11y/CSS, sat ovenfor) +
+  // auto-frem (evalueres live i seeingAdvance): selve flowet/trinnet er uændret, så
+  // intet teardown/re-apply nødvendigt (det aktive trin bevares).
 }
 function initA11yMode() {
   let stored = null;
@@ -2628,7 +2708,11 @@ initA11yMode();
 // på A11Y_KEY-const og fanges som false) → apply stepperen her, hvor data-a11y/
 // localStorage er sat. Søvndagbogen rammer ikke dette (dens felter renderes først
 // efter brugernavigation, dvs. efter init).
-if (cas1Id && a11yOn()) {
+// Ét-spørgsmål-ad-gangen = universel standard for CAS-1 (spec Greb 1, Viktor 27/6).
+// Stepperen anvendes for ALLE her, efter A11Y_KEY + data-a11y + localStorage er
+// resolved (under routing rammer a11yOn() TDZ → kunne ikke anvendes der). a11y skifter
+// kun input-affordance (knapper↔slider via data-a11y/CSS) + auto-frem, ikke selve flowet.
+if (cas1Id) {
   const cas1Screen = document.getElementById('screen-cas1');
   if (cas1Screen && cas1Screen.classList.contains('active')) { diaryStepIndex = 0; applyCas1Stepper(); }
 }
