@@ -82,6 +82,12 @@
   .radio-option:hover { border-color:var(--accent); background:#f0faf5; }
   .radio-option input[type=radio] { width:18px; height:18px; accent-color:var(--accent); flex-shrink:0; }
   .radio-option.checked { border-color:var(--accent); background:var(--accent-light); font-weight:500; }
+  /* Tal-badge paa svarknap (kun instrumenter m. showValueBadge, fx WHO-5): aria-hidden,
+     tallet baeres ogsaa i radioens tilgaengelige navn. font-variant tabular -> ens bredde.
+     Skalerer med A+/A++ via .screen zoom (px arver zoom). */
+  .radio-option .instr-val-badge { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; padding:0 7px; border-radius:6px; background:var(--border); color:var(--ink); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .radio-option.checked .instr-val-badge { background:var(--accent); color:white; }
+  .instr-review-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 6px; border-radius:5px; background:var(--accent-light); color:var(--accent); font-size:13px; font-weight:600; margin-right:8px; vertical-align:-2px; font-variant-numeric:tabular-nums; }
 
   /* VAS — ingen tal-readout (proces-neutral, nul-score) */
   .vas-row { margin-top:8px; }
@@ -2706,7 +2712,16 @@ function renderInstrument(id) {
       lbl.className = 'radio-option';
       // Inputtet wrappes af labelen (ingen `for` -> ingen dobbelt-association); labelens
       // <span>-tekst = radioens tilgaengelige navn (samme moenster som batteriets radioBlock).
-      lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}"><span>${instrEsc(opt.label)}</span>`;
+      // showValueBadge (kun WHO-5): synligt tal-badge (aria-hidden) FORAN ordlyd-labelen, og
+      // tallet flyttes ind i radioens tilgaengelige navn via aria-label ("5, Hele tiden") saa
+      // instruktionens "et hoejere tal" ogsaa giver mening for skaermlaeser. Begge synlige
+      // spans aria-hidden -> navnet styres alene af aria-label -> ingen dobbelt-oplaesning.
+      if (skema.showValueBadge) {
+        const aria = instrEscAttr(opt.value + ', ' + opt.label);
+        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}" aria-label="${aria}"><span class="instr-val-badge" aria-hidden="true">${opt.value}</span><span aria-hidden="true">${instrEsc(opt.label)}</span>`;
+      } else {
+        lbl.innerHTML = `<input type="radio" id="${rid}" name="${instrEscAttr(item.key)}" value="${opt.value}"><span>${instrEsc(opt.label)}</span>`;
+      }
       optByVal[opt.value] = lbl;
       lbl.querySelector('input').addEventListener('change', () => commitInstr(item, fs, group, optByVal, opt.value));
       group.appendChild(lbl);
@@ -2800,6 +2815,10 @@ function renderInstrument(id) {
       if (v == null) {
         ans.className = 'cas1-review-a tom';
         ans.textContent = item.required ? 'Ikke besvaret' : 'Ikke besvaret (valgfrit)';
+      } else if (opt && skema.showValueBadge) {
+        // Konsistens m. svar-knappens tal-badge; tallet aria-hidden (label-teksten laeses).
+        ans.className = 'cas1-review-a';
+        ans.innerHTML = `<span class="instr-review-badge" aria-hidden="true">${opt.value}</span>${instrEsc(opt.label)}`;
       } else { ans.className = 'cas1-review-a'; ans.textContent = opt ? opt.label : String(v); }
       main.appendChild(q); main.appendChild(ans);
       const ret = document.createElement('button');

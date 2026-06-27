@@ -495,6 +495,11 @@ export const WHO5_INSTRUMENT = {
   instruktion: 'Sæt venligst ved hvert af de 5 udsagn et kryds i det felt der kommer tættest på hvordan du har følt dig i de seneste to uger. Bemærk at et højere tal står for bedre trivsel.',
   stem: 'I de sidste 2 uger ...',
   attribution: 'WHO-5 Trivselindeks. WHO (1998). Gengivet med kildeangivelse.',
+  // Synligt tal-badge (5..0) paa hver svarknap: instruktionen siger "et hoejere tal
+  // staar for bedre trivsel", saa tallet skal vaere synligt for SEENDE klienter (og i
+  // svar-knappens tilgaengelige navn for skaermlaeser). Per-instrument-flag, default OFF.
+  // KUN WHO-5: PHQ-9 er 0-3 hvor hoejere=vaerre -> et tal ville aktivt vildlede klienten.
+  showValueBadge: true,
   options: WHO5_INSTRUMENT_OPTS,
   scoredItems: [
     { key: 'who5_item_1', text: '... har jeg været glad og i godt humør' },
